@@ -10,7 +10,7 @@ concept NumberRange = requires(T t) {
     requires std::integral<std::ranges::range_value_t<T>> || std::floating_point<std::ranges::range_value_t<T>>;
 };
 
-auto sum(NumberRange auto range)
+auto sum(NumberRange auto range) -> double
 {
     auto total = 0.0;
     for (auto sample : range)
@@ -20,15 +20,20 @@ auto sum(NumberRange auto range)
     return total;
 }
 
-auto average(NumberRange auto range)
+auto average(NumberRange auto range) -> double
 {
+    if (! range.size())
+    {
+        return 0;
+    }
+
     auto total = sum(range);
     return total / range.size();
 }
 
 template<std::ranges::input_range Range>
 requires std::is_arithmetic_v<std::ranges::range_value_t<Range>>
-auto sumSquared(const Range& range)
+auto sumSquared(const Range& range) -> double
 {
     using Value = std::common_type_t<double, std::ranges::range_value_t<Range>>;
     Value total = 0.0;
@@ -142,7 +147,6 @@ auto coefficientCorelation(NumberRange auto range_x, NumberRange auto range_y, b
     }
     return result;
 }
-
 
 auto covariance(NumberRange auto serie_x, NumberRange auto serie_y)
 -> std::optional<double>
