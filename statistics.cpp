@@ -1,4 +1,4 @@
-﻿// s tatistics.cpp : Defines the entry point for the application.
+﻿// statistics.cpp : Defines the entry point for the application.
 //
 
 #include "statistics.hpp"
@@ -10,17 +10,17 @@ concept NumberRange = requires(T t) {
     requires std::integral<std::ranges::range_value_t<T>> || std::floating_point<std::ranges::range_value_t<T>>;
 };
 
-auto sum(NumberRange auto range) -> double
+auto sum(NumberRange auto range) -> long double
 {
-    auto total = 0.0;
+    auto total = 0.0L;
     for (auto sample : range)
     {
-        total += sample;
+        total += static_cast<long double>(sample);
     }
     return total;
 }
 
-auto average(NumberRange auto range) -> double
+auto average(NumberRange auto range) -> long double
 {
     if (! range.size())
     {
@@ -28,28 +28,25 @@ auto average(NumberRange auto range) -> double
     }
 
     auto total = sum(range);
-    return total / range.size();
+    return static_cast<double>(total / static_cast<long double>(range.size()));
 }
 
 template<std::ranges::input_range Range>
 requires std::is_arithmetic_v<std::ranges::range_value_t<Range>>
-auto sumSquared(const Range& range) -> double
+auto sumSquared(const Range& range) -> long double
 {
-    using Value = std::common_type_t<double, std::ranges::range_value_t<Range>>;
-    Value total = 0.0;
-
+    auto total = 0.0L;
     for (const auto& sample : range)
     {
-        total += static_cast<Value>(sample) * static_cast<Value>(sample);
+        total += static_cast<long double>(sample) * static_cast<long double>(sample);
     }
-
     return total;
 }
 
 template<std::ranges::input_range RangeX, std::ranges::input_range RangeY>
 requires std::is_arithmetic_v<std::ranges::range_value_t<RangeX>> &&
          std::is_arithmetic_v<std::ranges::range_value_t<RangeY>>
-auto sumProduct(const RangeX& rangeX, const RangeY& rangeY) -> std::optional<double>
+auto sumProduct(const RangeX& rangeX, const RangeY& rangeY) -> std::optional<long double>
 {
     if (std::ranges::distance(rangeX) != std::ranges::distance(rangeY))
     {
@@ -64,19 +61,25 @@ auto sumProduct(const RangeX& rangeX, const RangeY& rangeY) -> std::optional<dou
         return std::nullopt;
     }
 
-    return std::transform_reduce(
-        std::ranges::begin(rangeX), std::ranges::end(rangeX),
-        std::ranges::begin(rangeY),
-        0.0,
-        std::plus{},
-        [](auto a, auto b) { return static_cast<double>(a) * static_cast<double>(b); }
-    );
+    auto total = 0.0L;
+    auto itX = std::ranges::begin(rangeX);
+    auto itY = std::ranges::begin(rangeY);
+    for (; itX != std::ranges::end(rangeX); ++itX, ++itY)
+    {
+        total += static_cast<long double>(*itX) * static_cast<long double>(*itY);
+    }
+
+    return total;
 }
 
 auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n, bool logging = false)
-    -> std::optional<double>
+    -> std::optional<long double>
 {
-    const auto radicante = n * sumSquared - sum * sum;
+    const auto n_ld = static_cast<long double>(n);
+    const auto sum_ld = static_cast<long double>(sum);
+    const auto sumSquared_ld = static_cast<long double>(sumSquared);
+
+    const auto radicante = n_ld * sumSquared_ld - sum_ld * sum_ld;
     if (radicante < 0)
     {
         std::println("{} * {} - {}^2={}", n, sumSquared, sum, radicante);
@@ -106,41 +109,35 @@ auto coefficientCorelation(NumberRange auto range_x, NumberRange auto range_y, b
         return {};
     }
 
-    auto n = range_x.size();
-    auto numerator = n * *sigma_xy - (sigma_x * sigma_y);
+    auto n = static_cast<long double>(range_x.size());
+    auto numerator = static_cast<long double>(n) * *sigma_xy - sigma_x * sigma_y;
 
-    auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, n, logging);
+    auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(n), logging);
     if (!denominator_x)
     {
         std::println("can't compute rawDeviationDenominatorPart x!");
-        std::println("n={} sigma_x={} sigma_x2={}", n, sigma_x, sigma_x2);
-        std::println("n={} sigma_y={} sigma_y2={}", n, sigma_y, sigma_y2);
-        std::println("sigma_xy={}", *sigma_xy);
         return {};
     }
 
-    auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, n, logging);
+    auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(n), logging);
     if (!denominator_y)
     {
         std::println("can't compute rawDeviationDenominatorPart y!");
-        std::println("n={} sigma_x={} sigma_x2={}", n, sigma_x, sigma_x2);
-        std::println("n={} sigma_y={} sigma_y2={}", n, sigma_y, sigma_y2);
-        std::println("sigma_xy={}", *sigma_xy);
         return {};
     }
 
     auto denominator = *denominator_x * *denominator_y;
-    if (denominator == 0.0)
+    if (denominator == 0.0L)
     {
         std::println("denominator is zero?");
         return {};
     }
 
-    const auto result = numerator / denominator;
+    auto result = static_cast<double>(numerator / denominator);
     if (logging)
     {
         std::println("n={} sigma_x={} sigma_y={} sigma_xy={}",
-            n, sigma_x, sigma_y, *sigma_xy);
+            static_cast<std::size_t>(n), sigma_x, sigma_y, *sigma_xy);
         std::println("sigma_x^2={} sigma_y^2={}", sigma_x2, sigma_y2);
         std::println("numerator={} denominator_x={} denominator_y={} denominator={} result={}",
             numerator, *denominator_x, *denominator_y, denominator, result);
@@ -247,7 +244,7 @@ int main(int argc, const char* argv[])
     }
 }
 /*
-radicante=141 800 892 690 000 rawDeviationDenominatorPart=11908018.000070373
+radicante=141800892690000 rawDeviationDenominatorPart=11908018.000070373
 radicante=573874297961 rawDeviationDenominatorPart=757544.9148142966
 n=30 sigma_x=11424900 sigma_y=807293 sigma_xy=325126674200
 sigma_x^2=9077641090000 sigma_y^2=40853209527
