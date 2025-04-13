@@ -10,7 +10,7 @@ concept NumberRange = requires(T t) {
     requires std::integral<std::ranges::range_value_t<T>> || std::floating_point<std::ranges::range_value_t<T>>;
 };
 
-auto sum(NumberRange auto range) -> long double
+auto sum(NumberRange auto& const range) -> long double
 {
     auto total = 0.0L;
     for (auto sample : range)
@@ -20,7 +20,7 @@ auto sum(NumberRange auto range) -> long double
     return total;
 }
 
-auto average(NumberRange auto range) -> long double
+auto average(NumberRange auto& const range) -> long double
 {
     if (! range.size())
     {
@@ -95,7 +95,7 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n, bool 
     return result;
 }
 
-auto coefficientCorelation(NumberRange auto range_x, NumberRange auto range_y, bool logging=false)
+auto coefficientCorelation(NumberRange auto& const range_x, NumberRange auto& const range_y, bool logging=false)
     -> std::optional<double>
 {
     auto sigma_x = sum(range_x);
@@ -175,7 +175,7 @@ auto covariance(NumberRange auto serie_x, NumberRange auto serie_y)
 
 int main(int argc, const char* argv[])
 {
-    auto coefCorrel = [](auto titre, auto colone_x, auto colone_y)
+    auto coefCorrel = [](auto titre, const auto& colone_x, const auto& colone_y)
     -> std::optional<double>
     {
         auto r = coefficientCorelation(colone_x, colone_y, true);
@@ -249,20 +249,20 @@ radicante=573874297961 rawDeviationDenominatorPart=757544.9148142966
 n=30 sigma_x=11424900 sigma_y=807293 sigma_xy=325126674200
 sigma_x^2=9077641090000 sigma_y^2=40853209527
 numerator=530558430300 denominator_x=11908018.000070373 denominator_y=757544.9148142966 denominator=9020858481470.422 result=0.05881462738716168
-r_profit_employers=0.0588
+r_profit_employers=0.05881462738716168
 
 n	30
-Σx	11 424 900
-Σx^2	9 077 641 090 000
-Σy	807 293
-Σy^2	40 853 209 527
-Σxy	325 126 674 200
-n Σxy	9 753 800 226 000
-Σx * Σy	9 223 241 795 700
-n * Σx^2 - (Σx)^2	141 800 892 690 000
-n * Σy^2 - (Σy)^2	466 743 181 803 034 000
-numérateur	530 558 430 300
-dénominateur	8 135 391 805 969 840
-r_profit_employés	0,0000652
+Σx	11424900
+Σx^2	9077641090000
+Σy	807293
+Σy^2	40853209527
+Σxy	325126674200
+n Σxy	9753800226000
+Σx * Σy	9223241795700
+n * Σx^2 - (Σx)^2	141800892690000
+n * Σy^2 - (Σy)^2	573874297961
+numérateur	530558430300
+dénominateur	9020858481470
+r_profit_employés	0,0588146
 
 */
