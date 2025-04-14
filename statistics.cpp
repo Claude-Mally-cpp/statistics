@@ -1,5 +1,4 @@
 ﻿// statistics.cpp : Defines the entry point for the application.
-//
 
 #include "statistics.hpp"
 
@@ -10,7 +9,7 @@ concept NumberRange = requires(T t) {
     requires std::integral<std::ranges::range_value_t<T>> || std::floating_point<std::ranges::range_value_t<T>>;
 };
 
-auto sum(NumberRange auto& const range) -> long double
+auto sum(const NumberRange auto& range) -> long double
 {
     auto total = 0.0L;
     for (auto sample : range)
@@ -20,7 +19,7 @@ auto sum(NumberRange auto& const range) -> long double
     return total;
 }
 
-auto average(NumberRange auto& const range) -> long double
+auto average(const NumberRange auto& range) -> long double
 {
     if (! range.size())
     {
@@ -72,7 +71,7 @@ auto sumProduct(const RangeX& rangeX, const RangeY& rangeY) -> std::optional<lon
     return total;
 }
 
-auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n, bool logging = false)
+auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n)
     -> std::optional<long double>
 {
     const auto n_ld = static_cast<long double>(n);
@@ -86,16 +85,13 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n, bool 
         return {};
     }
 
-    const auto result = std::sqrt(radicante);
-    if (logging)
-    {
-        std::println("radicante={} rawDeviationDenominatorPart={}", radicante, result);
-    }
-
-    return result;
+    return std::sqrt(radicante);
 }
 
-auto coefficientCorelation(NumberRange auto& const range_x, NumberRange auto& const range_y, bool logging=false)
+auto coefficientCorelation(
+    const NumberRange auto& range_x,
+    const NumberRange auto& range_y
+)
     -> std::optional<double>
 {
     auto sigma_x = sum(range_x);
@@ -112,14 +108,14 @@ auto coefficientCorelation(NumberRange auto& const range_x, NumberRange auto& co
     auto n = static_cast<long double>(range_x.size());
     auto numerator = static_cast<long double>(n) * *sigma_xy - sigma_x * sigma_y;
 
-    auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(n), logging);
+    auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(n));
     if (!denominator_x)
     {
         std::println("can't compute rawDeviationDenominatorPart x!");
         return {};
     }
 
-    auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(n), logging);
+    auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(n));
     if (!denominator_y)
     {
         std::println("can't compute rawDeviationDenominatorPart y!");
@@ -134,18 +130,10 @@ auto coefficientCorelation(NumberRange auto& const range_x, NumberRange auto& co
     }
 
     auto result = static_cast<double>(numerator / denominator);
-    if (logging)
-    {
-        std::println("n={} sigma_x={} sigma_y={} sigma_xy={}",
-            static_cast<std::size_t>(n), sigma_x, sigma_y, *sigma_xy);
-        std::println("sigma_x^2={} sigma_y^2={}", sigma_x2, sigma_y2);
-        std::println("numerator={} denominator_x={} denominator_y={} denominator={} result={}",
-            numerator, *denominator_x, *denominator_y, denominator, result);
-    }
     return result;
 }
 
-auto covariance(NumberRange auto serie_x, NumberRange auto serie_y)
+auto covariance(const NumberRange auto& serie_x, const NumberRange auto& serie_y)
 -> std::optional<double>
 {
     if (serie_x.size() != serie_y.size())
@@ -153,6 +141,7 @@ auto covariance(NumberRange auto serie_x, NumberRange auto serie_y)
         std::println("serie_x.size={} != serie_y.size()={}", serie_x.size(), serie_y.size());
         return {};
     }
+
     const auto n = serie_x.size();
     if (n < 2)
     {
@@ -168,6 +157,7 @@ auto covariance(NumberRange auto serie_x, NumberRange auto serie_y)
         std::println("error computing sigma_xy");
         return {};
     }
+
     auto numerator = *sigma_xy - (sigma_x * sigma_y) / (double)n;
     auto denominator = static_cast<double>(n - 1);
     return numerator / denominator;
@@ -178,13 +168,13 @@ int main(int argc, const char* argv[])
     auto coefCorrel = [](auto titre, const auto& colone_x, const auto& colone_y)
     -> std::optional<double>
     {
-        auto r = coefficientCorelation(colone_x, colone_y, true);
+        auto r = coefficientCorelation(colone_x, colone_y);
         if (!r)
         {
             std::println("error computing coefficientCorelation {}", titre);
             return {};
         }
-        std::println("{}={:.4f}", titre, *r);
+        std::println("{}={:.8f}", titre, *r);
         return *r;
     };
 
