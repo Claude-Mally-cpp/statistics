@@ -233,26 +233,3 @@ int main(int argc, const char* argv[])
         auto rbc = coefCorrel("r_profit_employers", profits, employers);
     }
 }
-/*
-radicante=141800892690000 rawDeviationDenominatorPart=11908018.000070373
-radicante=573874297961 rawDeviationDenominatorPart=757544.9148142966
-n=30 sigma_x=11424900 sigma_y=807293 sigma_xy=325126674200
-sigma_x^2=9077641090000 sigma_y^2=40853209527
-numerator=530558430300 denominator_x=11908018.000070373 denominator_y=757544.9148142966 denominator=9020858481470.422 result=0.05881462738716168
-r_profit_employers=0.05881462738716168
-
-n	30
-Σx	11424900
-Σx^2	9077641090000
-Σy	807293
-Σy^2	40853209527
-Σxy	325126674200
-n Σxy	9753800226000
-Σx * Σy	9223241795700
-n * Σx^2 - (Σx)^2	141800892690000
-n * Σy^2 - (Σy)^2	573874297961
-numérateur	530558430300
-dénominateur	9020858481470
-r_profit_employés	0,0588146
-
-*/
