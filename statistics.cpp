@@ -1,180 +1,257 @@
-﻿// statistics.cpp : Defines the entry point for the application.
-
+﻿// @file statistics.cpp
+// @brief This file contains functions to compute statistics on a range of numbers.
+// @details The functions use high precision floating point types to avoid precision loss.
+// @author Claude Mally
 #include "statistics.hpp"
 
-
+/// @brief Concept for a range of numbers.
 template<typename T>
 concept NumberRange = requires(T t) {
     { t } -> std::ranges::range;
-    requires std::integral<std::ranges::range_value_t<T>> || std::floating_point<std::ranges::range_value_t<T>>;
+    requires std::is_arithmetic_v<std::ranges::range_value_t<T>>;
 };
 
-auto sum(const NumberRange auto& range) -> long double
+/// @brief Type used for high precision floating point calculations.
+/// @details This type is used to avoid precision loss when calculating
+using HighPrecisionFloat = long double;
+
+/// @brief Type used for high precision floating point calculations with expected result.
+/// @details The unexpected result is a string error message.
+using HighPrecisionResult = std::expected<HighPrecisionFloat, std::string>;
+
+/// @brief Verbose debugging flag.
+/// @details This flag is used to enable verbose debugging output.
+const auto verboseDebugging = false;
+
+
+/// @brief compute the sum of a range of numbers
+/// @param range input range of numbers
+/// @details This function computes the sum of a range of numbers. It uses a high precision floating point type to avoid precision loss.
+/// @return sum of the range of numbers
+auto sum(const NumberRange auto& range) -> HighPrecisionFloat
 {
     auto total = 0.0L;
     for (auto sample : range)
     {
-        total += static_cast<long double>(sample);
+        total += static_cast<HighPrecisionFloat>(sample);
     }
     return total;
 }
 
-auto average(const NumberRange auto& range) -> long double
+/// @brief compute the average of a range of numbers
+/// @param range input range of numbers
+/// @return average of the range of numbers
+/// @details This function computes the average of a range of numbers. It uses a high precision floating point type to avoid precision loss.
+auto average(const NumberRange auto& range) -> HighPrecisionFloat
 {
     if (! range.size())
     {
-        return 0;
+        return 0.0L;
     }
 
     auto total = sum(range);
-    return static_cast<double>(total / static_cast<long double>(range.size()));
+    return total / static_cast<HighPrecisionFloat>(range.size());
 }
 
-template<std::ranges::input_range Range>
-requires std::is_arithmetic_v<std::ranges::range_value_t<Range>>
-auto sumSquared(const Range& range) -> long double
+/// @brief compute the sum of squares of a range of numbers
+/// @param range input range of numbers
+/// @return sum of squares of the range of numbers
+auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
 {
     auto total = 0.0L;
     for (const auto& sample : range)
     {
-        total += static_cast<long double>(sample) * static_cast<long double>(sample);
+        total += static_cast<HighPrecisionFloat>(sample) * static_cast<HighPrecisionFloat>(sample);
     }
     return total;
 }
 
-template<std::ranges::input_range RangeX, std::ranges::input_range RangeY>
-requires std::is_arithmetic_v<std::ranges::range_value_t<RangeX>> &&
-         std::is_arithmetic_v<std::ranges::range_value_t<RangeY>>
-auto sumProduct(const RangeX& rangeX, const RangeY& rangeY) -> std::optional<long double>
+/// @brief compute the sum of products of two ranges of numbers
+/// @param rangeX input range x of numbers
+/// @param rangeY input range y of numbers
+/// @return sum of products of the two ranges of numbers
+auto sumProduct(const NumberRange auto& rangeX, const NumberRange auto& rangeY) 
+    -> HighPrecisionResult
 {
     if (std::ranges::distance(rangeX) != std::ranges::distance(rangeY))
     {
-        std::println("rangeX.size() = {} != rangeY.size() = {}",
-                     std::ranges::distance(rangeX), std::ranges::distance(rangeY));
-        return std::nullopt;
+        return std::unexpected(
+            std::format(
+                "rangeX.size() = {} != rangeY.size() = {}",
+                std::ranges::distance(rangeX),
+                std::ranges::distance(rangeY)
+            )
+        );
     }
 
     if (std::ranges::empty(rangeX))
     {
-        std::println("rangeX is empty!");
-        return std::nullopt;
+        return std::unexpected("rangeX is empty!");
     }
 
-    auto total = 0.0L;
-    auto itX = std::ranges::begin(rangeX);
-    auto itY = std::ranges::begin(rangeY);
-    for (; itX != std::ranges::end(rangeX); ++itX, ++itY)
+    auto total = std::transform_reduce(
+        std::ranges::begin(rangeX), std::ranges::end(rangeX),
+        std::ranges::begin(rangeY), 0.0L,
+        std::plus<>{},
+        [](auto x, auto y) -> HighPrecisionFloat{
+            return static_cast<HighPrecisionFloat>(x) * static_cast<HighPrecisionFloat>(y);
+        }
+    );
+
+    if (total < 0)
     {
-        total += static_cast<long double>(*itX) * static_cast<long double>(*itY);
-    }
+        return std::unexpected(
+            std::format("total {} is negative!", total)
+        );
+    }    
 
     return total;
 }
 
+/// @brief Reusable part of the denominator of the correlation coefficient formula
+/// @details This function computes either the x or the y denominator portion of
+/// the correlation coefficient formula:
+/// sqrt(n * sum(x^2) - (sum(x))^2) * sqrt(n * sum(y^2) - (sum(y))^2)
+/// @param sum Sum of the elements in the range
+/// @param sumSquared Sum of squares of the elements in the range
+/// @param n Number of elements in the range
+/// @return HighPrecisionResult
 auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n)
-    -> std::optional<long double>
+    -> HighPrecisionResult
 {
-    const auto n_ld = static_cast<long double>(n);
-    const auto sum_ld = static_cast<long double>(sum);
-    const auto sumSquared_ld = static_cast<long double>(sumSquared);
+    const auto n_ld = static_cast<HighPrecisionFloat>(n);
+    const auto sum_ld = static_cast<HighPrecisionFloat>(sum);
+    const auto sumSquared_ld = static_cast<HighPrecisionFloat>(sumSquared);
 
-    const auto radicante = n_ld * sumSquared_ld - sum_ld * sum_ld;
-    if (radicante < 0)
+    const auto radicand = n_ld * sumSquared_ld - sum_ld * sum_ld;
+    if (radicand < 0)
     {
-        std::println("{} * {} - {}^2={}", n, sumSquared, sum, radicante);
-        return {};
+        return std::unexpected(
+            std::format("{} * {} - {}^2={}", n, sumSquared, sum, radicand)
+        );
     }
 
-    return std::sqrt(radicante);
+    if constexpr (verboseDebugging)
+    {
+        std::println("rawDeviationDenominatorPart: n={} sum={} sumSquared={} radicand={}", n, sum, sumSquared, radicand);
+    }
+
+    return std::sqrt(radicand);
 }
 
 auto coefficientCorelation(
     const NumberRange auto& range_x,
     const NumberRange auto& range_y
-)
-    -> std::optional<double>
+) -> HighPrecisionResult
 {
-    auto sigma_x = sum(range_x);
-    auto sigma_y = sum(range_y);
-    auto sigma_x2 = sumSquared(range_x);
-    auto sigma_y2 = sumSquared(range_y);
-    auto sigma_xy = sumProduct(range_x, range_y);
+    if (range_x.size() != range_y.size())
+    {
+        return std::unexpected(
+            std::format("xColumn.size={} != yColumn.size()={}", range_x.size(), range_y.size())
+        );
+    }
+
+    if (range_x.size() < 2)
+    {
+        return std::unexpected(
+            std::format("not enough data points: n={}", range_x.size())
+        );
+    }
+    
+    const auto sigma_x = sum(range_x);
+    const auto sigma_y = sum(range_y);
+    const auto sigma_x2 = sumSquared(range_x);
+    const auto sigma_y2 = sumSquared(range_y);
+    const auto sigma_xy = sumProduct(range_x, range_y);
     if (!sigma_xy)
     {
-        std::println("Unable to compute sigma_xy");
-        return {};
+        return sigma_xy;
     }
 
-    auto n = static_cast<long double>(range_x.size());
-    auto numerator = static_cast<long double>(n) * *sigma_xy - sigma_x * sigma_y;
+    const auto n = static_cast<HighPrecisionFloat>(range_x.size());
+    const auto numerator = static_cast<HighPrecisionFloat>(n) * *sigma_xy - sigma_x * sigma_y;
+    if constexpr (verboseDebugging)
+    {
+        std::println("n={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", n, sigma_x, sigma_y, *sigma_xy, numerator);
+    }
 
-    auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(n));
+    const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(n));
     if (!denominator_x)
     {
-        std::println("can't compute rawDeviationDenominatorPart x!");
-        return {};
+        return denominator_x;
     }
 
-    auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(n));
+    const auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(n));
     if (!denominator_y)
     {
-        std::println("can't compute rawDeviationDenominatorPart y!");
-        return {};
+        return denominator_y;
     }
 
-    auto denominator = *denominator_x * *denominator_y;
+    const auto denominator = *denominator_x * *denominator_y;
     if (denominator == 0.0L)
     {
-        std::println("denominator is zero?");
-        return {};
+        return std::unexpected(std::format("denominator is zero?"));
     }
 
-    auto result = static_cast<double>(numerator / denominator);
-    return result;
+    if constexpr (verboseDebugging)
+    {
+        std::println("coefficientCorelation: n={} sigma_x={} sigma_y={} sigma_xy={} numerator={} denominator_x={} denominator_y={} denominator={}", n, sigma_x, sigma_y, *sigma_xy, numerator, *denominator_x, *denominator_y, denominator);
+    }
+
+    return numerator / denominator;
 }
 
+/// @brief compute the covariance of two ranges of numbers
+/// @param serie_x input range x of numbers
+/// @param serie_y input range y of numbers
+/// @return covariance of the two ranges of numbers
 auto covariance(const NumberRange auto& serie_x, const NumberRange auto& serie_y)
--> std::optional<double>
+-> HighPrecisionResult
 {
     if (serie_x.size() != serie_y.size())
     {
-        std::println("serie_x.size={} != serie_y.size()={}", serie_x.size(), serie_y.size());
-        return {};
+        return std::unexpected(
+            std::format("serie_x.size={} != serie_y.size()={}", serie_x.size(), serie_y.size())
+        );
     }
 
     const auto n = serie_x.size();
     if (n < 2)
     {
-        std::println("not enough data points: n={}", n);
-        return {};
+        return std::unexpected(
+            std::format("not enough data points: n={}", n)
+        );
     }
 
-    auto sigma_x = sum(serie_x);
-    auto sigma_y = sum(serie_y);
-    auto sigma_xy = sumProduct(serie_x, serie_y);
+    const auto sigma_x = sum(serie_x);
+    const auto sigma_y = sum(serie_y);
+    const auto sigma_xy = sumProduct(serie_x, serie_y);
     if (!sigma_xy)
     {
-        std::println("error computing sigma_xy");
-        return {};
+        return sigma_xy;
     }
 
-    auto numerator = *sigma_xy - (sigma_x * sigma_y) / (double)n;
-    auto denominator = static_cast<double>(n - 1);
+    const auto numerator = *sigma_xy - (sigma_x * sigma_y) / (HighPrecisionFloat)n;
+    const auto denominator = static_cast<HighPrecisionFloat>(n - 1);
     return numerator / denominator;
 }
 
 int main(int argc, const char* argv[])
 {
-    auto coefCorrel = [](auto titre, const auto& colone_x, const auto& colone_y)
-    -> std::optional<double>
-    {
-        auto r = coefficientCorelation(colone_x, colone_y);
+    // lamda function to compute the correlation coefficient between two
+    // columns of data. The function takes a title and two columns of data as input.
+    // It performs some checks on the size of the columns and computes the correlation coefficient.
+    // It outputs the result or an error message to the console.
+    auto coefCorrel = [](auto title, const auto& xColumn, const auto& yColumn)
+    -> HighPrecisionResult
+    {    
+        const auto r = coefficientCorelation(xColumn, yColumn);
         if (!r)
         {
-            std::println("error computing coefficientCorelation {}", titre);
-            return {};
+            std::println("{} error: {}", title, r.error());
+            return r;
         }
-        std::println("{}={:.8f}", titre, *r);
+        std::println("{}={}", title, *r);
         return *r;
     };
 
