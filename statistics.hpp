@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cstdlib>
 #include <cmath>
 #include <concepts>
@@ -59,7 +60,7 @@ namespace mally::statlib
     /// @param range input range of numbers
     /// @details This function computes the sum of a range of numbers. It uses a high precision floating point type to avoid precision loss.
     /// @return sum of the range of numbers
-    auto sum(const NumberRange auto& range) -> HighPrecisionFloat
+    constexpr auto sum(const NumberRange auto& range) -> HighPrecisionFloat
     {
         return std::accumulate(
             std::ranges::begin(range), std::ranges::end(range), 0.0L,
@@ -71,8 +72,9 @@ namespace mally::statlib
     /// @brief compute the average of a range of numbers
     /// @param range input range of numbers
     /// @return average of the range of numbers
-    /// @details This function computes the average of a range of numbers. It uses a high precision floating point type to avoid precision loss.
-    auto average(const NumberRange auto& range) -> HighPrecisionFloat
+    /// @details This function computes the average of a range of numbers.
+    /// It uses a high precision floating point type to avoid precision loss.
+    constexpr auto average(const NumberRange auto& range) -> HighPrecisionFloat
     {
         if (! range.size())
         {
@@ -83,10 +85,40 @@ namespace mally::statlib
         return total / toHPF(range.size());
     }
 
+    /// @brief compute the product of a range of numbers
+    /// @param range input range of numbers
+    /// @details This function computes the producy of a range of numbers.
+    /// It uses a high precision floating point type to avoid precision loss.
+    /// @return ptoduct of the range of numbers
+    constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
+    {
+        return std::accumulate(
+            std::ranges::begin(range), std::ranges::end(range), 1.0L,
+            [](HighPrecisionFloat acc, auto val) {
+                return acc * toHPF(val);
+            });
+    }
+
+    /// @brief compute the geometric mean of a range of numbers
+    /// @param range input range of numbers
+    /// @return geometric mean of the range of numbers
+    /// @details This function computes the average of a range of numbers. 
+    /// It usses a high precision floating point type to avoid precision loss.
+    constexpr auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloat
+    {
+        if (! range.size())
+        {
+            return 0.0L;
+        }
+
+        auto totalProduct = product(range);
+        return std::powl(totalProduct, 1.0 / toHPF(range.size()));
+    }
+
     /// @brief compute the sum of squares of a range of numbers
     /// @param range input range of numbers
     /// @return sum of squares of the range of numbers
-    auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
+    constexpr auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
     {
         return std::accumulate(
             std::ranges::begin(range), std::ranges::end(range), 0.0L,
@@ -100,7 +132,7 @@ namespace mally::statlib
     /// @param rangeX input range x of numbers
     /// @param rangeY input range y of numbers
     /// @return sum of products of the two ranges of numbers
-    auto sumProduct(const NumberRange auto& rangeX, const NumberRange auto& rangeY) 
+    constexpr auto sumProduct(const NumberRange auto& rangeX, const NumberRange auto& rangeY) 
         -> HighPrecisionResult
     {
         if (std::ranges::distance(rangeX) != std::ranges::distance(rangeY))
