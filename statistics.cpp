@@ -51,7 +51,7 @@ int main(int argc, const char* argv[])
         }
     }
 
-    const bool question29 = true;
+    const bool question29 = false;
     if constexpr (question29)
     {
         const auto profits =
@@ -75,5 +75,18 @@ int main(int argc, const char* argv[])
         static_assert(profits.size() == employers.size());
 
         auto rbc = coefCorrel("r_profit_employers", profits, employers);
+    }
+
+    const auto testProduct = true;
+    if constexpr (testProduct)
+    {
+        constexpr auto productTest = std::array{ 1, 2, 3, 4, 5 };
+        static_assert(product(productTest) == 120);
+
+        constexpr auto insectCount =
+            std::array{10, 1, 1000, 1, 10};
+        constexpr auto result = product(insectCount);
+        static_assert(result == 100000);
+        std::println("product({})={:0.2Lf}", insectCount, product(insectCount));
     }
 }
