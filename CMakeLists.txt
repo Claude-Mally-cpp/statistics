@@ -15,8 +15,10 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Use libc++ and libc++abi
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+# Detect Clang
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
 
 # Use FetchContent to get fmt
 include(FetchContent)
@@ -28,7 +30,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(fmt)
 
 add_executable(statistics "statistics.cpp" "statistics.hpp")
-target_link_libraries(statistics PRIVATE fmt::fmt c++ c++abi)
+target_link_libraries(statistics PRIVATE fmt::fmt)
+
+# Link libc++/libc++abi only with Clang
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_link_libraries(statistics PRIVATE c++ c++abi)
+endif()
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET statistics PROPERTY CXX_STANDARD 23)
