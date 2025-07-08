@@ -29,10 +29,9 @@ namespace mally::statlib
 {
     /// @brief Concept for a range of numbers.
     template<typename T>
-    concept NumberRange = requires(T t) {
+    concept NumberRange = 
         std::ranges::range<T> &&
         std::is_arithmetic_v<std::ranges::range_value_t<T>>;
-    };
 
     /// @brief Type used for high precision floating point calculations.
     /// @details This type is used to avoid precision loss when calculating
