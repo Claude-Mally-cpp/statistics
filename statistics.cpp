@@ -1,9 +1,13 @@
 ﻿// @file statistics.cpp
 #include "statistics.hpp"
+#include "print_compat.hpp"
+#include <fmt/core.h>
+#include <fmt/ranges.h>
 
-using namespace mally::statlib;
+namespace mally::statlib
+{
 
-int main(int argc, const char* argv[])
+int test()
 {
     // lambda function to compute the correlation coefficient between two
     // columns of data. The function takes a title and two columns of data as input.
@@ -15,14 +19,14 @@ int main(int argc, const char* argv[])
         const auto r = coefficientCorrelation(xColumn, yColumn);
         if (!r)
         {
-            std::println("{} error: {}", title, r.error());
+            mally::statlib::println("{} error: {}", title, r.error());
             return r;
         }
-        std::println("{}={}", title, *r);
+        mally::statlib::println("{}={}", title, *r);
         return *r;
     };
 
-    const bool rendements_ab_ac_bc = false;
+    const bool rendements_ab_ac_bc = true;
     if constexpr (rendements_ab_ac_bc)
     {
         const auto returnsA = std::array{ 0.07, 0.09, 0.10 };
@@ -34,24 +38,25 @@ int main(int argc, const char* argv[])
         auto rbc = coefCorrel("r_bc", returnsB, returnsC);
     }
 
-    const bool rendementsTitresXversusRendementsDuMarche = false;
+    const bool rendementsTitresXversusRendementsDuMarche = true;
     if constexpr (rendementsTitresXversusRendementsDuMarche)
     {
-        const auto rendemetsTitresX = std::array{ -0.10, -0.05, 0.00, 0.08, 0.14, 0.20, 0.25 };
-        const auto rendementsMarche = std::array{ -0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30 };
+        constexpr auto rendemetsTitresX = std::array{ -0.10, -0.05, 0.00, 0.08, 0.14, 0.20, 0.25 };
+        constexpr auto rendementsMarche = std::array{ -0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30 };
         static_assert(rendemetsTitresX.size() == rendementsMarche.size());
         auto cov_xy = covariance(rendemetsTitresX, rendementsMarche);
         if (!cov_xy)
         {
-            std::println("error computing covariance");
+            mally::statlib::println("error computing covariance");
+            return -1;
         }
         else
         {
-            std::println("cov_xy={:.2f}", *cov_xy);
+            mally::statlib::println("cov_xy={:.2f}", *cov_xy);
         }
     }
 
-    const bool question29 = false;
+    const bool question29 = true;
     if constexpr (question29)
     {
         const auto profits =
@@ -87,6 +92,16 @@ int main(int argc, const char* argv[])
             std::array{10, 1, 1000, 1, 10};
         constexpr auto result = product(insectCount);
         static_assert(result == 100000);
-        std::println("product({})={:0.2Lf}", insectCount, product(insectCount));
+        // Use fmt::println directly for container printing
+        fmt::println("product({})={:0.2Lf}", insectCount, product(insectCount));
     }
+
+    // Note: The function returns 0 to indicate successful execution.
+    return 0;
+}
+}
+
+int main(int argc, const char* argv[])
+{
+    return mally::statlib::test();;
 }
