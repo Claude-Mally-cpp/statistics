@@ -86,7 +86,7 @@ namespace mally::statlib
 
     /// @brief compute the product of a range of numbers
     /// @param range input range of numbers
-    /// @details This function computes the producy of a range of numbers.
+    /// @details This function computes the product of a range of numbers.
     /// It uses a high precision floating point type to avoid precision loss.
     /// @return ptoduct of the range of numbers
     constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
