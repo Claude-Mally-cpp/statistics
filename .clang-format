@@ -1,0 +1,41 @@
+# .clang-format
+
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 120
+
+AllowShortFunctionsOnASingleLine: Empty
+BreakBeforeBraces: Allman
+
+# Add spaces around operators
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeParens: ControlStatements
+SpacesInAngles:  false
+SpacesInContainerLiterals: true
+SpacesInCStyleCastParentheses: true
+SpacesInParentheses: false
+SpaceInEmptyParentheses: false
+SpaceAfterCStyleCast: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpacesBeforeTrailingComments: 1
+
+# Aligning and formatting
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignOperands: true
+AlignTrailingComments: true
+
+# Keep includes clean
+SortIncludes: true
+IncludeBlocks: Preserve
+
+# C++20/23 support
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# Trailing commas (optional, helpful in multi-line init)
+Cpp11BracedListStyle: true
