@@ -15,6 +15,7 @@
 #include <format>
 #include <functional>
 #include <iostream>
+#include <ciso646>
 #include <numeric>
 #include <optional>
 #include <print>
@@ -70,7 +71,7 @@ constexpr auto sum(const NumberRange auto& range) -> HighPrecisionFloat
 /// It uses a high precision floating point type to avoid precision loss.
 constexpr auto average(const NumberRange auto& range) -> HighPrecisionFloat
 {
-    if (!range.size())
+    if (not range.size())
     {
         return 0.0L;
     }
@@ -97,7 +98,7 @@ constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
 /// It usses a high precision floating point type to avoid precision loss.
 constexpr auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloat
 {
-    if (!range.size())
+    if (not range.size())
     {
         return 0.0L;
     }
@@ -197,7 +198,7 @@ auto coefficientCorrelation(const NumberRange auto& range_x, const NumberRange a
     const auto sigma_x2 = sumSquared(range_x);
     const auto sigma_y2 = sumSquared(range_y);
     const auto sigma_xy = sumProduct(range_x, range_y);
-    if (!sigma_xy)
+    if (not sigma_xy)
     {
         return sigma_xy;
     }
@@ -210,13 +211,13 @@ auto coefficientCorrelation(const NumberRange auto& range_x, const NumberRange a
     }
 
     const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(n));
-    if (!denominator_x)
+    if (not denominator_x)
     {
         return denominator_x;
     }
 
     const auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(n));
-    if (!denominator_y)
+    if (not denominator_y)
     {
         return denominator_y;
     }
@@ -260,7 +261,7 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
     const auto sigma_x  = sum(range_x);
     const auto sigma_y  = sum(range_y);
     const auto sigma_xy = sumProduct(range_x, range_y);
-    if (!sigma_xy)
+    if (not sigma_xy)
     {
         return sigma_xy;
     }
