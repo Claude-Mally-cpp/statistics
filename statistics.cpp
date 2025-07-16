@@ -16,7 +16,7 @@ int test()
     auto coefCorrel = [](auto title, const auto& xColumn, const auto& yColumn) -> HighPrecisionResult
     {
         const auto r = coefficientCorrelation(xColumn, yColumn);
-        if (!r)
+        if (not r)
         {
             mally::statlib::println("{} error: {}", title, r.error());
             return r;
@@ -44,7 +44,7 @@ int test()
         constexpr auto rendementsMarche = std::array{-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
         static_assert(rendemetsTitresX.size() == rendementsMarche.size());
         auto cov_xy = covariance(rendemetsTitresX, rendementsMarche);
-        if (!cov_xy)
+        if (not cov_xy)
         {
             mally::statlib::println("error computing covariance");
             return -1;
