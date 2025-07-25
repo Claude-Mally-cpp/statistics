@@ -29,6 +29,17 @@ jobs:
           sudo ./llvm.sh 18
           sudo apt install -y clang-18
 
+      - name: Show compiler version
+        if: runner.os == 'Linux'
+        run: |
+          if [[ "${{ matrix.compiler }}" == "gcc-14" ]]; then
+            gcc-14 -v
+            g++-14 -v
+          elif [[ "${{ matrix.compiler }}" == "clang-18" ]]; then
+            clang-18 -v
+            clang++-18 -v
+          fi
+
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
 
@@ -37,3 +48,7 @@ jobs:
 
       - name: Run tests
         run: ctest --test-dir build
+
+      - name: Show MSVC version
+        if: runner.os == 'Windows'
+        run: cl
