@@ -50,5 +50,5 @@ jobs:
         run: ctest --test-dir build
 
       - name: Show MSVC version
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && matrix.compiler == 'msvc'
         run: cl
