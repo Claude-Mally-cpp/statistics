@@ -23,5 +23,5 @@ jobs:
       - name: Run test executable
         shell: pwsh
         run: |
-          $exe = Resolve-Path .\build\statistics_test.exe
+          $exe = Resolve-Path .\build\Debug\statistics_test.exe
           & $exe
