@@ -2,26 +2,28 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-and-test:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        config: [Debug, Release]
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure CMake
-        run: cmake -S . -B build
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --config ${{ matrix.config }}
 
       - name: Run test executable
         shell: pwsh
         run: |
-          $exe = Resolve-Path .\build\Debug\statistics_test.exe
+          $exe = Resolve-Path ".\\build\\${{ matrix.config }}\\statistics_test.exe"
           & $exe
