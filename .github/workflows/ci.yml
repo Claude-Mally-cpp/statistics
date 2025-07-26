@@ -2,53 +2,22 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build-and-test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        compiler: [gcc-14, clang-18]
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install GCC-14 and Clang-18 (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt update
-          sudo apt install -y software-properties-common
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-          sudo apt update
-          sudo apt install -y gcc-14 g++-14
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 18
-          sudo apt install -y clang-18
-
-      - name: Show compiler version
-        if: runner.os == 'Linux'
-        run: |
-          if [[ "${{ matrix.compiler }}" == "gcc-14" ]]; then
-            gcc-14 -v
-            g++-14 -v
-          elif [[ "${{ matrix.compiler }}" == "clang-18" ]]; then
-            clang-18 -v
-            clang++-18 -v
-          fi
-
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
-
+        run: cmake -S . -B build
       - name: Build
         run: cmake --build build
-
       - name: Run tests
         run: ctest --test-dir build
-
       - name: Show MSVC version
-        if: runner.os == 'Windows' && matrix.compiler == 'msvc'
         run: cl
