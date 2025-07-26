@@ -21,4 +21,7 @@ jobs:
         run: cmake --build build
 
       - name: Run test executable
-        run: .\\build\\statistics_test.exe
+        shell: pwsh
+        run: |
+          $exe = Resolve-Path .\build\statistics_test.exe
+          & $exe
