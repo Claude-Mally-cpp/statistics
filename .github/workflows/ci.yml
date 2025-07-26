@@ -13,11 +13,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Configure CMake
         run: cmake -S . -B build
+
       - name: Build
         run: cmake --build build
-      - name: Run tests
-        run: ctest --test-dir build
-      - name: Show MSVC version
-        run: cl
+
+      - name: Run test executable
+        run: ./build/statistics_test
