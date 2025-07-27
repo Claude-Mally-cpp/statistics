@@ -35,3 +35,28 @@ jobs:
         run: |
           $exe = Resolve-Path ".\\build\\${{ matrix.config }}\\statistics_test.exe"
           & $exe
+
+  docker-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [clang18, gcc14]
+        config: [debug, release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -f Dockerfile.${{ matrix.compiler }} -t cpp-ci-${{ matrix.compiler }} .
+
+      - name: Run CMake and Build inside Docker
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} \
+          cmake --preset linux-${{ matrix.compiler }}-${{ matrix.config }} && \
+          cmake --build out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}
+
+      - name: Run tests
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} \
+          ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
