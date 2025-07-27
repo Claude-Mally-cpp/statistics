@@ -46,9 +46,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clean build directory
+        run: rm -rf out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}
+
       - name: Build Docker image
-        run: |
-          docker build -f Dockerfile.${{ matrix.compiler }} -t cpp-ci-${{ matrix.compiler }} .
+        run: docker build -f Dockerfile.${{ matrix.compiler }} -t cpp-ci-${{ matrix.compiler }} .
 
       - name: Run CMake and Build inside Docker
         run: |
