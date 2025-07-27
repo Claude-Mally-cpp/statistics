@@ -1,0 +1,32 @@
+# Ignore build directories
+build/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore generated binaries and object files
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.out
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+
+# Ignore Git files
+.git/
+.gitignore
+
+# Ignore Docker artifacts
+.dockerignore
