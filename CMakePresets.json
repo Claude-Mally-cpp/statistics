@@ -8,7 +8,6 @@
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl.exe",
         "CMAKE_CXX_COMPILER": "cl.exe"
       },
       "condition": {
@@ -18,8 +17,8 @@
       }
     },
     {
-      "name": "x64-debug",
-      "displayName": "x64 Debug",
+      "name": "msvc-x64-debug",
+      "displayName": "MSVC x64 Debug",
       "inherits": "windows-base",
       "architecture": {
         "value": "x64",
@@ -30,16 +29,16 @@
       }
     },
     {
-      "name": "x64-release",
-      "displayName": "x64 Release",
-      "inherits": "x64-debug",
+      "name": "msvc-x64-release",
+      "displayName": "MSVC x64 Release",
+      "inherits": "msvc-x64-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "x86-debug",
-      "displayName": "x86 Debug",
+      "name": "msvc-x86-debug",
+      "displayName": "MSVC x86 Debug",
       "inherits": "windows-base",
       "architecture": {
         "value": "x86",
@@ -50,21 +49,20 @@
       }
     },
     {
-      "name": "x86-release",
-      "displayName": "x86 Release",
-      "inherits": "x86-debug",
+      "name": "msvc-x86-release",
+      "displayName": "MSVC x86 Release",
+      "inherits": "msvc-x86-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "wsl-base",
+      "name": "linux-base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       },
       "condition": {
@@ -74,29 +72,28 @@
       }
     },
     {
-      "name": "wsl-debug",
-      "displayName": "WSL Debug",
-      "inherits": "wsl-base",
+      "name": "linux-debug",
+      "displayName": "Linux Debug",
+      "inherits": "linux-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "wsl-release",
-      "displayName": "WSL Release",
-      "inherits": "wsl-base",
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "inherits": "linux-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "wsl-clang18-base",
+      "name": "linux-clang18-base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "/usr/bin/clang-18",
         "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18"
       },
       "condition": {
@@ -106,13 +103,12 @@
       }
     },
     {
-      "name": "wsl-gcc14-base",
+      "name": "linux-gcc14-base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "/usr/bin/gcc-14",
         "CMAKE_CXX_COMPILER": "/usr/bin/g++-14"
       },
       "condition": {
@@ -122,33 +118,33 @@
       }
     },
     {
-      "name": "wsl-clang18-debug",
-      "displayName": "WSL Debug (Clang 18)",
-      "inherits": "wsl-clang18-base",
+      "name": "linux-clang18-debug",
+      "displayName": "Linux Debug (Clang 18)",
+      "inherits": "linux-clang18-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "wsl-clang18-release",
-      "displayName": "WSL Release (Clang 18)",
-      "inherits": "wsl-clang18-base",
+      "name": "linux-clang18-release",
+      "displayName": "Linux Release (Clang 18)",
+      "inherits": "linux-clang18-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "wsl-gcc14-debug",
-      "displayName": "WSL Debug (gcc)",
-      "inherits": "wsl-gcc14-base",
+      "name": "linux-gcc14-debug",
+      "displayName": "Linux Debug (gcc)",
+      "inherits": "linux-gcc14-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "wsl-gcc14-release",
-      "displayName": "WSL Release (gcc)",
-      "inherits": "wsl-gcc14-base",
+      "name": "linux-gcc14-release",
+      "displayName": "Linux Release (gcc)",
+      "inherits": "linux-gcc14-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
