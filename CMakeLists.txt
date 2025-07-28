@@ -3,23 +3,27 @@ project(statistics LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Use libc++ globally when compiling with Clang
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  add_compile_options(-stdlib=libc++)
+  add_link_options(-stdlib=libc++ -lc++ -lc++abi)
+endif()
+
+# Header-only library
+add_library(statistics INTERFACE)
+target_include_directories(statistics INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Fetch fmt
 include(FetchContent)
-
 FetchContent_Declare(
   fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
   GIT_TAG 10.2.1
 )
-
 FetchContent_MakeAvailable(fmt)
 
+# Test executable
 add_executable(statistics_test statistics.cpp)
-
-target_link_libraries(statistics_test PRIVATE fmt)
-
-# Use libc++ when compiling with Clang
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  target_compile_options(statistics_test PRIVATE -stdlib=libc++)
-  target_link_libraries(statistics_test PRIVATE c++ c++abi)
-endif()
+target_link_libraries(statistics_test PRIVATE statistics fmt::fmt)
