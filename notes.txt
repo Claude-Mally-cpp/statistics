@@ -10,3 +10,6 @@ MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD:/project" -w /project cpp-ci-clang18
 
 TODO: 
 For native windows tests, run this through Developper powerShell 
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --config Debug
+.\build\Debug\test_statistics_test.exe
