@@ -53,4 +53,4 @@ jobs:
       - name: Run tests
         run: |
           docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} \
-          ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
+          ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/test_statistics
