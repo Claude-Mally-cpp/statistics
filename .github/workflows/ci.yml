@@ -25,7 +25,7 @@ jobs:
       - name: Run test executable
         shell: pwsh
         run: |
-          $exe = Resolve-Path ".\\build\\${{ matrix.config }}\\test_statistics.exe"
+          $exe = Resolve-Path ".\\build\\${{ matrix.config }}\\statistics_test.exe"
           & $exe
 
   docker-build:
@@ -53,4 +53,4 @@ jobs:
       - name: Run tests
         run: |
           docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} \
-          ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/test_statistics
+          ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
