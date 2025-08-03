@@ -1,0 +1,12 @@
+docker build -f Dockerfile.gcc14 -t cpp-ci-gcc14 .
+docker build -f Dockerfile.clang18 -t cpp-ci-clang18 .
+
+
+# git bash
+MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD:/project" -w /project cpp-ci-gcc14 cmake --preset linux-gcc14-debug
+MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD:/project" -w /project cpp-ci-gcc14 cmake --preset linux-gcc14-release
+MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD:/project" -w /project cpp-ci-clang18 cmake --preset linux-clang18-debug
+MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD:/project" -w /project cpp-ci-clang18 cmake --preset linux-clang18-release
+
+docker run --rm -v "$PWD":/project -w /project cpp-ci-gcc14 cmake --preset gcc14
+docker run --rm -v "$PWD":/project -w /project cpp-ci-clang18 cmake --preset clang18
