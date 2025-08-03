@@ -25,7 +25,7 @@ jobs:
       - name: Run test executable
         shell: pwsh
         run: |
-          $exe = Resolve-Path ".\\build\\${{ matrix.config }}\\statistics_test.exe"
+          $exe = Resolve-Path ".\\build\\${{ matrix.config }}\\test_statistics.exe"
           & $exe
 
   docker-build:
