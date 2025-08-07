@@ -23,3 +23,13 @@ To build and test this project for multiple Linux toolchains using Docker, use t
 # verbose output
 ./dockerLinuxBuildAndTest.sh --verbose
 ```
+
+To buld and test on windows release and debug
+
+```powershell
+# terse output
+./windowsBuildAndTest.ps1
+
+# verbose output
+./windowsBuildAndTest.ps1 --verbose
+```
