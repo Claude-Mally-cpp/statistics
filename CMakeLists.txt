@@ -24,6 +24,20 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fmt)
 
+# Fetch GoogleTest
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG v1.14.0
+)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
 # Test executable
-add_executable(statistics_test statistics.cpp)
-target_link_libraries(statistics_test PRIVATE statistics fmt::fmt)
+add_executable(statistics_test test_statistics.cpp)
+# add_executable(statistics_test statistics.cpp)
+target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main)
+
+include(GoogleTest)
+gtest_discover_tests(statistics_test)
