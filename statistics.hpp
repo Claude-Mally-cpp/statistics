@@ -10,15 +10,12 @@
 #include <cassert>
 #include <cmath>
 #include <concepts>
-#include <cstdlib>
 #include <expected>
 #include <format>
 #include <functional>
-#include <iostream>
 #include <ciso646>
 #include <numeric>
 #include <optional>
-#include <print>
 #include <ranges>
 #include <stdint.h>
 #include <type_traits>
@@ -84,7 +81,7 @@ constexpr auto average(const NumberRange auto& range) -> HighPrecisionFloat
 /// @param range input range of numbers
 /// @details This function computes the product of a range of numbers.
 /// It uses a high precision floating point type to avoid precision loss.
-/// @return ptoduct of the range of numbers
+/// @return product of the range of numbers
 constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
 {
     return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 1.0L,
@@ -141,11 +138,6 @@ constexpr auto sumProduct(const NumberRange auto& rangeX, const NumberRange auto
         std::transform_reduce(std::ranges::begin(rangeX), std::ranges::end(rangeX), std::ranges::begin(rangeY), 0.0L,
                               std::plus<>{}, [](auto x, auto y) -> HighPrecisionFloat { return toHPF(x) * toHPF(y); });
 
-    if (total < 0)
-    {
-        return std::unexpected(std::format("total {} is negative!", total));
-    }
-
     return total;
 }
 
@@ -178,7 +170,7 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> Hi
     return std::sqrt(radicand);
 }
 
-auto coefficientCorrelation(const NumberRange auto& range_x, const NumberRange auto& range_y) -> HighPrecisionResult
+auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange auto& range_y) -> HighPrecisionResult
 {
     const auto sizeX = std::ranges::distance(range_x);
     const auto sizeY = std::ranges::distance(range_y);
@@ -266,7 +258,7 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
         return sigma_xy;
     }
 
-    const auto numerator   = *sigma_xy - (sigma_x * sigma_y) / ( HighPrecisionFloat ) n;
+    const auto numerator   = *sigma_xy - (sigma_x * sigma_y) / toHPF(n);
     const auto denominator = toHPF(n - 1);
     return numerator / denominator;
 }
