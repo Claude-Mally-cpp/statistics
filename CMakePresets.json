@@ -88,13 +88,13 @@
       }
     },
     {
-      "name": "linux-clang18-base",
+      "name": "linux-clang-base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18"
+        "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
       },
       "condition": {
         "type": "equals",
@@ -103,13 +103,13 @@
       }
     },
     {
-      "name": "linux-gcc14-base",
+      "name": "linux-gcc-base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "/usr/bin/g++-14"
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++"
       },
       "condition": {
         "type": "equals",
@@ -118,33 +118,37 @@
       }
     },
     {
-      "name": "linux-clang18-debug",
-      "displayName": "Linux Debug (Clang 18)",
-      "inherits": "linux-clang18-base",
+      "name": "linux-clang-debug",
+      "generator": "Ninja",
+      "displayName": "Linux Debug (Clang)",
+      "inherits": "linux-clang-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "linux-clang18-release",
-      "displayName": "Linux Release (Clang 18)",
-      "inherits": "linux-clang18-base",
+      "name": "linux-clang-release",
+      "generator": "Ninja",
+      "displayName": "Linux Release (Clang)",
+      "inherits": "linux-clang-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "linux-gcc14-debug",
+      "name": "linux-gcc-debug",
+      "generator": "Ninja",
       "displayName": "Linux Debug (gcc)",
-      "inherits": "linux-gcc14-base",
+      "inherits": "linux-gcc-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "linux-gcc14-release",
+      "name": "linux-gcc-release",
+      "generator": "Ninja",
       "displayName": "Linux Release (gcc)",
-      "inherits": "linux-gcc14-base",
+      "inherits": "linux-gcc-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
