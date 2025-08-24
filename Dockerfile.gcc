@@ -1,31 +1,10 @@
 # Dockerfile.gcc
-FROM ubuntu:24.04
+FROM gcc:15
 
-# Install dependencies
-RUN apt update && apt install -y \
-    software-properties-common \
-    build-essential \
-    cmake \
-    ninja-build \
-    git \
-    wget \
-    curl \
-    lsb-release \
-    libmpfr-dev \
-    libgmp-dev \
-    libmpc-dev \
-    flex \
-    bison \
-    texinfo \
-    zlib1g-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake ninja-build git curl wget ca-certificates \
+ && update-ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://ftp.gnu.org/gnu/gcc/gcc-15.1.0/gcc-15.1.0.tar.gz && \
-    tar -xf gcc-15.1.0.tar.gz && \
-    mkdir gcc-15.1.0/build && \
-    cd gcc-15.1.0/build && \
-    ../configure --prefix=/opt/gcc-15 --enable-languages=c,c++ --disable-multilib && \
-    make -j$(nproc) && \
-    make install
-
-# Ajouter GCC 15 au PATH
-ENV PATH="/opt/gcc-15/bin:${PATH}"
+WORKDIR /project
+CMD ["/bin/bash"]
