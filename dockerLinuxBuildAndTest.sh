@@ -1,75 +1,79 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-# dockerLinuxBuildAndTest.sh
-# This script builds and tests the project in Docker containers for multiple Linux toolchains.
-# It supports a --verbose argument for detailed output.
-#
-# Usage:
-#   ./dockerLinuxBuildAndTest.sh [--verbose]
-#
-# If running under Git Bash or MSYS2 on Windows, MSYS_NO_PATHCONV=1 is set automatically.
-# The script prints a summary of all build and test results at the end.
+# --- options -----------------------------------------------------------------
+VERBOSE=0
+if [[ "${1:-}" == "--verbose" ]]; then VERBOSE=1; shift; fi
 
-set -e
-
+# --- colors ------------------------------------------------------------------
 GREEN='\033[0;32m'
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
-
 summary=""
-VERBOSE=0
 
-# Parse arguments
-for arg in "$@"; do
-    if [[ "$arg" == "--verbose" ]]; then
-        VERBOSE=1
-    fi
-done
-
-# Only export MSYS_NO_PATHCONV=1 if running under Git Bash/MSYS2
-if [[ "$MSYSTEM" == MINGW* || "$MSYSTEM" == MSYS* ]]; then
-    export MSYS_NO_PATHCONV=1
-fi
-
+# --- helpers -----------------------------------------------------------------
 run_and_report() {
-    label="$1"
-    shift
-    if [[ $VERBOSE -eq 1 ]]; then
-        echo "=== $label ==="
-        if "$@"; then
-            echo -e "${GREEN}$label: SUCCESS${NC}"
-            summary="$summary\n$label: SUCCESS"
-        else
-            echo -e "${RED}$label: FAILURE${NC}"
-            summary="$summary\n$label: FAILURE"
-        fi
-    else
-        if output=$("$@" 2>&1); then
-            echo -e "${GREEN}$label: SUCCESS${NC}"
-            summary="$summary\n$label: SUCCESS"
-        else
-            echo -e "${RED}$label: FAILURE${NC}"
-            echo "$output"
-            summary="$summary\n$label: FAILURE"
-        fi
-    fi
+  local label="$1"; shift
+  echo -e "${YELLOW}==> $label${NC}"
+
+  set +e
+  if (( VERBOSE )); then
+    "$@"
+  else
+    "$@" >/dev/null 2>&1
+  fi
+  local rc=$?
+  set -e
+
+  if (( rc == 0 )); then
+    echo -e "${GREEN}$label: SUCCESS${NC}"
+    summary+="$label: SUCCESS\n"
+  else
+    echo -e "${RED}$label: FAILURE${NC}"
+    summary+="$label: FAILURE\n"
+  fi
+  return $rc
 }
 
-# GCC14 Debug
-run_and_report "GCC14 Debug Build" docker run --rm -v "$PWD:/project" -w /project cpp-ci-gcc14 cmake --preset linux-gcc14-debug
-run_and_report "GCC14 Debug Test"  docker run --rm -v "$PWD:/project" -w /project cpp-ci-gcc14 ./out/build/linux-gcc14-debug/statistics_test
+# --- docker path handling (fix for Git Bash on Windows) ----------------------
+export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL="*"
 
-# GCC14 Release
-run_and_report "GCC14 Release Build" docker run --rm -v "$PWD:/project" -w /project cpp-ci-gcc14 cmake --preset linux-gcc14-release
-run_and_report "GCC14 Release Test"  docker run --rm -v "$PWD:/project" -w /project cpp-ci-gcc14 ./out/build/linux-gcc14-release/statistics_test
+HOST_PWD="$PWD"
+case "${OSTYPE:-}" in
+  msys*|cygwin*)
+    if command -v pwd >/dev/null 2>&1; then
+      HOST_PWD="$(pwd -W 2>/dev/null | sed 's#\\#/#g')"
+    fi
+    ;;
+esac
 
-# Clang18 Debug
-run_and_report "Clang18 Debug Build" docker run --rm -v "$PWD:/project" -w /project cpp-ci-clang18 cmake --preset linux-clang18-debug
-run_and_report "Clang18 Debug Test"  docker run --rm -v "$PWD:/project" -w /project cpp-ci-clang18 ./out/build/linux-clang18-debug/statistics_test
+# --- main runner -------------------------------------------------------------
+run_build_and_test() {
+  local compiler="$1"    # clang | gcc
+  local buildType="$2"   # debug | release
+  local preset="linux-${compiler}-${buildType}"
+  local buildDir="out/build/$preset"
+  local image="cpp-ci-${compiler}"
 
-# Clang18 Release
-run_and_report "Clang18 Release Build" docker run --rm -v "$PWD:/project" -w /project cpp-ci-clang18 cmake --preset linux-clang18-release
-run_and_report "Clang18 Release Test"  docker run --rm -v "$PWD:/project" -w /project cpp-ci-clang18 ./out/build/linux-clang18-release/statistics_test
+  local DOCKER=(docker run --rm -v "${HOST_PWD}:/project" -w /project "$image")
+
+  run_and_report "${compiler^} ${buildType^} Configure" \
+    "${DOCKER[@]}" cmake --preset "$preset"
+
+  run_and_report "${compiler^} ${buildType^} Build" \
+    "${DOCKER[@]}" cmake --build "$buildDir"
+
+  run_and_report "${compiler^} ${buildType^} Test" \
+    "${DOCKER[@]}" "$buildDir/statistics_test"
+}
+
+# --- calls -------------------------------------------------------------------
+run_build_and_test clang debug
+run_build_and_test clang release
+run_build_and_test gcc debug
+run_build_and_test gcc release
 
 echo -e "\n========== SUMMARY =========="
 echo -e "$summary"
