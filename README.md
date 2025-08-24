@@ -8,8 +8,8 @@ playing around with statistics
 Before running the build and test script, you need to build the Docker images for each toolchain:
 
 ```sh
-docker build -f [Dockerfile.gcc14](http://_vscodecontentref_/0) -t cpp-ci-gcc14 .
-docker build -f [Dockerfile.clang18](http://_vscodecontentref_/1) -t cpp-ci-clang18 .
+docker build -f Dockerfile.gcc -t cpp-ci-gcc .
+docker build -f Dockerfile.clang -t cpp-ci-clang .
 ```
 
 ### 2. Build and Test the Project

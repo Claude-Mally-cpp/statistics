@@ -1,4 +1,4 @@
-# Dockerfile.clang18
+# Dockerfile.clang
 FROM ubuntu:24.04
 
 # Install dependencies
@@ -11,13 +11,13 @@ RUN apt update && apt install -y \
     wget \
     curl \
     lsb-release \
-    clang-18 \
-    libc++-18-dev \
-    libc++abi-18-dev
+    clang-19 \
+    libc++-19-dev \
+    libc++abi-19-dev
 
-# Set Clang 18 as default
-RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100 \
- && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100
+# Set Clang 19 as default
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100 \
+ && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
 
 # Create working directory
 WORKDIR /project
