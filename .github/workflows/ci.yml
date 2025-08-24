@@ -7,12 +7,11 @@ on:
     branches: [main]
 
 jobs:
-  build-and-test:
+  windows-msvc:
     runs-on: windows-latest
     strategy:
       matrix:
         config: [Debug, Release]
-
     steps:
       - uses: actions/checkout@v4
 
@@ -25,32 +24,31 @@ jobs:
       - name: Run test executable
         shell: pwsh
         run: |
-          $exe = Resolve-Path ".\\build\\${{ matrix.config }}\\statistics_test.exe"
+          $exe = Resolve-Path ".\build\${{ matrix.config }}\statistics_test.exe"
           & $exe
 
-  docker-build:
+  docker-linux:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [clang18, gcc14]
+        compiler: [clang, gcc] 
         config: [debug, release]
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Clean build and install directories
         run: rm -rf out
 
-      - name: Build Docker image
+      - name: Build Docker image (${{ matrix.compiler }})
         run: docker build -f Dockerfile.${{ matrix.compiler }} -t cpp-ci-${{ matrix.compiler }} .
 
-      - name: Configure and build with CMake inside Docker
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} \
-          bash -c "cmake --preset linux-${{ matrix.compiler }}-${{ matrix.config }} && \
-                   cmake --build out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
+      - name: Configure and build (${{ matrix.compiler }} / ${{ matrix.config }})
+        run: >
+          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }}
+          bash -lc "cmake --preset linux-${{ matrix.compiler }}-${{ matrix.config }} &&
+                    cmake --build out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
 
-      - name: Run tests
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} \
+      - name: Run tests (${{ matrix.compiler }} / ${{ matrix.config }})
+        run: >
+          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }}
           ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
