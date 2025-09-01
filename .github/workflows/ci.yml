@@ -27,6 +27,15 @@ jobs:
           $exe = Resolve-Path ".\build\${{ matrix.config }}\statistics_test.exe"
           & $exe
 
+      - name: Install cppcheck
+        shell: pwsh
+        run: choco install cppcheck -y
+
+      - name: Run cppcheck on headers and tests
+        shell: pwsh
+        run: |
+          cppcheck ./include/* ./test/*
+
   docker-linux:
     runs-on: ubuntu-latest
     strategy:
