@@ -35,6 +35,7 @@ jobs:
         shell: pwsh
         run: |
           $env:Path += ";$env:ChocolateyInstall\bin"
+          ls "$env:ChocolateyInstall\bin"
           cppcheck.exe ./include/* ./test/*
     
   docker-linux:
