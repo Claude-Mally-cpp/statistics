@@ -36,7 +36,6 @@ enable_testing()
 
 # Test executable
 add_executable(statistics_test test_statistics.cpp)
-# add_executable(statistics_test statistics.cpp)
 target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main)
 
 include(GoogleTest)
