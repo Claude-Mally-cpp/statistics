@@ -34,8 +34,9 @@ jobs:
       - name: Run cppcheck on headers and tests
         shell: pwsh
         run: |
+          $env:Path += ";$env:ChocolateyInstall\bin"
           cppcheck.exe ./include/* ./test/*
-
+    
   docker-linux:
     runs-on: ubuntu-latest
     strategy:
