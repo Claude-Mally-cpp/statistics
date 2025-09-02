@@ -14,7 +14,8 @@ RUN apt update && apt install -y \
     clang-19 \
     libc++-19-dev \
     libc++abi-19-dev \
-    cppcheck
+    cppcheck \
+    jq
 
 # Set Clang 19 as default
 RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100 \

@@ -63,7 +63,7 @@ TEST(StatisticsTest, Correlation_Profits_Employers) {
     ASSERT_TRUE(result.has_value());
     const auto expected = 0.05881462738716168;
     const auto tolerance = 1e-10;
-    EXPECT_NEAR(*result, expected, 1e-10) << "Expected " << expected << ", got " << *result << ". Check calculation or expected value."; // Update expected value as needed
+    EXPECT_NEAR(*result, expected, tolerance ) << "Expected " << expected << ", got " << *result << ". Check calculation or expected value."; // Update expected value as needed
     // Alternative: test with shuffled data, or edge cases
 }
 

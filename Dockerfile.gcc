@@ -3,7 +3,7 @@ FROM gcc:15
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake ninja-build git curl wget ca-certificates \
-    cppcheck \
+    cppcheck jq \
  && update-ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
