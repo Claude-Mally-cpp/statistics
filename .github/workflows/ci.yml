@@ -7,70 +7,70 @@ on:
     branches: [main]
 
 jobs:
-  windows-msvc:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        config: [Debug, Release]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }}
-
-      - name: Build
-        run: cmake --build build --config ${{ matrix.config }}
-
-      - name: Run test executable
-        shell: pwsh
-        run: |
-          $exe = Resolve-Path ".\build\${{ matrix.config }}\statistics_test.exe"
-          & $exe
-
-      - name: Install cppcheck
-        shell: pwsh
-        run: choco install cppcheck -y
-
-      - name: Add cppcheck to PATH
-        shell: pwsh
-        run: |
-          $dir = "${env:ProgramFiles}\Cppcheck"
-          if (!(Test-Path "$dir\cppcheck.exe")) {
-            # Fallback: search just in case the installer used a different dir
-            $found = Get-ChildItem "C:\Program Files","C:\Program Files (x86)" -Recurse -Filter cppcheck.exe -ErrorAction SilentlyContinue |
-              Select-Object -First 1
-            if ($found) { $dir = $found.DirectoryName }
-          }
-          "$dir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Run cppcheck
-        shell: pwsh
-        run: |
-          cppcheck --version
-          cppcheck ./include/* ./test/*
-      
-  docker-linux:
+  linux-docker:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        compiler: [clang, gcc] 
-        config: [debug, release]
+        compiler: [clang, gcc]   # matches Dockerfile.clang / Dockerfile.gcc
+        config:   [debug, release]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Clean build and install directories
-        run: rm -rf out
 
       - name: Build Docker image (${{ matrix.compiler }})
         run: docker build -f Dockerfile.${{ matrix.compiler }} -t cpp-ci-${{ matrix.compiler }} .
 
-      - name: Configure and build (${{ matrix.compiler }} / ${{ matrix.config }})
+      - name: Configure & Build (${{ matrix.compiler }} / ${{ matrix.config }})
         run: >
-          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }}
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-${{ matrix.compiler }}
           bash -lc "cmake --preset linux-${{ matrix.compiler }}-${{ matrix.config }} &&
                     cmake --build out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
 
+      - name: Cppcheck (${{ matrix.compiler }} / ${{ matrix.config }})
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} bash -lc '
+            set -e
+            BUILD_DIR="out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
+
+            # Decide target (project mode with filtered DB, else dir scan)
+            if [ -f "$BUILD_DIR/compile_commands.json" ]; then
+              if command -v jq >/dev/null 2>&1; then
+                jq '"'"'[ .[] | select(.file | test("^(?:/project/)?(include|test)/")) ]'"'"' \
+                  "$BUILD_DIR/compile_commands.json" > "$BUILD_DIR/compile_commands.local.json"
+                TARGET=( --project="$BUILD_DIR/compile_commands.local.json" )
+              elif command -v fq >/dev/null 2>&1; then
+                fq -r '"'"'[ .[] | select(.file | test("^(?:/project/)?(include|test)/")) ]'"'"' \
+                  "$BUILD_DIR/compile_commands.json" > "$BUILD_DIR/compile_commands.local.json"
+                TARGET=( --project="$BUILD_DIR/compile_commands.local.json" )
+              else
+                TARGET=( include test -I include --language=c++ --std=c++20 )
+              fi
+            else
+              TARGET=( include test -I include --language=c++ --std=c++20 )
+            fi
+
+            XML="$BUILD_DIR/cppcheck.xml"
+            set +e
+            cppcheck "${TARGET[@]}" \
+              --enable=warning,style,performance,portability,information,missingInclude \
+              --inline-suppr --suppress=missingIncludeSystem \
+              --quiet --xml --xml-version=2 2> "$XML"
+            rc=$?; set -e
+            echo "cppcheck rc: $rc"
+
+            if grep -q "severity=\"error\"" "$XML"; then
+              echo "::error::cppcheck found severity=error issues"
+              exit 2
+            fi
+          '
+
       - name: Run tests (${{ matrix.compiler }} / ${{ matrix.config }})
         run: >
-          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }}
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-${{ matrix.compiler }}
           ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
