@@ -13,7 +13,7 @@ endif()
 
 # Header-only library
 add_library(statistics INTERFACE)
-target_include_directories(statistics INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(statistics INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Fetch fmt
 include(FetchContent)
@@ -35,8 +35,7 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 # Test executable
-add_executable(statistics_test test_statistics.cpp)
-# add_executable(statistics_test statistics.cpp)
+add_executable(statistics_test test/test_statistics.cpp)
 target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main)
 
 include(GoogleTest)

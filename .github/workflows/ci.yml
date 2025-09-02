@@ -7,48 +7,129 @@ on:
     branches: [main]
 
 jobs:
+  # ===== Linux (Docker) - build, test, and cppcheck using your images =====
+  linux-docker:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [clang, gcc]   # matches Dockerfile.clang / Dockerfile.gcc
+        config:   [debug, release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image (${{ matrix.compiler }})
+        run: docker build -f Dockerfile.${{ matrix.compiler }} -t cpp-ci-${{ matrix.compiler }} .
+
+      - name: Configure & Build (${{ matrix.compiler }} / ${{ matrix.config }})
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-${{ matrix.compiler }}
+          bash -lc "cmake --preset linux-${{ matrix.compiler }}-${{ matrix.config }} &&
+                    cmake --build out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
+
+      - name: Cppcheck (${{ matrix.compiler }} / ${{ matrix.config }})
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} bash -lc '
+            set -e
+            BUILD_DIR="out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
+
+            # Prefer filtered compile DB; fall back to dir scan
+            if [ -f "$BUILD_DIR/compile_commands.json" ]; then
+              if command -v jq >/dev/null 2>&1; then
+                jq '"'"'[ .[] | select(.file | test("^(?:/project/)?(include|test)/")) ]'"'"' \
+                  "$BUILD_DIR/compile_commands.json" > "$BUILD_DIR/compile_commands.local.json"
+                TARGET=( --project="$BUILD_DIR/compile_commands.local.json" )
+              elif command -v fq >/dev/null 2>&1; then
+                fq -r '"'"'[ .[] | select(.file | test("^(?:/project/)?(include|test)/")) ]'"'"' \
+                  "$BUILD_DIR/compile_commands.json" > "$BUILD_DIR/compile_commands.local.json"
+                TARGET=( --project="$BUILD_DIR/compile_commands.local.json" )
+              else
+                TARGET=( include test -I include --language=c++ --std=c++20 )
+              fi
+            else
+              TARGET=( include test -I include --language=c++ --std=c++20 )
+            fi
+
+            XML="$BUILD_DIR/cppcheck.xml"
+            set +e
+            cppcheck "${TARGET[@]}" \
+              --enable=warning,style,performance,portability,information,missingInclude \
+              --inline-suppr --suppress=missingIncludeSystem \
+              --quiet --xml --xml-version=2 2> "$XML"
+            rc=$?; set -e
+            echo "cppcheck rc: $rc"
+            if grep -q "severity=\"error\"" "$XML"; then
+              echo "::error::cppcheck found severity=error issues"
+              exit 2
+            fi
+          '
+
+      - name: Run tests (${{ matrix.compiler }} / ${{ matrix.config }})
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-${{ matrix.compiler }}
+          ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
+
+  # ===== Windows - cppcheck only (fast lint pass) =====
+  windows-cppcheck:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck (and jq for optional use)
+        shell: pwsh
+        run: |
+          choco install cppcheck -y
+          choco install jq -y
+
+      - name: Run cppcheck (Windows)
+        shell: pwsh
+        run: |
+          # Ensure choco shims & Program Files path are visible
+          $env:Path += ';C:\ProgramData\chocolatey\bin;C:\Program Files\Cppcheck'
+          # Analyze only your code (include/ and test/)
+          $xml = 'cppcheck.xml'
+          cppcheck include test -I include --language=c++ --std=c++20 `
+            --enable=warning,style,performance,portability,information,missingInclude `
+            --inline-suppr --suppress=missingIncludeSystem `
+            --quiet --xml --xml-version=2 2> $xml
+          if (Select-String -Path $xml -Pattern 'severity="error"' -Quiet) {
+            Write-Error "cppcheck: found severity=error issues"
+            exit 2
+          }
+
+  # ===== Windows - configure, build, and test with MSVC (Debug & Release) =====
   windows-msvc:
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         config: [Debug, Release]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y
 
-      - name: Build
-        run: cmake --build build --config ${{ matrix.config }}
+      - name: Set up MSVC (x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
-      - name: Run test executable
+      - name: Configure (${{ matrix.config }})
         shell: pwsh
         run: |
-          $exe = Resolve-Path ".\build\${{ matrix.config }}\statistics_test.exe"
-          & $exe
+          cmake -S . -B build-msvc-${{ matrix.config }} -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
-  docker-linux:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        compiler: [clang, gcc] 
-        config: [debug, release]
-    steps:
-      - uses: actions/checkout@v4
+      - name: Build (${{ matrix.config }})
+        run: cmake --build build-msvc-${{ matrix.config }}
 
-      - name: Clean build and install directories
-        run: rm -rf out
-
-      - name: Build Docker image (${{ matrix.compiler }})
-        run: docker build -f Dockerfile.${{ matrix.compiler }} -t cpp-ci-${{ matrix.compiler }} .
-
-      - name: Configure and build (${{ matrix.compiler }} / ${{ matrix.config }})
-        run: >
-          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }}
-          bash -lc "cmake --preset linux-${{ matrix.compiler }}-${{ matrix.config }} &&
-                    cmake --build out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
-
-      - name: Run tests (${{ matrix.compiler }} / ${{ matrix.config }})
-        run: >
-          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }}
-          ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
+      - name: Test (${{ matrix.config }})
+        run: ctest --test-dir build-msvc-${{ matrix.config }} --output-on-failure
