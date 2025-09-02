@@ -7,6 +7,7 @@ on:
     branches: [main]
 
 jobs:
+  # ===== Linux (Docker) - build, test, and cppcheck using your images =====
   linux-docker:
     runs-on: ubuntu-latest
     strategy:
@@ -35,7 +36,7 @@ jobs:
             set -e
             BUILD_DIR="out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
 
-            # Decide target (project mode with filtered DB, else dir scan)
+            # Prefer filtered compile DB; fall back to dir scan
             if [ -f "$BUILD_DIR/compile_commands.json" ]; then
               if command -v jq >/dev/null 2>&1; then
                 jq '"'"'[ .[] | select(.file | test("^(?:/project/)?(include|test)/")) ]'"'"' \
@@ -60,7 +61,6 @@ jobs:
               --quiet --xml --xml-version=2 2> "$XML"
             rc=$?; set -e
             echo "cppcheck rc: $rc"
-
             if grep -q "severity=\"error\"" "$XML"; then
               echo "::error::cppcheck found severity=error issues"
               exit 2
@@ -74,3 +74,33 @@ jobs:
           -w /project
           cpp-ci-${{ matrix.compiler }}
           ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
+
+  # ===== Windows - run cppcheck directly on the workspace =====
+  windows-cppcheck:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck (and jq for optional use)
+        shell: pwsh
+        run: |
+          choco install cppcheck -y
+          choco install jq -y
+
+      # If you want to build on Windows too, add CMake configure/build steps here.
+      # For cppcheck we keep it simple with a directory scan of your code.
+      - name: Run cppcheck (Windows)
+        shell: pwsh
+        run: |
+          # Ensure choco shims & Program Files path are visible
+          $env:Path += ';C:\ProgramData\chocolatey\bin;C:\Program Files\Cppcheck'
+          # Analyze only your code (include/ and test/)
+          $xml = 'cppcheck.xml'
+          cppcheck include test -I include --language=c++ --std=c++20 `
+            --enable=warning,style,performance,portability,information,missingInclude `
+            --inline-suppr --suppress=missingIncludeSystem `
+            --quiet --xml --xml-version=2 2> $xml
+          if (Select-String -Path $xml -Pattern 'severity="error"' -Quiet) {
+            Write-Error "cppcheck: found severity=error issues"
+            exit 2
+          }
