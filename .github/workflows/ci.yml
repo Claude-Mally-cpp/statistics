@@ -75,7 +75,7 @@ jobs:
           cpp-ci-${{ matrix.compiler }}
           ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
 
-  # ===== Windows - run cppcheck directly on the workspace =====
+  # ===== Windows - cppcheck only (fast lint pass) =====
   windows-cppcheck:
     runs-on: windows-latest
     steps:
@@ -87,8 +87,6 @@ jobs:
           choco install cppcheck -y
           choco install jq -y
 
-      # If you want to build on Windows too, add CMake configure/build steps here.
-      # For cppcheck we keep it simple with a directory scan of your code.
       - name: Run cppcheck (Windows)
         shell: pwsh
         run: |
@@ -104,3 +102,34 @@ jobs:
             Write-Error "cppcheck: found severity=error issues"
             exit 2
           }
+
+  # ===== Windows - configure, build, and test with MSVC (Debug & Release) =====
+  windows-msvc:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Set up MSVC (x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure (${{ matrix.config }})
+        shell: pwsh
+        run: |
+          cmake -S . -B build-msvc-${{ matrix.config }} -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+
+      - name: Build (${{ matrix.config }})
+        run: cmake --build build-msvc-${{ matrix.config }}
+
+      - name: Test (${{ matrix.config }})
+        run: ctest --test-dir build-msvc-${{ matrix.config }} --output-on-failure
