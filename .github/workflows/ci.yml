@@ -74,6 +74,10 @@ jobs:
       - name: Run cppcheck (Windows)
         shell: pwsh
         run: |
+          # Don't let native non-zero exits abort the step
+          $ErrorActionPreference = 'Continue'
+          $PSNativeCommandUseErrorActionPreference = $false
+
           # Ensure choco shims & Program Files path are visible
           $env:Path += ';C:\ProgramData\chocolatey\bin;C:\Program Files\Cppcheck'
 
@@ -89,11 +93,12 @@ jobs:
           $rc = $LASTEXITCODE
 
           # Normalize: 2=failure (real errors), 1=informational/noise, 0=clean
-          if ($rc -eq 2) { exit 2 }
+          if ($rc -eq 2) { Write-Error 'cppcheck: error-severity issues found'; exit 2 }
           elseif ($rc -eq 1) {
             Write-Host 'cppcheck exited 1 (informational); ignoring.'
             exit 0
           } else { exit 0 }
+
 
   # ===== Windows - configure, build, and test with MSVC (Debug & Release) =====
   windows-msvc:
