@@ -10,7 +10,7 @@ TEST(StatisticsTest, Correlation_AB) {
     auto result = mally::statlib::correlationCoefficient(returnsA, returnsB);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
     // Use fixed expected value, update if implementation changes
-    mally::statlib::HighPrecisionFloat expected = 0.21677749238102959;
+    auto expected = 0.21677749238102959L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance) << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
     // Alternative: test for range, or parameterize with more datasets
@@ -22,7 +22,7 @@ TEST(StatisticsTest, Correlation_AC) {
     const auto returnsC = std::array<double, 3>{0.12, 0.11, 0.10};
     auto result = mally::statlib::correlationCoefficient(returnsA, returnsC);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
-    mally::statlib::HighPrecisionFloat expected = -0.9819805060619121;
+    auto expected = -0.9819805060619121L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance) << "Expected " << -0.981980 << ", got " << *result << ". Check calculation or expected value.";
 }
@@ -33,7 +33,7 @@ TEST(StatisticsTest, Correlation_BC) {
     const auto returnsC = std::array{0.12, 0.11, 0.10};
     auto result = mally::statlib::correlationCoefficient(returnsB, returnsC);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
-    mally::statlib::HighPrecisionFloat expected = -0.39735970711947155;
+    auto expected = -0.39735970711947155L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance) << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
 }
@@ -44,7 +44,7 @@ TEST(StatisticsTest, Covariance_TitresX_Marche) {
     constexpr auto marketReturns = std::array{-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
     auto result = mally::statlib::covariance(returnsX, marketReturns);
     ASSERT_TRUE(result.has_value());
-    mally::statlib::HighPrecisionFloat expected = 0.022571428571428576;
+    auto expected = 0.022571428571428576L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance) << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
     // Alternative: test for symmetry, or with randomized data

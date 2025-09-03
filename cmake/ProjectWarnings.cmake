@@ -14,8 +14,11 @@ target_compile_options(project_warnings INTERFACE
     -Wshadow -Wold-style-cast -Woverloaded-virtual
     -Wnon-virtual-dtor -Wnull-dereference -Wdouble-promotion
     -Wformat=2 -Wimplicit-fallthrough -Wextra-semi
-    -Wcast-qual -Wcast-align=strict -Wmissing-declarations
+    -Wcast-qual -Wcast-align -Wmissing-declarations
   >
+  $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:GNU>>:-Wcast-align=strict>
+  $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>>:-Wcast-align>
+
   $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:MSVC>>:
     /W4 /permissive- /sdl /Zc:__cplusplus
     /w14242 /w14254 /w14263 /w14265 /w14287
