@@ -2,10 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - '**'
   pull_request:
-    branches: [main]
-
+    branches:
+      - '**'
 jobs:
   # ===== Linux (Docker) - build, test, and cppcheck using your images =====
   linux-docker:
