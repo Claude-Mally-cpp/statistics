@@ -77,20 +77,21 @@ jobs:
           # Ensure choco shims & Program Files path are visible
           $env:Path += ';C:\ProgramData\chocolatey\bin;C:\Program Files\Cppcheck'
 
-          # Analyze only your code (include/ and test/), as C++23
-          cppcheck include test -I include --language=c++ --std=c++23 `
-            --enable=warning,style,performance,portability,missingInclude `
-            --inline-suppr --suppress=missingIncludeSystem `
-            --error-exitcode=2 -q
+          # Build argument array (no fragile backticks)
+          $args = @(
+            'include','test','-I','include','--language=c++','--std=c++23',
+            '--enable=warning,style,performance,portability,missingInclude',
+            '--inline-suppr','--suppress=missingIncludeSystem',
+            '--error-exitcode=2','-q'
+          )
 
-          # Normalize Cppcheck exit codes on Windows:
-          #  - 2 => real "error" severities -> fail the job
-          #  - 1 => informational/noise -> ignore
-          #  - 0 => clean
+          & cppcheck @args
           $rc = $LASTEXITCODE
+
+          # Normalize: 2=failure (real errors), 1=informational/noise, 0=clean
           if ($rc -eq 2) { exit 2 }
           elseif ($rc -eq 1) {
-            Write-Host "cppcheck exited 1 (informational); ignoring."
+            Write-Host 'cppcheck exited 1 (informational); ignoring.'
             exit 0
           } else { exit 0 }
 
