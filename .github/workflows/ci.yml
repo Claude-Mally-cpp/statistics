@@ -4,6 +4,7 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+
 jobs:
   # ===== Linux (Docker) - build, test, and cppcheck using your images =====
   linux-docker:
@@ -30,25 +31,84 @@ jobs:
 
       - name: Cppcheck (${{ matrix.compiler }} / ${{ matrix.config }})
         run: |
-          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} bash -lc '
-            set -euo pipefail
-            BUILD_DIR="out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
-            TARGET=()
+          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} bash -s <<'BASH'
+          set -euo pipefail
+          BUILD_DIR="out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
+          TARGET=()
 
-            # Prefer compile_commands.json (optionally filtered to include/ and test/)
-            if [ -f "$BUILD_DIR/compile_commands.json" ]; then
-              if command -v jq >/dev/null 2>&1; then
-                jq '"'"'[ .[] | select(.file | test("^(?:/project/)?(include|test)/")) ]'"'"' \
-                  "$BUILD_DIR/compile_commands.json" > "$BUILD_DIR/compile_commands.local.json"
-                TARGET=( --project="$BUILD_DIR/compile_commands.local.json" )
-              else
-                TARGET=( --project="$BUILD_DIR/compile_commands.json" )
-              fi
-            else
-              TARGET=( include test -I include --language=c++ --std=c++23 )
-            fi
+          # Prefer compile_commands.json; fall back to include/test scan
+          if [ -f "$BUILD_DIR/compile_commands.json" ]; then
+            TARGET=( --project="$BUILD_DIR/compile_commands.json" )
+          else
+            TARGET=( include test -I include --language=c++ --std=c++23 )
+          fi
 
-            # Let cppcheck decide pass/fail; analyze as C++23
-            cppcheck "${TARGET[@]}" \
-              --std=c++23 --language=c++ \
-              --enable=warning,style,performance,portabilit
+          # Let cppcheck decide pass/fail; analyze as C++23
+          cppcheck "${TARGET[@]}" \
+            --std=c++23 --language=c++ \
+            --enable=warning,style,performance,portability,information,missingInclude \
+            --inline-suppr --suppress=missingIncludeSystem \
+            --error-exitcode=2 -q
+          BASH
+
+      - name: Run tests (${{ matrix.compiler }} / ${{ matrix.config }})
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-${{ matrix.compiler }}
+          ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
+
+  # ===== Windows - Cppcheck quick pass =====
+  windows-cppcheck:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck (and jq for optional use)
+        shell: pwsh
+        run: |
+          choco install cppcheck -y
+          choco install jq -y
+
+      - name: Run cppcheck (Windows)
+        shell: pwsh
+        run: |
+          # Ensure choco shims & Program Files path are visible
+          $env:Path += ';C:\ProgramData\chocolatey\bin;C:\Program Files\Cppcheck'
+          # Quick lint over your code (include/ and test/), fail on real errors
+          cppcheck include test -I include --language=c++ --std=c++23 `
+            --enable=warning,style,performance,portability,information,missingInclude `
+            --inline-suppr --suppress=missingIncludeSystem `
+            --error-exitcode=2 -q
+
+  # ===== Windows - configure, build, and test with MSVC (Debug & Release) =====
+  windows-msvc:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Set up MSVC (x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+            arch: x64
+
+      - name: Configure (${{ matrix.config }})
+        shell: pwsh
+        run: |
+          cmake -S . -B build-msvc-${{ matrix.config }} -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+
+      - name: Build (${{ matrix.config }})
+        run: cmake --build build-msvc-${{ matrix.config }}
+
+      - name: Test (${{ matrix.config }})
+        run: ctest --test-dir build-msvc-${{ matrix.config }} --output-on-failure
