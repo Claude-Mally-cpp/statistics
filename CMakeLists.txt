@@ -11,6 +11,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   add_link_options(-stdlib=libc++ -lc++ -lc++abi)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(ProjectWarnings)
+
 # Header-only library
 add_library(statistics INTERFACE)
 target_include_directories(statistics INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -36,7 +39,7 @@ enable_testing()
 
 # Test executable
 add_executable(statistics_test test/test_statistics.cpp)
-target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main)
+target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main project_warnings)
 
 include(GoogleTest)
 gtest_discover_tests(statistics_test)
