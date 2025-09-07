@@ -1,0 +1,1 @@
+clang-format --dry-run --Werror include/*.hpp test/*.cpp test/*.hpp
