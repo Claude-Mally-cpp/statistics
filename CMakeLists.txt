@@ -13,10 +13,24 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(ProjectWarnings)
+include(ClangFormat)
 
-# Header-only library
 add_library(statistics INTERFACE)
 target_include_directories(statistics INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+file(GLOB_RECURSE STATISTICS_HEADERS
+     CONFIGURE_DEPENDS
+     "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+     "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
+)
+
+target_sources(statistics INTERFACE
+  FILE_SET HEADERS
+  BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  FILES ${STATISTICS_HEADERS}
+)
+
+add_clang_format_targets_for(statistics)
 
 # Fetch fmt
 include(FetchContent)

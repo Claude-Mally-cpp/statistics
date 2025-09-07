@@ -1,1 +1,1 @@
-clang-format --dry-run --Werror include/*.hpp test/*.cpp test/*.hpp
+cmake --build build --target statistics_test-format-check
