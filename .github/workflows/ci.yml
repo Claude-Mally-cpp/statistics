@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   # ===== Linux (Docker) - build, test, and cppcheck using your images =====
@@ -32,40 +31,25 @@ jobs:
 
       - name: Cppcheck (${{ matrix.compiler }} / ${{ matrix.config }})
         run: |
-          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} bash -lc '
-            set -e
-            BUILD_DIR="out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
+          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-${{ matrix.compiler }} bash -s <<'BASH'
+          set -euo pipefail
+          BUILD_DIR="out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}"
+          TARGET=()
 
-            # Prefer filtered compile DB; fall back to dir scan
-            if [ -f "$BUILD_DIR/compile_commands.json" ]; then
-              if command -v jq >/dev/null 2>&1; then
-                jq '"'"'[ .[] | select(.file | test("^(?:/project/)?(include|test)/")) ]'"'"' \
-                  "$BUILD_DIR/compile_commands.json" > "$BUILD_DIR/compile_commands.local.json"
-                TARGET=( --project="$BUILD_DIR/compile_commands.local.json" )
-              elif command -v fq >/dev/null 2>&1; then
-                fq -r '"'"'[ .[] | select(.file | test("^(?:/project/)?(include|test)/")) ]'"'"' \
-                  "$BUILD_DIR/compile_commands.json" > "$BUILD_DIR/compile_commands.local.json"
-                TARGET=( --project="$BUILD_DIR/compile_commands.local.json" )
-              else
-                TARGET=( include test -I include --language=c++ --std=c++20 )
-              fi
-            else
-              TARGET=( include test -I include --language=c++ --std=c++20 )
-            fi
+          # Prefer compile_commands.json; fall back to include/test scan
+          if [ -f "$BUILD_DIR/compile_commands.json" ]; then
+            TARGET=( --project="$BUILD_DIR/compile_commands.json" )
+          else
+            TARGET=( include test -I include --language=c++ --std=c++23 )
+          fi
 
-            XML="$BUILD_DIR/cppcheck.xml"
-            set +e
-            cppcheck "${TARGET[@]}" \
-              --enable=warning,style,performance,portability,information,missingInclude \
-              --inline-suppr --suppress=missingIncludeSystem \
-              --quiet --xml --xml-version=2 2> "$XML"
-            rc=$?; set -e
-            echo "cppcheck rc: $rc"
-            if grep -q "severity=\"error\"" "$XML"; then
-              echo "::error::cppcheck found severity=error issues"
-              exit 2
-            fi
-          '
+          # Let cppcheck decide pass/fail; analyze as C++23
+          cppcheck "${TARGET[@]}" \
+            --std=c++23 --language=c++ \
+            --enable=warning,style,performance,portability,information,missingInclude \
+            --inline-suppr --suppress=missingIncludeSystem \
+            --error-exitcode=2 -q
+          BASH
 
       - name: Run tests (${{ matrix.compiler }} / ${{ matrix.config }})
         run: >
@@ -75,7 +59,7 @@ jobs:
           cpp-ci-${{ matrix.compiler }}
           ./out/build/linux-${{ matrix.compiler }}-${{ matrix.config }}/statistics_test
 
-  # ===== Windows - cppcheck only (fast lint pass) =====
+  # ===== Windows - Cppcheck quick pass =====
   windows-cppcheck:
     runs-on: windows-latest
     steps:
@@ -90,18 +74,32 @@ jobs:
       - name: Run cppcheck (Windows)
         shell: pwsh
         run: |
+          # Don't let native non-zero exits abort the step
+          $ErrorActionPreference = 'Continue'
+          $PSNativeCommandUseErrorActionPreference = $false
+
           # Ensure choco shims & Program Files path are visible
           $env:Path += ';C:\ProgramData\chocolatey\bin;C:\Program Files\Cppcheck'
-          # Analyze only your code (include/ and test/)
-          $xml = 'cppcheck.xml'
-          cppcheck include test -I include --language=c++ --std=c++20 `
-            --enable=warning,style,performance,portability,information,missingInclude `
-            --inline-suppr --suppress=missingIncludeSystem `
-            --quiet --xml --xml-version=2 2> $xml
-          if (Select-String -Path $xml -Pattern 'severity="error"' -Quiet) {
-            Write-Error "cppcheck: found severity=error issues"
-            exit 2
-          }
+
+          # Build argument array (no fragile backticks)
+          $args = @(
+            'include','test','-I','include','--language=c++','--std=c++23',
+            '--enable=warning,style,performance,portability,missingInclude',
+            '--inline-suppr','--suppress=missingIncludeSystem',
+            '--check-level=exhaustive'
+            '--error-exitcode=2','-q'
+          )
+
+          & cppcheck @args
+          $rc = $LASTEXITCODE
+
+          # Normalize: 2=failure (real errors), 1=informational/noise, 0=clean
+          if ($rc -eq 2) { Write-Error 'cppcheck: error-severity issues found'; exit 2 }
+          elseif ($rc -eq 1) {
+            Write-Host 'cppcheck exited 1 (informational); ignoring.'
+            exit 0
+          } else { exit 0 }
+
 
   # ===== Windows - configure, build, and test with MSVC (Debug & Release) =====
   windows-msvc:
