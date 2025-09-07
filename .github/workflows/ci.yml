@@ -86,6 +86,7 @@ jobs:
             'include','test','-I','include','--language=c++','--std=c++23',
             '--enable=warning,style,performance,portability,missingInclude',
             '--inline-suppr','--suppress=missingIncludeSystem',
+            '--check-level=exhaustive'
             '--error-exitcode=2','-q'
           )
 
