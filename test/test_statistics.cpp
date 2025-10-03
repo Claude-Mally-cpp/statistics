@@ -88,3 +88,36 @@ TEST(StatisticsTest, Product_InsectCount) {
     std::println("float to int conversion: {} -> {}", testFloatConversion, dangerousConversion);
 #   endif
 }
+
+// Test median of sorted evenData
+TEST(StatisticsTest, Median_EvenData) {
+    constexpr auto evenData = std::array{1, 2, 3, 4, 5, 6};
+    auto result = mally::statlib::median(evenData);
+    EXPECT_EQ(result, 3.5L);
+    // Alternative: test with odd number of elements, or unsorted data
+}
+
+// Test median of sorted oddData
+TEST(StatisticsTest, Median_OddData) {
+    constexpr auto oddData = std::array{1, 2, 3, 4, 5};
+    auto result = mally::statlib::median(oddData);
+    EXPECT_EQ(result, 3.0L);
+    // Alternative: test with even number of elements, or unsorted data
+}
+
+// Test median of unsorted data
+TEST(StatisticsTest, Median_UnsortedData) {
+    const auto unsortedData = std::array{3, 1, 4, 2, 5};
+    auto result = mally::statlib::median(unsortedData);
+    EXPECT_EQ(result, 3.0L);
+    // Alternative: test with even number of elements, or already sorted data
+}
+
+// Test median of empty data
+TEST(StatisticsTest, Median_EmptyData) {
+    const std::array<int, 0> emptyData = {};
+    auto result = mally::statlib::median(emptyData);
+    EXPECT_EQ(result, 0.0L);
+    // Alternative: test with single element, or large datasets
+}
+
