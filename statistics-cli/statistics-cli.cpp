@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <print>
+#include <statistics.hpp>
 
 int main(int argc, char** argv) {
     CLI::App app{"Hobby Statistics CLI"};
@@ -23,9 +24,11 @@ int main(int argc, char** argv) {
 
     CLI11_PARSE(app, argc, argv);
 
-    // --- stub: we'll compute later; for now just confirm parsing ---
     if (summary->parsed()) {
-        std::println("Parsed {} value(s) for summary.", data.size());
+        auto mean = mally::statlib::average(data);
+        auto median  = mally::statlib::median(data);
+        std::println("mean:={} median={}", mean, median);
+        std::println("Parsed data {} .", data);
         // TODO: compute & print the R-like table:
         // Min., 1st Qu., Median, Mean, 3rd Qu., Max.
     }
