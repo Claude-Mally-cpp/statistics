@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 
     // --- stub: we'll compute later; for now just confirm parsing ---
     if (summary->parsed()) {
-        std::print("Parsed {} calue(s) for summary.\n", data.size());
+        std::println("Parsed {} value(s) for summary.", data.size());
         // TODO: compute & print the R-like table:
         // Min., 1st Qu., Median, Mean, 3rd Qu., Max.
     }
