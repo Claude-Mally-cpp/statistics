@@ -35,6 +35,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+# Fetch CLI11 v2.5.0
+FetchContent_Declare(
+  CLI11
+  GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+  GIT_TAG v2.5.0
+)
+FetchContent_MakeAvailable(CLI11)
+
 enable_testing()
 
 # Test executable
@@ -43,3 +51,16 @@ target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main pro
 
 include(GoogleTest)
 gtest_discover_tests(statistics_test)
+
+add_executable(statistics-cli statistics-cli/statistics-cli.cpp)
+
+# name the produced binary just "statistics"
+set_target_properties(statistics-cli PROPERTIES OUTPUT_NAME statistics)
+
+target_link_libraries(statistics-cli
+  PRIVATE
+    CLI11::CLI11
+    statistics
+    fmt::fmt
+    project_warnings
+)
