@@ -76,6 +76,35 @@ constexpr auto average(const NumberRange auto& range) -> HighPrecisionFloat
     return total / toHPF(range.size());
 }
 
+/// @brief compute the median of a range of numbers
+/// @param range input range of numbers
+/// @return median of the range of numbers
+/// @details This function computes the median of a range of numbers.
+/// It uses a high precision floating point type to avoid precision loss.
+constexpr auto median(const NumberRange auto& range) -> HighPrecisionFloat
+{
+    if (std::ranges::empty(range))
+    {
+        return 0.0L;
+    }
+
+    std::vector<typename std::ranges::range_value_t<decltype(range)>> sortedData(std::ranges::begin(range),
+                                                                                std::ranges::end(range));
+    std::sort(sortedData.begin(), sortedData.end());
+
+    const auto n = sortedData.size();
+    if (n % 2 == 1)
+    {
+        // Odd number of elements, return the middle one
+        return toHPF(sortedData[n / 2]);
+    }
+    else
+    {
+        // Even number of elements, return the average of the two middle ones
+        return (toHPF(sortedData[n / 2 - 1]) + toHPF(sortedData[n / 2])) / 2.0L;
+    }
+}
+
 /// @brief compute the product of a range of numbers
 /// @param range input range of numbers
 /// @details This function computes the product of a range of numbers.
