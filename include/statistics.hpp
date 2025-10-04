@@ -76,6 +76,23 @@ constexpr auto average(const NumberRange auto& range) -> HighPrecisionFloat
     return total / toHPF(range.size());
 }
 
+/// @brief Compute the median of a pre-sorted range
+/// @param sortedRange Sorted range of numbers
+/// @return median of the range
+constexpr auto medianSorted(const auto& sortedRange) -> HighPrecisionFloat
+{
+    if (std::ranges::empty(sortedRange)) {
+        return 0.0L;
+    }
+
+    const auto n = sortedRange.size();
+    if (n % 2 == 1) {
+        return toHPF(sortedRange[n / 2]);
+    } else {
+        return (toHPF(sortedRange[n / 2 - 1]) + toHPF(sortedRange[n / 2])) / 2.0L;
+    }
+}
+
 /// @brief compute the median of a range of numbers
 /// @param range input range of numbers
 /// @return median of the range of numbers
@@ -83,26 +100,89 @@ constexpr auto average(const NumberRange auto& range) -> HighPrecisionFloat
 /// It uses a high precision floating point type to avoid precision loss.
 constexpr auto median(const NumberRange auto& range) -> HighPrecisionFloat
 {
-    if (std::ranges::empty(range))
-    {
+    if (std::ranges::empty(range)) {
         return 0.0L;
     }
 
-    std::vector<typename std::ranges::range_value_t<decltype(range)>> sortedData(std::ranges::begin(range),
-                                                                                std::ranges::end(range));
+    std::vector<typename std::ranges::range_value_t<decltype(range)>> sortedData(
+        std::ranges::begin(range), std::ranges::end(range));
+    std::sort(sortedData.begin(), sortedData.end());
+    return medianSorted(sortedData);
+}
+
+/// @brief Summary quartiles (Q1, median, Q3)
+struct QuartileSummary {
+    HighPrecisionFloat q1;
+    HighPrecisionFloat median;
+    HighPrecisionFloat q3;
+};
+
+/// @brief Compute Q1, Median, Q3 assuming we sort here once.
+/// @param range Input range of numbers.
+/// @return QuartileSummary with Q1, Median, Q3.
+constexpr auto quartiles(const NumberRange auto& range) -> QuartileSummary
+{
+    if (std::ranges::empty(range)) {
+        return {0.0L, 0.0L, 0.0L};
+    }
+
+    std::vector<typename std::ranges::range_value_t<decltype(range)>> sortedData(
+        std::ranges::begin(range), std::ranges::end(range));
     std::sort(sortedData.begin(), sortedData.end());
 
     const auto n = sortedData.size();
-    if (n % 2 == 1)
-    {
-        // Odd number of elements, return the middle one
-        return toHPF(sortedData[n / 2]);
+    const auto mid = n / 2;
+
+    auto lower = std::span(sortedData.begin(), sortedData.begin() + mid);
+    auto upper = (n % 2 == 0)
+                     ? std::span(sortedData.begin() + mid, sortedData.end())
+                     : std::span(sortedData.begin() + mid + 1, sortedData.end());
+
+    return {medianSorted(lower), medianSorted(sortedData), medianSorted(upper)};
+}
+
+/// @brief Complete summary of numeric range (R-style output)
+struct SummaryStats {
+    HighPrecisionFloat min;
+    HighPrecisionFloat q1;
+    HighPrecisionFloat median;
+    HighPrecisionFloat mean;
+    HighPrecisionFloat q3;
+    HighPrecisionFloat max;
+};
+
+/// @brief Compute full summary statistics (Min, Q1, Median, Mean, Q3, Max)
+/// @param range Input range of numbers.
+/// @return SummaryStats with Min, Q1, Median, Mean, Q3, Max
+/// @details This function computes the full summary statistics of a range of numbers.
+/// It uses a high precision floating point type to avoid precision loss.
+constexpr auto summary(const NumberRange auto& range) -> SummaryStats
+{
+    if (std::ranges::empty(range)) {
+        return {0, 0, 0, 0, 0, 0};
     }
-    else
-    {
-        // Even number of elements, return the average of the two middle ones
-        return (toHPF(sortedData[n / 2 - 1]) + toHPF(sortedData[n / 2])) / 2.0L;
-    }
+
+    std::vector<typename std::ranges::range_value_t<decltype(range)>> sortedData(
+        std::ranges::begin(range), std::ranges::end(range));
+    std::sort(sortedData.begin(), sortedData.end());
+
+    const auto n = sortedData.size();
+    const auto mid = n / 2;
+
+    auto lower = std::span(sortedData.begin(), sortedData.begin() + mid);
+    auto upper = (n % 2 == 0)
+                     ? std::span(sortedData.begin() + mid, sortedData.end())
+                     : std::span(sortedData.begin() + mid + 1, sortedData.end());
+
+    const auto q1 = medianSorted(lower);
+    const auto med = medianSorted(sortedData);
+    const auto q3 = medianSorted(upper);
+
+    HighPrecisionFloat sum = 0.0L;
+    for (const auto& val : sortedData) sum += toHPF(val);
+    const auto mean = sum / static_cast<HighPrecisionFloat>(n);
+
+    return {toHPF(sortedData.front()), q1, med, mean, q3, toHPF(sortedData.back())};
 }
 
 /// @brief compute the product of a range of numbers
