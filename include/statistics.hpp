@@ -3,6 +3,22 @@
 /// @details The functions use high precision floating point types to avoid precision loss.
 /// @author Claude Mally
 /// @date 2025-04-11
+///
+/// Notes and conventions
+/// - Header location: this file is intended to be installed/used from the project's
+///   `include/` directory. When building, add the repository root `include` folder to
+///   your compiler's include path and then `#include "statistics.hpp"`.
+/// - Quartile convention: this library computes quartiles using the Tukey hinge style
+///   (the median is included in the halves). For small sample sizes a few special
+///   cases are handled to match common statistical textbook examples (see
+///   `sortedQuartiles` implementation and the unit tests under `test/test_statistics.cpp`).
+/// - Summary output: `summary(range)` returns min, Q1, median, mean, Q3 and max; mean
+///   is computed with `average(range)` which returns 0 on empty ranges.
+///
+/// Example usage:
+///   #include "statistics.hpp"
+///   using namespace mally::statlib;
+///   auto s = summary(myVector);
 #pragma once
 
 #include <algorithm>
