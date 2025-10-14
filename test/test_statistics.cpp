@@ -143,7 +143,7 @@ TEST(StatisticsTest, Median_SingleElement) {
 
 // Basic quartile test for odd count
 TEST(StatisticsTest, Quartiles_OddData) {
-    const std::vector<int> data{1, 2, 3, 4, 5};
+    const std::array data{1, 2, 3, 4, 5};
     auto q = quartiles(data);
     EXPECT_EQ(q.q1, 1.5L);
     EXPECT_EQ(q.median, 3.0L);
@@ -152,7 +152,7 @@ TEST(StatisticsTest, Quartiles_OddData) {
 
 // Basic quartile test for even count
 TEST(StatisticsTest, Quartiles_EvenData) {
-    const std::vector<int> data{1, 2, 3, 4, 5, 6};
+    const std::array data{1, 2, 3, 4, 5, 6};
     auto q = quartiles(data);
     EXPECT_EQ(q.q1, 2.0L);
     EXPECT_EQ(q.median, 3.5L);
@@ -161,7 +161,7 @@ TEST(StatisticsTest, Quartiles_EvenData) {
 
 // Quartiles with unsorted input (should handle sorting internally)
 TEST(StatisticsTest, Quartiles_UnsortedData) {
-    const std::vector<int> data{6, 1, 4, 2, 5, 3};
+    const std::array data{6, 1, 4, 2, 5, 3};
     auto q = quartiles(data);
     EXPECT_EQ(q.q1, 2.0L);
     EXPECT_EQ(q.median, 3.5L);
@@ -170,7 +170,7 @@ TEST(StatisticsTest, Quartiles_UnsortedData) {
 
 // Quartiles with empty range
 TEST(StatisticsTest, Quartiles_EmptyData) {
-    const std::vector<double> data{};
+    const std::array<double, 0> data{};
     auto q = quartiles(data);
     EXPECT_EQ(q.q1, 0.0L);
     EXPECT_EQ(q.median, 0.0L);
@@ -183,7 +183,7 @@ TEST(StatisticsTest, Quartiles_EmptyData) {
 
 // Summary statistics on small dataset
 TEST(StatisticsTest, Summary_Basic) {
-    const std::vector<double> data{12.3, 9e4, -0.6666};
+    const std::array data{12.3, 9e4, -0.6666};
     auto s = summary(data);
 
     EXPECT_NEAR(static_cast<double>(s.min), -0.6666, 1e-9);
@@ -196,7 +196,7 @@ TEST(StatisticsTest, Summary_Basic) {
 
 // Empty dataset summary
 TEST(StatisticsTest, Summary_Empty) {
-    const std::vector<double> data{};
+    const std::array<long, 0> data{};
     auto s = summary(data);
     EXPECT_EQ(s.min, 0.0L);
     EXPECT_EQ(s.q1, 0.0L);
@@ -208,7 +208,7 @@ TEST(StatisticsTest, Summary_Empty) {
 
 // Summary consistency: quartiles() vs summary()
 TEST(StatisticsTest, Summary_QuartileConsistency) {
-    const std::vector<int> data{1, 2, 3, 4, 5, 6};
+    const std::array data{1, 2, 3, 4, 5, 6};
     auto q = quartiles(data);
     auto s = summary(data);
 
