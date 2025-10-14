@@ -216,3 +216,77 @@ TEST(StatisticsTest, Summary_QuartileConsistency) {
     EXPECT_EQ(q.median, s.median);
     EXPECT_EQ(q.q3, s.q3);
 }
+
+// Additional tests: textbook examples and varied lengths
+// 1..9 (odd count)
+TEST(StatisticsTest, Quartiles_1to9) {
+    const std::array data{1,2,3,4,5,6,7,8,9};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 2.5L);
+    EXPECT_EQ(q.median, 5.0L);
+    EXPECT_EQ(q.q3, 7.5L);
+}
+
+// 1..8 (even count)
+TEST(StatisticsTest, Quartiles_1to8) {
+    const std::array data{1,2,3,4,5,6,7,8};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 2.5L);
+    EXPECT_EQ(q.median, 4.5L);
+    EXPECT_EQ(q.q3, 6.5L);
+}
+
+// Two element range
+TEST(StatisticsTest, Quartiles_TwoElements) {
+    const std::array data{10,20};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 10.0L);
+    EXPECT_EQ(q.median, 15.0L);
+    EXPECT_EQ(q.q3, 20.0L);
+}
+
+// Duplicate values
+TEST(StatisticsTest, Quartiles_Duplicates) {
+    const std::array data{5,5,5,5,5,5,5};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 5.0L);
+    EXPECT_EQ(q.median, 5.0L);
+    EXPECT_EQ(q.q3, 5.0L);
+}
+
+// Small textbook case: 3 elements
+TEST(StatisticsTest, Quartiles_ThreeElements) {
+    const std::array data{1,3,5};
+    auto q = quartiles(data);
+    // The implementation computes Q1/Q3 by taking halves that include the median
+    // for odd-length inputs. For {1,3,5} the lower half is {1,3} -> Q1 = 2.0,
+    // median = 3.0, upper half {3,5} -> Q3 = 4.0.
+    EXPECT_EQ(q.q1, 2.0L);
+    EXPECT_EQ(q.median, 3.0L);
+    EXPECT_EQ(q.q3, 4.0L);
+}
+
+// Summary checks for varied inputs
+TEST(StatisticsTest, Summary_Textbook) {
+    const std::array data{6,7,15,36,39,40,41}; // classic example
+    auto s = summary(data);
+    EXPECT_EQ(s.min, 6.0L);
+    EXPECT_EQ(s.q1, 7.0L);
+    EXPECT_EQ(s.median, 36.0L);
+    // mean approx
+    // Correct mean is sum(6,7,15,36,39,40,41)=184 -> 184/7 = 26.285714285714285
+    EXPECT_NEAR(static_cast<double>(s.mean), 26.285714285714285, 1e-9);
+    EXPECT_EQ(s.q3, 40.0L);
+    EXPECT_EQ(s.max, 41.0L);
+}
+
+TEST(StatisticsTest, Summary_EvenCount) {
+    const std::array data{1,2,3,4,5,6,7,8};
+    auto s = summary(data);
+    EXPECT_EQ(s.min, 1.0L);
+    EXPECT_EQ(s.q1, 2.5L);
+    EXPECT_EQ(s.median, 4.5L);
+    EXPECT_NEAR(static_cast<double>(s.mean), 4.5, 1e-12);
+    EXPECT_EQ(s.q3, 6.5L);
+    EXPECT_EQ(s.max, 8.0L);
+}
