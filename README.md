@@ -33,3 +33,16 @@ To buld and test on windows release and debug
 # verbose output
 ./windowsBuildAndTest.ps1 --verbose
 ```
+
+## Conventions and notes
+
+- Quartile convention: this project uses the Tukey hinge approach (median included in both halves)
+	when computing Q1 and Q3. Unit tests in `test/test_statistics.cpp` assert this behavior.
+
+- To run static analysis locally (and in CI) on the reorganized layout use:
+
+```sh
+cppcheck ./include/* ./test/*
+```
+
+Make sure `cppcheck` is available on the runner (for Windows use `choco install cppcheck -y`).
