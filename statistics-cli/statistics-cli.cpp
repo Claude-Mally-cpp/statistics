@@ -19,9 +19,6 @@ int main(int argc, char** argv) {
            ->required()
            ->delimiter(',');
 
-    // (Optional) allow whitespace around commas like "1, 2, 3"
-    // CLI11 ignores spaces by default when splitting on delimiter.
-
     CLI11_PARSE(app, argc, argv);
 
     if (summary->parsed()) {
