@@ -22,12 +22,8 @@ int main(int argc, char** argv) {
     CLI11_PARSE(app, argc, argv);
 
     if (summary->parsed()) {
-        auto mean = mally::statlib::average(data);
-        auto median  = mally::statlib::median(data);
-        std::println("mean:={} median={}", mean, median);
-        std::println("Parsed data {} .", data);
-        // TODO: compute & print the R-like table:
-        // Min., 1st Qu., Median, Mean, 3rd Qu., Max.
+        auto summaryData = mally::statlib::summary(data);
+        std::println("Computed summary: {}", summaryData);
     }
 
     return 0;
