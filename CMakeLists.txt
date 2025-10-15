@@ -64,3 +64,22 @@ target_link_libraries(statistics-cli
     fmt::fmt
     project_warnings
 )
+
+# Install the CLI executable
+install(TARGETS statistics-cli
+        RUNTIME DESTINATION bin
+        BUNDLE DESTINATION bin
+        LIBRARY DESTINATION lib
+)
+
+# Install headers (all .hpp files under include/)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+        DESTINATION include
+        FILES_MATCHING PATTERN "*.hpp"
+)
+
+# Optional: install the test runner for CI/local use
+install(TARGETS statistics_test
+        RUNTIME DESTINATION bin/tests
+        OPTIONAL
+)
