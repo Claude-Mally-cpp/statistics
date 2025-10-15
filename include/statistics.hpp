@@ -36,6 +36,8 @@
 #include <type_traits>
 #include <vector>
 
+#include "HighPrecisionFloat.hpp"
+
 // @brief This file contains functions to compute statistics on a range of numbers.
 // @details The functions use high precision floating point types to avoid precision loss.
 namespace mally::statlib
@@ -48,22 +50,6 @@ concept NumberRange =
     std::ranges::contiguous_range<T> &&
     std::is_arithmetic_v<std::ranges::range_value_t<T>>;
 
-/// @brief Type used for high precision floating point calculations.
-/// @details This type is used to avoid precision loss when calculating
-using HighPrecisionFloat = long double;
-
-/// @brief Type used for high precision floating point calculations with expected result.
-/// @details The unexpected result is a string error message.
-using HighPrecisionResult = std::expected<HighPrecisionFloat, std::string>;
-
-/// @brief Convert a value to a high precision floating point type.
-/// @param value value to convert
-/// @return HighPrecisionFloat from the value
-/// @details This function converts a value to a high precision floating point type.
-constexpr auto toHPF(auto value) -> HighPrecisionFloat
-{
-    return static_cast<HighPrecisionFloat>(value);
-}
 
 /// @brief Verbose debugging flag.
 /// @details This flag is used to enable verbose debugging output.
@@ -182,16 +168,6 @@ constexpr auto quartiles(const NumberRange auto& range) -> QuartileSummary
 
     return sortedQuartiles(sortedData);
 }
-
-/// @brief Complete summary of numeric range (R-style output)
-struct SummaryStats {
-    HighPrecisionFloat min;
-    HighPrecisionFloat q1;
-    HighPrecisionFloat median;
-    HighPrecisionFloat mean;
-    HighPrecisionFloat q3;
-    HighPrecisionFloat max;
-};
 
 /// @brief Compute full summary statistics (Min, Q1, Median, Mean, Q3, Max)
 /// @param range Input range of numbers.
