@@ -1,25 +1,26 @@
-#include <cstddef>
-#include <format>
-#include <print>
 
-namespace mally::statlib
+#include <concepts>
+#include <type_traits>
+
+namespace mally::statlib 
 {
-/// @brief Type used for high precision floating point calculations.
-/// @details This type is used to avoid precision loss when calculating
-using HighPrecisionFloat = long double;
 
-/// @brief Type used for high precision floating point calculations with expected result.
-/// @details The unexpected result is a string error message.
+using HighPrecisionFloat  = long double;
 using HighPrecisionResult = std::expected<HighPrecisionFloat, std::string>;
 
-/// @brief Convert a value to a high precision floating point type.
-/// @param value value to convert
-/// @return HighPrecisionFloat from the value
-/// @details This function converts a value to a high precision floating point type.
-constexpr auto toHPF(auto value) -> HighPrecisionFloat
-{
-    return static_cast<HighPrecisionFloat>(value);
+// keep a pass-through for HPF
+constexpr HighPrecisionFloat toHPF(HighPrecisionFloat v) noexcept { return v; }
+
+// accept any arithmetic scalar
+template <class T>
+    requires std::is_arithmetic_v<std::remove_cvref_t<T>>
+constexpr HighPrecisionFloat toHPF(T v) noexcept {
+    return static_cast<HighPrecisionFloat>(v);
 }
+
+template <class R>
+    requires requires { typename R::value_type; } // crude "looks like container"
+HighPrecisionFloat toHPF(const R&) = delete;
 
 /// @brief Complete summary of numeric range (R-style output)
 struct SummaryStats
@@ -37,7 +38,7 @@ struct SummaryStats
 
 
 
-// 2) Formatter for SummaryStats
+// Formatter for SummaryStats
 // We parse ONE float spec and reuse it for each field so users can write
 // std::format("{:.3f}", stats) and have every number use .3f.
 template <> struct std::formatter<mally::statlib::SummaryStats>
