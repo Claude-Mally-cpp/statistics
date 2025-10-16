@@ -97,7 +97,7 @@ constexpr auto quartiles(const std::array<T, N>& data) -> QuartileSummary {
 /// @details Materializes to a local vector<HPF>, sorts, then computes hinges.
 /// @note Keeps array path constexpr while supporting vectors/spans/etc.
 template <class R>
-    requires num::numberRange<R>
+    requires num::NumberRange<R>
 inline auto quartiles(const R& r) -> QuartileSummary {
     // Materialize to HPF
     std::vector<HighPrecisionFloat> hp;
