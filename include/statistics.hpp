@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "HighPrecisionFloat.hpp"
+#include "quartiles.hpp"
 
 // @brief This file contains functions to compute statistics on a range of numbers.
 // @details The functions use high precision floating point types to avoid precision loss.
@@ -116,13 +117,6 @@ constexpr auto median(const NumberRange auto& range) -> HighPrecisionFloat
     return medianSorted(sortedData);
 }
 
-/// @brief Summary quartiles (Q1, median, Q3)
-struct QuartileSummary {
-    HighPrecisionFloat q1;
-    HighPrecisionFloat median;
-    HighPrecisionFloat q3;
-};
-
 /// @brief Compute Q1, Median, Q3 assuming the input range is already sorted.
 /// @param range Input sorted range of numbers.
 /// @return QuartileSummary with Q1, Median, Q3.
@@ -176,13 +170,33 @@ constexpr auto quartiles(const NumberRange auto& range) -> QuartileSummary
 /// It uses a high precision floating point type to avoid precision loss.
 constexpr auto summary(const NumberRange auto& range) -> SummaryStats
 {
-    auto qsumary = quartiles(range);
-    return {std::ranges::empty(range) ? 0.0L : toHPF(*std::ranges::min_element(range)),
-            qsumary.q1,
-            qsumary.median,
-            average(range),
-            qsumary.q3,
-            std::ranges::empty(range) ? 0.0L : toHPF(*std::ranges::max_element(range))};
+    SummaryStats out{};
+    if (std::ranges::empty(range)) {
+        // count = 0, rest default-initialized to 0
+        return out;
+    }
+
+    // Count
+    const auto n = static_cast<std::size_t>(std::ranges::distance(range));
+    out.count = n;
+
+    // Min/Max (works for vector and any forward range)
+    const auto [itMin, itMax] = std::ranges::minmax_element(range);
+    out.min = toHPF(*itMin);
+    out.max = toHPF(*itMax);
+
+    // Mean
+    HighPrecisionFloat sum = 0.0L;
+    for (auto&& x : range) sum += toHPF(x);
+    out.mean = sum / static_cast<HighPrecisionFloat>(n);
+
+    // Quartiles (whatever overload you have: vector/range/array)
+    const auto qs = quartiles(range);
+    out.q1     = qs.q1;
+    out.median = qs.median;
+    out.q3     = qs.q3;
+
+    return out;
 }
 
 /// @brief compute the product of a range of numbers
