@@ -29,10 +29,15 @@
 #include <array>
 #include <algorithm>
 #include <format>
+#include <numeric>
 #include <ranges>
 #include <type_traits>
 
 namespace mally::statlib {
+
+/// @brief Enable verbose debugging output to stderr (for development).
+/// @note Disabled by default; enable manually when needed.
+inline constexpr bool verboseDebugging = false;
 
 /// @brief Summary of basic descriptive statistics.
 struct SummaryStats {
@@ -83,7 +88,7 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats {
 /// @details Uses numeric helpers and the range-generic quartiles adapter.
 /// @note Requires input_range; min/max needs forward iteration (met by std::vector).
 template <class R>
-    requires num::numberRange<R>
+    requires num::NumberRange<R>
 constexpr auto summary(const R& range) -> SummaryStats {
     SummaryStats out{};
 
