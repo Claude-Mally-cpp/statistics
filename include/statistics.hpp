@@ -19,178 +19,87 @@
 ///   #include "statistics.hpp"
 ///   using namespace mally::statlib;
 ///   auto s = summary(myVector);
+// ... your existing includes ...
 #pragma once
 
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <cmath>
-#include <concepts>
-#include <expected>
-#include <format>
-#include <functional>
-#include <numeric>
-#include <optional>
-#include <ranges>
-#include <stdint.h>
-#include <type_traits>
-#include <vector>
-
 #include "HighPrecisionFloat.hpp"
+#include "numeric.hpp"
 #include "quartiles.hpp"
 
-// @brief This file contains functions to compute statistics on a range of numbers.
-// @details The functions use high precision floating point types to avoid precision loss.
-namespace mally::statlib
-{
-/// @brief Concept for a range of numbers.
-template <typename T>
-concept NumberRange =
-    std::ranges::sized_range<T> &&
-    std::ranges::random_access_range<T> &&
-    std::ranges::contiguous_range<T> &&
-    std::is_arithmetic_v<std::ranges::range_value_t<T>>;
+#include <array>
+#include <algorithm>
+#include <format>
+#include <ranges>
+#include <type_traits>
 
+namespace mally::statlib {
 
-/// @brief Verbose debugging flag.
-/// @details This flag is used to enable verbose debugging output.
-const auto verboseDebugging = false;
+/// @brief Summary of basic descriptive statistics.
+struct SummaryStats {
+    std::size_t        count{};   ///< @brief Number of elements.
+    HighPrecisionFloat min{};     ///< @brief Minimum value.
+    HighPrecisionFloat q1{};      ///< @brief First quartile (Tukey lower hinge).
+    HighPrecisionFloat median{};  ///< @brief Median.
+    HighPrecisionFloat mean{};    ///< @brief Arithmetic mean.
+    HighPrecisionFloat q3{};      ///< @brief Third quartile (Tukey upper hinge).
+    HighPrecisionFloat max{};      ///< @brief Maximum value.
+};
 
-/// @brief compute the sum of a range of numbers
-/// @param range input range of numbers
-/// @details This function computes the sum of a range of numbers. It uses a high precision floating point type to avoid
-/// precision loss.
-/// @return sum of the range of numbers
-constexpr auto sum(const NumberRange auto& range) -> HighPrecisionFloat
-{
-    return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 0.0L,
-                           [](HighPrecisionFloat acc, auto val) { return acc + toHPF(val); });
-}
-
-/// @brief compute the average of a range of numbers
-/// @param range input range of numbers
-/// @return average of the range of numbers
-/// @details This function computes the average of a range of numbers.
-/// It uses a high precision floating point type to avoid precision loss.
-constexpr auto average(const NumberRange auto& range) -> HighPrecisionFloat
-{
-    if (not range.size())
-    {
-        return 0.0L;
-    }
-
-    auto total = sum(range);
-    return total / toHPF(range.size());
-}
-
-/// @brief Compute the median of a pre-sorted range
-/// @param sortedRange Sorted range of numbers
-/// @return median of the range
-constexpr auto medianSorted(const auto& sortedRange) -> HighPrecisionFloat
-{
-    if (std::ranges::empty(sortedRange)) {
-        return 0.0L;
-    }
-
-    const auto n = sortedRange.size();
-    if (n % 2 == 1) {
-        return toHPF(sortedRange[n / 2]);
-    } else {
-        return (toHPF(sortedRange[n / 2 - 1]) + toHPF(sortedRange[n / 2])) / 2.0L;
-    }
-}
-
-/// @brief compute the median of a range of numbers
-/// @param range input range of numbers
-/// @return median of the range of numbers
-/// @details This function computes the median of a range of numbers.
-/// It uses a high precision floating point type to avoid precision loss.
-constexpr auto median(const NumberRange auto& range) -> HighPrecisionFloat
-{
-    if (std::ranges::empty(range)) {
-        return 0.0L;
-    }
-
-    std::vector<typename std::ranges::range_value_t<decltype(range)>> sortedData(
-        std::ranges::begin(range), std::ranges::end(range));
-    std::sort(sortedData.begin(), sortedData.end());
-    return medianSorted(sortedData);
-}
-
-/// @brief Compute Q1, Median, Q3 assuming the input range is already sorted.
-/// @param range Input sorted range of numbers.
-/// @return QuartileSummary with Q1, Median, Q3.
-/// @details This function computes the quartiles of a sorted range of numbers.
-constexpr auto sortedQuartiles(auto& sortedRange) -> QuartileSummary
-{
-    if (std::ranges::empty(sortedRange)) {
-        return {0.0L, 0.0L, 0.0L};
-    }
-
-    const auto n = sortedRange.size();
-    const auto med = medianSorted(sortedRange);
-
-    // Special-rule for n == 3 to match tests:
-    if (n == 3) {
-        const auto q1 = (toHPF(sortedRange.front()) + med) / 2.0L;
-        const auto q3 = (med + toHPF(sortedRange.back())) / 2.0L;
-        return {q1, med, q3};
-    }
-
-    const auto mid = n / 2;
-    auto lower = std::span(sortedRange.begin(), sortedRange.begin() + mid);
-    auto upper = (n % 2 == 0)
-                    ? std::span(sortedRange.begin() + mid, sortedRange.end())
-                    : std::span(sortedRange.begin() + mid + 1, sortedRange.end());
-
-    return { medianSorted(lower), med, medianSorted(upper) };
-}
-
-/// @brief Compute Q1, Median, Q3 assuming we sort here once.
-/// @param range Input range of numbers.
-/// @return QuartileSummary with Q1, Median, Q3.
-/// @see sortedQuartiles
-constexpr auto quartiles(const NumberRange auto& range) -> QuartileSummary
-{
-    if (std::ranges::empty(range)) {
-        return {0.0L, 0.0L, 0.0L};
-    }
-
-    std::vector<typename std::ranges::range_value_t<decltype(range)>> sortedData(
-        std::ranges::begin(range), std::ranges::end(range));
-    std::sort(sortedData.begin(), sortedData.end());
-
-    return sortedQuartiles(sortedData);
-}
-
-/// @brief Compute full summary statistics (Min, Q1, Median, Mean, Q3, Max)
-/// @param range Input range of numbers.
-/// @return SummaryStats with Min, Q1, Median, Mean, Q3, Max
-/// @details This function computes the full summary statistics of a range of numbers.
-/// It uses a high precision floating point type to avoid precision loss.
-constexpr auto summary(const NumberRange auto& range) -> SummaryStats
-{
+/// @brief Summary for an std::array without allocations.
+/// @tparam T arithmetic or HighPrecisionFloat.
+/// @note Converts to HPF, sorts a local array, reuses quartilesSorted().
+template <class T, std::size_t N>
+    requires (std::is_arithmetic_v<std::remove_cvref_t<T>> ||
+              std::is_same_v<std::remove_cvref_t<T>, HighPrecisionFloat>)
+constexpr auto summary(const std::array<T, N>& data) -> SummaryStats {
     SummaryStats out{};
+    out.count = N;
+
+    if constexpr (N == 0) {
+        return out;
+    } else {
+        // Materialize as HPF and sort
+        std::array<HighPrecisionFloat, N> hp{};
+        for (std::size_t i = 0; i < N; ++i) hp[i] = toHPF(data[i]);
+        std::ranges::sort(hp);
+
+        // Min/Max from sorted array
+        out.min = hp.front();
+        out.max = hp.back();
+
+        // Quartiles from sorted array
+        const auto qs = quartilesSorted(hp);
+        out.q1     = qs.q1;
+        out.median = qs.median;
+        out.q3     = qs.q3;
+
+        // Mean (use numeric helper on the original array to avoid re-summing hp)
+        out.mean = num::average(data);
+        return out;
+    }
+}
+
+/// @brief Summary for a generic numeric range (vectors, spans, views…).
+/// @details Uses numeric helpers and the range-generic quartiles adapter.
+/// @note Requires input_range; min/max needs forward iteration (met by std::vector).
+template <class R>
+    requires num::numberRange<R>
+constexpr auto summary(const R& range) -> SummaryStats {
+    SummaryStats out{};
+
     if (std::ranges::empty(range)) {
-        // count = 0, rest default-initialized to 0
         return out;
     }
 
-    // Count
-    const auto n = static_cast<std::size_t>(std::ranges::distance(range));
-    out.count = n;
+    out.count = static_cast<std::size_t>(std::ranges::distance(range));
 
-    // Min/Max (works for vector and any forward range)
-    const auto [itMin, itMax] = std::ranges::minmax_element(range);
-    out.min = toHPF(*itMin);
-    out.max = toHPF(*itMax);
+    // Min/Max & Mean via helpers (HPF-safe)
+    auto [minVal, maxVal] = num::minMaxValue(range);
+    out.min  = minVal;
+    out.max  = maxVal;
+    out.mean = num::average(range);
 
-    // Mean
-    HighPrecisionFloat sum = 0.0L;
-    for (auto&& x : range) sum += toHPF(x);
-    out.mean = sum / static_cast<HighPrecisionFloat>(n);
-
-    // Quartiles (whatever overload you have: vector/range/array)
+    // Quartiles via adapter (materializes to vector<HPF> internally)
     const auto qs = quartiles(range);
     out.q1     = qs.q1;
     out.median = qs.median;
@@ -239,29 +148,6 @@ constexpr auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
                            });
 }
 
-/// @brief compute the sum of products of two ranges of numbers
-/// @param rangeX input range x of numbers
-/// @param rangeY input range y of numbers
-/// @return sum of products of the two ranges of numbers
-constexpr auto sumProduct(const NumberRange auto& rangeX, const NumberRange auto& rangeY) -> HighPrecisionResult
-{
-    if (std::ranges::distance(rangeX) != std::ranges::distance(rangeY))
-    {
-        return std::unexpected(std::format("rangeX.size() = {} != rangeY.size() = {}", std::ranges::distance(rangeX),
-                                           std::ranges::distance(rangeY)));
-    }
-
-    if (std::ranges::empty(rangeX))
-    {
-        return std::unexpected("rangeX is empty!");
-    }
-
-    auto total =
-        std::transform_reduce(std::ranges::begin(rangeX), std::ranges::end(rangeX), std::ranges::begin(rangeY), 0.0L,
-                              std::plus<>{}, [](auto x, auto y) -> HighPrecisionFloat { return toHPF(x) * toHPF(y); });
-
-    return total;
-}
 
 /// @brief Reusable part of the denominator of the correlation coefficient formula
 /// @details This function computes either the x or the y denominator portion of
@@ -385,3 +271,27 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
     return numerator / denominator;
 }
 } // namespace mally::statlib
+
+/// @brief Formatter for SummaryStats reusing one numeric spec for all values.
+template <>
+struct std::formatter<mally::statlib::SummaryStats, char> {
+    std::formatter<mally::statlib::HighPrecisionFloat, char> num_{};
+
+    /// @brief Parse user’s numeric spec (e.g. ".3f", ">12.6e").
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return num_.parse(ctx);
+    }
+
+    /// @brief Format as: n=… min=… q1=… median=… mean=… q3=… max=…
+    template <class FormatContext>
+    auto format(const mally::statlib::SummaryStats& s, FormatContext& ctx) const {
+        using std::format_to;
+        format_to(ctx.out(), "n={} min=", s.count); num_.format(s.min,    ctx);
+        format_to(ctx.out(), " q1=");               num_.format(s.q1,     ctx);
+        format_to(ctx.out(), " median=");           num_.format(s.median, ctx);
+        format_to(ctx.out(), " mean=");             num_.format(s.mean,   ctx);
+        format_to(ctx.out(), " q3=");               num_.format(s.q3,     ctx);
+        format_to(ctx.out(), " max=");              num_.format(s.max,    ctx);
+        return ctx.out();
+    }
+};
