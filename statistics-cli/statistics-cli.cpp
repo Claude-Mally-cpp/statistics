@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
         "summary", "Compute summary statistics for a vector of numbers");
 
     // Accept: --data "12.3,9e4,-0.6666"
-    std::vector<double> data;
+    std::vector<mally::statlib::HighPrecisionFloat> data;
     summary->add_option("-d,--data", data,
                         "Comma-separated numeric values (e.g. \"12.3,9e4,-0.6666\")")
            ->required()
