@@ -51,6 +51,46 @@ constexpr auto medianSorted(const std::array<HighPrecisionFloat, N>& a) -> HighP
 
 } // namespace detail
 
+
+/// @brief Median of a (possibly unsorted) range. Materializes/sorts when needed.
+/// @note Works for std::array (constexpr path) and for generic ranges (materializes to vector).
+template <class R>
+    requires num::NumberRange<R>
+inline auto median(const R& r) -> HighPrecisionFloat {
+    // If fixed-size array with constexpr path, prefer array overload:
+    if constexpr (std::ranges::sized_range<R> && std::ranges::random_access_range<R> &&
+                  std::is_array_v<std::remove_reference_t<R>>) {
+        // fallback — but general code below handles arrays too, so this branch is optional.
+    }
+
+    // Materialize to HPF (vector) and sort for general ranges
+    std::vector<HighPrecisionFloat> hp;
+    hp.reserve(static_cast<std::size_t>(std::ranges::distance(r)));
+    for (auto&& x : r) hp.push_back(toHPF(x));
+    if (hp.empty()) return 0.0L;
+    std::ranges::sort(hp);
+    const auto n = hp.size();
+    if (n % 2 == 1) return hp[n / 2];
+    return (hp[n/2 - 1] + hp[n/2]) / 2.0L;
+}
+
+/// @brief Median of a sorted *array* or a sorted vector.
+/// @note Keep this name because tests call medianSorted on arrays and expect constexpr behavior.
+template <std::size_t N>
+constexpr auto medianSorted(const std::array<HighPrecisionFloat, N>& sorted) -> HighPrecisionFloat {
+    return detail::medianSorted(sorted);
+}
+
+/// @brieg Overload for sorted std::vector<HPF>
+/// @param sorted sorted vector of HPF
+/// @return median value (0.0L if empty)
+inline auto medianSorted(const std::vector<HighPrecisionFloat>& sorted) -> HighPrecisionFloat {
+    if (sorted.empty()) return 0.0L;
+    const auto n = sorted.size();
+    if (n % 2 == 1) return sorted[n / 2];
+    return (sorted[n/2 - 1] + sorted[n/2]) / 2.0L;
+}
+
 /// @brief Tukey hinges on an already-sorted array<HPF, N>.
 /// @note Median element is included in both halves when N is odd.
 template <std::size_t N>
