@@ -12,6 +12,11 @@
 #include <span>
 #include <vector>
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4702 4127)
+#endif
+
 namespace mally::statlib {
 
 /// @brief Q1/median/Q3 summary.
@@ -22,11 +27,6 @@ struct QuartileSummary {
 };
 
 namespace detail {
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4702 4127)
-#endif
 
 /// @brief Median of an already-sorted inclusive slice [lo..hi] in an array.
 template <typename T, std::size_t N>
@@ -87,10 +87,6 @@ inline auto toHPFVector(const R& r) -> std::vector<HighPrecisionFloat> {
     for (auto&& x : r) out.push_back(toHPF(x));
     return out;
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 } // namespace detail
 
@@ -168,11 +164,6 @@ inline auto quartiles(const R& r) -> QuartileSummary {
     std::ranges::sort(hp);
     const auto n = hp.size();
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4702 4127)
-#endif
-
     const auto medianOfSlice = [&](std::size_t lo, std::size_t hi) -> HighPrecisionFloat {
         const std::size_t len = (hi >= lo) ? (hi - lo + 1) : 0;
         if (len == 0) return 0.0L;
@@ -181,10 +172,6 @@ inline auto quartiles(const R& r) -> QuartileSummary {
         const std::size_t midLo = midHi - 1;
         return (hp[midLo] + hp[midHi]) / 2.0L;
     };
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
     HighPrecisionFloat med = (n & 1U) ? hp[n/2] : (hp[n/2 - 1] + hp[n/2]) / 2.0L;
     std::size_t loL = 0, loH, hiL, hiH = n - 1;
@@ -207,3 +194,8 @@ inline auto quartiles(const R& r) -> QuartileSummary {
 }
 
 } // namespace mally::statlib
+
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
