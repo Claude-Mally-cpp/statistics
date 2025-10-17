@@ -39,6 +39,8 @@ namespace mally::statlib {
 /// @note Disabled by default; enable manually when needed.
 inline constexpr bool verboseDebugging = false;
 
+using num::NumberRange;
+
 /// @brief Summary of basic descriptive statistics.
 struct SummaryStats {
     std::size_t        count{};   ///< @brief Number of elements.
@@ -153,7 +155,6 @@ constexpr auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
                            });
 }
 
-
 /// @brief Reusable part of the denominator of the correlation coefficient formula
 /// @details This function computes either the x or the y denominator portion of
 /// the correlation coefficient formula:
@@ -263,9 +264,9 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
         return std::unexpected(std::format("not enough data points: n={}", n));
     }
 
-    const auto sigma_x  = sum(range_x);
-    const auto sigma_y  = sum(range_y);
-    const auto sigma_xy = sumProduct(range_x, range_y);
+    const auto sigma_x  = num::sum(range_x);
+    const auto sigma_y  = num::sum(range_y);
+    const auto sigma_xy = num::sumProduct(range_x, range_y);
     if (not sigma_xy)
     {
         return sigma_xy;
