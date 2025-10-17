@@ -1,3 +1,5 @@
+/// @file numeric.hpp
+/// @brief Numeric helper functions for statistics library.
 #pragma once
 #include "HighPrecisionFloat.hpp"
 
