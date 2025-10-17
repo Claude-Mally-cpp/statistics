@@ -1,3 +1,5 @@
+/// @file HighPrecisionFloat.hpp
+/// @brief High-precision floating-point type and conversions for statistics library.
 #pragma once
 #include <concepts>
 #include <type_traits>
