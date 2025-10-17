@@ -30,6 +30,7 @@
 
 #include <array>
 #include <algorithm>
+#include <cmath>
 #include <format>
 #include <numeric>
 #include <ranges>
