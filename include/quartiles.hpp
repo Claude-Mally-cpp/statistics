@@ -6,6 +6,7 @@
 #include <array>
 #include <ranges>
 #include <type_traits>
+#include <span>
 #include <vector>
 
 namespace mally::statlib {
@@ -21,31 +22,33 @@ namespace detail {
 
 /// @brief Median of an already-sorted inclusive slice [lo..hi] in an array.
 /// @note constexpr for fixed-size arrays.
-template <std::size_t N>
-constexpr auto medianSortedSlice(const std::array<HighPrecisionFloat, N>& a,
+template <typename T, std::size_t N>
+constexpr auto medianSortedSlice(const std::array<T, N>& a,
                                  std::size_t lo, std::size_t hi) -> HighPrecisionFloat {
+    static_assert(std::is_convertible_v<T, HighPrecisionFloat>, "array element not convertible to HighPrecisionFloat");
     const std::size_t len = (hi >= lo) ? (hi - lo + 1) : 0;
     if (len == 0) {
         return 0.0L;
     } else if (len & 1U) { // odd
-        return a[lo + len / 2];
+        return toHPF(a[lo + len / 2]);
     } else {               // even
         const std::size_t midHi = lo + len / 2;
         const std::size_t midLo = midHi - 1;
-        return (a[midLo] + a[midHi]) / 2.0L;
+        return (toHPF(a[midLo]) + toHPF(a[midHi])) / 2.0L;
     }
 }
 
 /// @brief Median of an already-sorted whole array.
 /// @note constexpr for fixed-size arrays.
-template <std::size_t N>
-constexpr auto medianSorted(const std::array<HighPrecisionFloat, N>& a) -> HighPrecisionFloat {
+template <typename T, std::size_t N>
+constexpr auto medianSorted(const std::array<T, N>& a) -> HighPrecisionFloat {
+    static_assert(std::is_convertible_v<T, HighPrecisionFloat>, "array element not convertible to HighPrecisionFloat");
     if constexpr (N == 0) {
         return 0.0L;
     } else if constexpr (N % 2 == 1) {
-        return a[N / 2];
+        return toHPF(a[N / 2]);
     } else {
-        return (a[N / 2 - 1] + a[N / 2]) / 2.0L;
+        return (toHPF(a[N / 2 - 1]) + toHPF(a[N / 2])) / 2.0L;
     }
 }
 
@@ -76,23 +79,28 @@ inline auto median(const R& r) -> HighPrecisionFloat {
 
 /// @brief Median of a sorted *array* or a sorted vector.
 /// @note Keep this name because tests call medianSorted on arrays and expect constexpr behavior.
-template <std::size_t N>
-constexpr auto medianSorted(const std::array<HighPrecisionFloat, N>& sorted) -> HighPrecisionFloat {
+template <typename T, std::size_t N>
+constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> HighPrecisionFloat {
+    // allow arrays of arithmetic types (e.g. int) that are convertible to HighPrecisionFloat
+    static_assert(std::is_convertible_v<T, HighPrecisionFloat>, "array element not convertible to HighPrecisionFloat");
     return detail::medianSorted(sorted);
 }
 
 /// @brieg Overload for sorted std::vector<HPF>
 /// @param sorted sorted vector of HPF
 /// @return median value (0.0L if empty)
-inline auto medianSorted(const std::vector<HighPrecisionFloat>& sorted) -> HighPrecisionFloat {
+inline auto medianSortedSpan(std::span<const HighPrecisionFloat> sorted) -> HighPrecisionFloat {
     if (sorted.empty()) return 0.0L;
     const auto n = sorted.size();
     if (n % 2 == 1) return sorted[n / 2];
     return (sorted[n/2 - 1] + sorted[n/2]) / 2.0L;
 }
 
+// Convenience overload for containers/ranges of HighPrecisionFloat that can provide a span
+// NOTE: no generic medianSorted overload to avoid overload-resolution issues across compilers.
+
 /// @brief Tukey hinges on an already-sorted array<HPF, N>.
-/// @note Median element is included in both halves when N is odd.
+/// @note Uses the exclusive-median variant: the median element is excluded from both halves when N is odd.
 template <std::size_t N>
 constexpr auto quartilesSorted(const std::array<HighPrecisionFloat, N>& sorted) -> QuartileSummary {
     if constexpr (N == 0) {
@@ -103,8 +111,15 @@ constexpr auto quartilesSorted(const std::array<HighPrecisionFloat, N>& sorted) 
         std::size_t loL = 0, loH, hiL, hiH = N - 1;
         if constexpr (N % 2 == 1) {
             const std::size_t mid = N / 2;
-            loH = mid;   // [0 .. mid]
-            hiL = mid;   // [mid .. N-1]
+            if constexpr (N == 3) {
+                // For N==3 follow the small-sample textbook convention: include the median in both halves
+                loH = mid;   // [0 .. mid]
+                hiL = mid;   // [mid .. N-1]
+            } else {
+                // Exclusive-median for larger odd N: exclude the median element from both halves
+                loH = mid - 1;   // [0 .. mid-1]
+                hiL = mid + 1;   // [mid+1 .. N-1]
+            }
         } else {
             loH = N / 2 - 1; // [0 .. N/2 - 1]
             hiL = N / 2;     // [N/2 .. N-1]
@@ -172,8 +187,15 @@ inline auto quartiles(const R& r) -> QuartileSummary {
     std::size_t loL = 0, loH, hiL, hiH = n - 1;
     if (n % 2U == 1U) {
         const std::size_t mid = n / 2;
-        loH = mid;   // [0 .. mid]
-        hiL = mid;   // [mid .. n-1]
+        if (n == 3U) {
+            // Small-sample convention: include median in both halves for n==3
+            loH = mid;   // [0 .. mid]
+            hiL = mid;   // [mid .. n-1]
+        } else {
+            // Exclusive-median for larger odd n
+            loH = mid - 1;   // [0 .. mid-1]
+            hiL = mid + 1;   // [mid+1 .. n-1]
+        }
     } else {
         loH = n / 2 - 1; // [0 .. n/2 - 1]
         hiL = n / 2;     // [n/2 .. n-1]

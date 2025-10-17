@@ -8,10 +8,12 @@
 /// - Header location: this file is intended to be installed/used from the project's
 ///   `include/` directory. When building, add the repository root `include` folder to
 ///   your compiler's include path and then `#include "statistics.hpp"`.
-/// - Quartile convention: this library computes quartiles using the Tukey hinge style
-///   (the median is included in the halves). For small sample sizes a few special
-///   cases are handled to match common statistical textbook examples (see
-///   `sortedQuartiles` implementation and the unit tests under `test/test_statistics.cpp`).
+/// - Quartile convention: this library computes quartiles using the Tukey hinge style.
+///   By default the implementation uses the exclusive-median variant (the median element
+///   is excluded from both lower and upper halves when computing Q1 and Q3). For a
+///   very small sample (size == 3) a small-sample special-case is applied and the
+///   median is included in both halves to match common textbook examples. See
+///   `quartiles.hpp` and the unit tests under `test/test_statistics.cpp` for details.
 /// - Summary output: `summary(range)` returns min, Q1, median, mean, Q3 and max; mean
 ///   is computed with `average(range)` which returns 0 on empty ranges.
 ///
@@ -199,11 +201,11 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
         return std::unexpected(std::format("not enough data points: n={}", sizeX));
     }
 
-    const auto sigma_x  = sum(range_x);
-    const auto sigma_y  = sum(range_y);
+    const auto sigma_x  = num::sum(range_x);
+    const auto sigma_y  = num::sum(range_y);
     const auto sigma_x2 = sumSquared(range_x);
     const auto sigma_y2 = sumSquared(range_y);
-    const auto sigma_xy = sumProduct(range_x, range_y);
+    const auto sigma_xy = num::sumProduct(range_x, range_y);
     if (not sigma_xy)
     {
         return sigma_xy;
