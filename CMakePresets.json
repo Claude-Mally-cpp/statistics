@@ -156,6 +156,23 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
+    },
+    {
+      "name": "local-msvc-debug",
+      "displayName": "Local MSVC Debug (build/Debug)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/Debug",
+      "installDir": "${sourceDir}/build/install/Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "local-msvc-debug",
+      "configurePreset": "local-msvc-debug"
     }
   ]
 }

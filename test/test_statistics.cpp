@@ -3,11 +3,13 @@
 #include "statistics.hpp"
 #include "print_compat.hpp"
 
+using namespace mally::statlib;
+
 // Test correlation between returnsA and returnsB
 TEST(StatisticsTest, Correlation_AB) {
     const std::array<double, 3> returnsA = {0.07, 0.09, 0.10};
     const std::array<double, 3> returnsB = {0.085, 0.07, 0.095};
-    auto result = mally::statlib::correlationCoefficient(returnsA, returnsB);
+    auto result = correlationCoefficient(returnsA, returnsB);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
     // Use fixed expected value, update if implementation changes
     auto expected = 0.21677749238102959L;
@@ -20,7 +22,7 @@ TEST(StatisticsTest, Correlation_AB) {
 TEST(StatisticsTest, Correlation_AC) {
     const auto returnsA = std::array<double, 3>{0.07, 0.09, 0.10};
     const auto returnsC = std::array<double, 3>{0.12, 0.11, 0.10};
-    auto result = mally::statlib::correlationCoefficient(returnsA, returnsC);
+    auto result = correlationCoefficient(returnsA, returnsC);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
     auto expected = -0.9819805060619121L;
     const auto tolerance = 1e-10;
@@ -31,7 +33,7 @@ TEST(StatisticsTest, Correlation_AC) {
 TEST(StatisticsTest, Correlation_BC) {
     const auto returnsB = std::array{0.085, 0.07, 0.095};
     const auto returnsC = std::array{0.12, 0.11, 0.10};
-    auto result = mally::statlib::correlationCoefficient(returnsB, returnsC);
+    auto result = correlationCoefficient(returnsB, returnsC);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
     auto expected = -0.39735970711947155L;
     const auto tolerance = 1e-10;
@@ -42,7 +44,7 @@ TEST(StatisticsTest, Correlation_BC) {
 TEST(StatisticsTest, Covariance_TitresX_Marche) {
     constexpr auto returnsX = std::array{-0.10, -0.05, 0.00, 0.08, 0.14, 0.20, 0.25};
     constexpr auto marketReturns = std::array{-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
-    auto result = mally::statlib::covariance(returnsX, marketReturns);
+    auto result = covariance(returnsX, marketReturns);
     ASSERT_TRUE(result.has_value());
     auto expected = 0.022571428571428576L;
     const auto tolerance = 1e-10;
@@ -60,7 +62,7 @@ TEST(StatisticsTest, Correlation_Profits_Employers) {
         std::array{7523, 8200, 12068, 9500, 5000, 18000, 4708, 13740, 95000, 8200,
                    56000, 31404, 8578, 2900, 9100, 10200, 9548, 82300, 28334, 40929,
                    50816, 54100, 28200, 83100, 3418, 34400, 42100, 8527, 21300, 20100};
-    auto result = mally::statlib::correlationCoefficient(profits, employers);
+    auto result = correlationCoefficient(profits, employers);
     ASSERT_TRUE(result.has_value());
     const auto expected = 0.05881462738716168;
     const auto tolerance = 1e-10;
@@ -71,7 +73,7 @@ TEST(StatisticsTest, Correlation_Profits_Employers) {
 // Test product of productTest
 TEST(StatisticsTest, Product_Simple) {
     constexpr auto productTest = std::array{1, 2, 3, 4, 5};
-    auto result = mally::statlib::product(productTest);
+    auto result = product(productTest);
     EXPECT_EQ(result, 120);
     // Alternative: test with zeros, negatives, or large numbers
 }
@@ -79,7 +81,7 @@ TEST(StatisticsTest, Product_Simple) {
 // Test product of insectCount
 TEST(StatisticsTest, Product_InsectCount) {
     constexpr auto insectCount = std::array{10, 1, 1000, 1, 10};
-    auto result = mally::statlib::product(insectCount);
+    auto result = product(insectCount);
     EXPECT_EQ(result, 100000);
 #   if 0
     // To test warnings
@@ -87,4 +89,192 @@ TEST(StatisticsTest, Product_InsectCount) {
     int dangerousConversion = testFloatConversion;
     std::println("float to int conversion: {} -> {}", testFloatConversion, dangerousConversion);
 #   endif
+}
+
+//
+// ---- Median tests ----
+//
+
+// Test median of sorted evenData
+TEST(StatisticsTest, Median_EvenData_Sorted) {
+    constexpr std::array<mally::statlib::HighPrecisionFloat, 6> evenData = {1, 2, 3, 4, 5, 6};
+    auto result = median(evenData);
+    EXPECT_EQ(result, 3.5L);
+}
+
+// Test median of sorted oddData
+TEST(StatisticsTest, Median_OddData_Sorted) {
+    constexpr std::array<mally::statlib::HighPrecisionFloat, 5> oddData = {1, 2, 3, 4, 5};
+    auto result = median(oddData);
+    EXPECT_EQ(result, 3.0L);
+}
+
+// Test median of unsorted data
+TEST(StatisticsTest, Median_UnsortedData) {
+    const auto unsortedData = std::array{3, 1, 4, 2, 5};
+    auto result = median(unsortedData);
+    EXPECT_EQ(result, 3.0L);
+}
+
+// Test median of empty data
+TEST(StatisticsTest, Median_EmptyData) {
+    const std::array<int, 0> emptyData = {};
+    auto result = median(emptyData);
+    EXPECT_EQ(result, 0.0L);
+}
+
+// Test median single element
+TEST(StatisticsTest, Median_SingleElement) {
+    const auto single = std::array{42};
+    auto result = median(single);
+    EXPECT_EQ(result, 42.0L);
+}
+
+//
+// ---- Quartiles tests ----
+//
+
+// Basic quartile test for odd count
+TEST(StatisticsTest, Quartiles_OddData) {
+    const std::array data{1, 2, 3, 4, 5};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 1.5L);
+    EXPECT_EQ(q.median, 3.0L);
+    EXPECT_EQ(q.q3, 4.5L);
+}
+
+// Basic quartile test for even count
+TEST(StatisticsTest, Quartiles_EvenData) {
+    const std::array data{1, 2, 3, 4, 5, 6};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 2.0L);
+    EXPECT_EQ(q.median, 3.5L);
+    EXPECT_EQ(q.q3, 5.0L);
+}
+
+// Quartiles with unsorted input (should handle sorting internally)
+TEST(StatisticsTest, Quartiles_UnsortedData) {
+    const std::array data{6, 1, 4, 2, 5, 3};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 2.0L);
+    EXPECT_EQ(q.median, 3.5L);
+    EXPECT_EQ(q.q3, 5.0L);
+}
+
+// Quartiles with empty range
+TEST(StatisticsTest, Quartiles_EmptyData) {
+    const std::array<double, 0> data{};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 0.0L);
+    EXPECT_EQ(q.median, 0.0L);
+    EXPECT_EQ(q.q3, 0.0L);
+}
+
+//
+// ---- Summary tests ----
+//
+
+// Summary statistics on small dataset
+TEST(StatisticsTest, Summary_Basic) {
+    const std::array data{12.3, 9e4, -0.6666};
+    auto s = summary(data);
+
+    EXPECT_NEAR(static_cast<double>(s.min), -0.6666, 1e-9);
+    EXPECT_NEAR(static_cast<double>(s.q1), 5.8167, 1e-3);
+    EXPECT_NEAR(static_cast<double>(s.median), 12.3, 1e-9);
+    EXPECT_NEAR(static_cast<double>(s.mean), 30003.8778, 1e-3);
+    EXPECT_NEAR(static_cast<double>(s.q3), 45006.15, 1e-2);
+    EXPECT_NEAR(static_cast<double>(s.max), 90000.0, 1e-9);
+}
+
+// Empty dataset summary
+TEST(StatisticsTest, Summary_Empty) {
+    const std::array<long, 0> data{};
+    auto s = summary(data);
+    EXPECT_EQ(s.min, 0.0L);
+    EXPECT_EQ(s.q1, 0.0L);
+    EXPECT_EQ(s.median, 0.0L);
+    EXPECT_EQ(s.mean, 0.0L);
+    EXPECT_EQ(s.q3, 0.0L);
+    EXPECT_EQ(s.max, 0.0L);
+}
+
+// Summary consistency: quartiles() vs summary()
+TEST(StatisticsTest, Summary_QuartileConsistency) {
+    const std::array data{1, 2, 3, 4, 5, 6};
+    auto q = quartiles(data);
+    auto s = summary(data);
+
+    EXPECT_EQ(q.q1, s.q1);
+    EXPECT_EQ(q.median, s.median);
+    EXPECT_EQ(q.q3, s.q3);
+}
+
+// Additional tests: textbook examples and varied lengths
+// 1..9 (odd count)
+TEST(StatisticsTest, Quartiles_1to9) {
+    const std::array data{1,2,3,4,5,6,7,8,9};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 2.5L);
+    EXPECT_EQ(q.median, 5.0L);
+    EXPECT_EQ(q.q3, 7.5L);
+}
+
+// 1..8 (even count)
+TEST(StatisticsTest, Quartiles_1to8) {
+    const std::array data{1,2,3,4,5,6,7,8};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 2.5L);
+    EXPECT_EQ(q.median, 4.5L);
+    EXPECT_EQ(q.q3, 6.5L);
+}
+
+// Two element range
+TEST(StatisticsTest, Quartiles_TwoElements) {
+    const std::array data{10,20};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 10.0L);
+    EXPECT_EQ(q.median, 15.0L);
+    EXPECT_EQ(q.q3, 20.0L);
+}
+
+// Duplicate values
+TEST(StatisticsTest, Quartiles_Duplicates) {
+    const std::array data{5,5,5,5,5,5,5};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 5.0L);
+    EXPECT_EQ(q.median, 5.0L);
+    EXPECT_EQ(q.q3, 5.0L);
+}
+
+// Small textbook case: 3 elements
+TEST(StatisticsTest, Quartiles_ThreeElements) {
+    const std::array data{1,3,5};
+    auto q = quartiles(data);
+    EXPECT_EQ(q.q1, 2.0L);
+    EXPECT_EQ(q.median, 3.0L);
+    EXPECT_EQ(q.q3, 4.0L);
+}
+
+// Summary checks for varied inputs
+TEST(StatisticsTest, Summary_Textbook) {
+    const std::array data{6,7,15,36,39,40,41}; // classic example
+    auto s = summary(data);
+    EXPECT_EQ(s.min, 6.0L);
+    EXPECT_EQ(s.q1, 7.0L);
+    EXPECT_EQ(s.median, 36.0L);
+    EXPECT_NEAR(static_cast<double>(s.mean), 26.285714285714285, 1e-9);
+    EXPECT_EQ(s.q3, 40.0L);
+    EXPECT_EQ(s.max, 41.0L);
+}
+
+TEST(StatisticsTest, Summary_EvenCount) {
+    const std::array data{1,2,3,4,5,6,7,8};
+    auto s = summary(data);
+    EXPECT_EQ(s.min, 1.0L);
+    EXPECT_EQ(s.q1, 2.5L);
+    EXPECT_EQ(s.median, 4.5L);
+    EXPECT_NEAR(static_cast<double>(s.mean), 4.5, 1e-12);
+    EXPECT_EQ(s.q3, 6.5L);
+    EXPECT_EQ(s.max, 8.0L);
 }
