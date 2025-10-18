@@ -3,7 +3,6 @@
 #include "statistics.hpp"
 #include <gtest/gtest.h>
 
-
 using namespace mally::statlib;
 
 // Test correlation between returnsA and returnsB

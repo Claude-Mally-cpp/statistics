@@ -6,7 +6,6 @@
 #include <string>
 #include <type_traits>
 
-
 namespace mally::statlib
 {
 

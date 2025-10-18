@@ -36,7 +36,6 @@
 #include <ranges>
 #include <type_traits>
 
-
 namespace mally::statlib
 {
 
