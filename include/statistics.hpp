@@ -28,15 +28,17 @@
 #include "numeric.hpp"
 #include "quartiles.hpp"
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <format>
 #include <numeric>
 #include <ranges>
 #include <type_traits>
 
-namespace mally::statlib {
+
+namespace mally::statlib
+{
 
 /// @brief Enable verbose debugging output to stderr (for development).
 /// @note Disabled by default; enable manually when needed.
@@ -45,32 +47,37 @@ inline constexpr bool verboseDebugging = false;
 using num::NumberRange;
 
 /// @brief Summary of basic descriptive statistics.
-struct SummaryStats {
-    std::size_t        count{};   ///< @brief Number of elements.
-    HighPrecisionFloat min{};     ///< @brief Minimum value.
-    HighPrecisionFloat q1{};      ///< @brief First quartile (Tukey lower hinge).
-    HighPrecisionFloat median{};  ///< @brief Median.
-    HighPrecisionFloat mean{};    ///< @brief Arithmetic mean.
-    HighPrecisionFloat q3{};      ///< @brief Third quartile (Tukey upper hinge).
-    HighPrecisionFloat max{};      ///< @brief Maximum value.
+struct SummaryStats
+{
+    std::size_t        count{};  ///< @brief Number of elements.
+    HighPrecisionFloat min{};    ///< @brief Minimum value.
+    HighPrecisionFloat q1{};     ///< @brief First quartile (Tukey lower hinge).
+    HighPrecisionFloat median{}; ///< @brief Median.
+    HighPrecisionFloat mean{};   ///< @brief Arithmetic mean.
+    HighPrecisionFloat q3{};     ///< @brief Third quartile (Tukey upper hinge).
+    HighPrecisionFloat max{};    ///< @brief Maximum value.
 };
 
 /// @brief Summary for an std::array without allocations.
 /// @tparam T arithmetic or HighPrecisionFloat.
 /// @note Converts to HPF, sorts a local array, reuses quartilesSorted().
 template <class T, std::size_t N>
-    requires (std::is_arithmetic_v<std::remove_cvref_t<T>> ||
-              std::is_same_v<std::remove_cvref_t<T>, HighPrecisionFloat>)
-constexpr auto summary(const std::array<T, N>& data) -> SummaryStats {
+    requires(std::is_arithmetic_v<std::remove_cvref_t<T>> || std::is_same_v<std::remove_cvref_t<T>, HighPrecisionFloat>)
+constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
+{
     SummaryStats out{};
     out.count = N;
 
-    if constexpr (N == 0) {
+    if constexpr (N == 0)
+    {
         return out;
-    } else {
+    }
+    else
+    {
         // Materialize as HPF and sort
         std::array<HighPrecisionFloat, N> hp{};
-        for (std::size_t i = 0; i < N; ++i) hp[i] = toHPF(data[i]);
+        for (std::size_t i = 0; i < N; ++i)
+            hp[i] = toHPF(data[i]);
         std::ranges::sort(hp);
 
         // Min/Max from sorted array
@@ -79,9 +86,9 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats {
 
         // Quartiles from sorted array
         const auto qs = quartilesSorted(hp);
-        out.q1     = qs.q1;
-        out.median = qs.median;
-        out.q3     = qs.q3;
+        out.q1        = qs.q1;
+        out.median    = qs.median;
+        out.q3        = qs.q3;
 
         // Mean (use numeric helper on the original array to avoid re-summing hp)
         out.mean = num::average(data);
@@ -94,10 +101,12 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats {
 /// @note Requires input_range; min/max needs forward iteration (met by std::vector).
 template <class R>
     requires num::NumberRange<R>
-constexpr auto summary(const R& range) -> SummaryStats {
+constexpr auto summary(const R& range) -> SummaryStats
+{
     SummaryStats out{};
 
-    if (std::ranges::empty(range)) {
+    if (std::ranges::empty(range))
+    {
         return out;
     }
 
@@ -105,15 +114,15 @@ constexpr auto summary(const R& range) -> SummaryStats {
 
     // Min/Max & Mean via helpers (HPF-safe)
     auto [minVal, maxVal] = num::minMaxValue(range);
-    out.min  = minVal;
-    out.max  = maxVal;
-    out.mean = num::average(range);
+    out.min               = minVal;
+    out.max               = maxVal;
+    out.mean              = num::average(range);
 
     // Quartiles via adapter (materializes to vector<HPF> internally)
     const auto qs = quartiles(range);
-    out.q1     = qs.q1;
-    out.median = qs.median;
-    out.q3     = qs.q3;
+    out.q1        = qs.q1;
+    out.median    = qs.median;
+    out.q3        = qs.q3;
 
     return out;
 }
@@ -282,25 +291,32 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
 } // namespace mally::statlib
 
 /// @brief Formatter for SummaryStats reusing one numeric spec for all values.
-template <>
-struct std::formatter<mally::statlib::SummaryStats, char> {
+template <> struct std::formatter<mally::statlib::SummaryStats, char>
+{
     std::formatter<mally::statlib::HighPrecisionFloat, char> num_{};
 
     /// @brief Parse user’s numeric spec (e.g. ".3f", ">12.6e").
-    constexpr auto parse(std::format_parse_context& ctx) {
+    constexpr auto parse(std::format_parse_context& ctx)
+    {
         return num_.parse(ctx);
     }
 
     /// @brief Format as: n=… min=… q1=… median=… mean=… q3=… max=…
-    template <class FormatContext>
-    auto format(const mally::statlib::SummaryStats& s, FormatContext& ctx) const {
+    template <class FormatContext> auto format(const mally::statlib::SummaryStats& s, FormatContext& ctx) const
+    {
         using std::format_to;
-        format_to(ctx.out(), "n={} min=", s.count); num_.format(s.min,    ctx);
-        format_to(ctx.out(), " q1=");               num_.format(s.q1,     ctx);
-        format_to(ctx.out(), " median=");           num_.format(s.median, ctx);
-        format_to(ctx.out(), " mean=");             num_.format(s.mean,   ctx);
-        format_to(ctx.out(), " q3=");               num_.format(s.q3,     ctx);
-        format_to(ctx.out(), " max=");              num_.format(s.max,    ctx);
+        format_to(ctx.out(), "n={} min=", s.count);
+        num_.format(s.min, ctx);
+        format_to(ctx.out(), " q1=");
+        num_.format(s.q1, ctx);
+        format_to(ctx.out(), " median=");
+        num_.format(s.median, ctx);
+        format_to(ctx.out(), " mean=");
+        num_.format(s.mean, ctx);
+        format_to(ctx.out(), " q3=");
+        num_.format(s.q3, ctx);
+        format_to(ctx.out(), " max=");
+        num_.format(s.max, ctx);
         return ctx.out();
     }
 };
