@@ -19,3 +19,8 @@ if ! printf '%s\0' "${FILES[@]}" | xargs -0 clang-format --dry-run --Werror >/de
 fi
 
 echo "✅ Formatting looks good."
+
+# ---- clang-tidy (warning-only) ----
+if [ -x ./tidy-staged.sh ]; then
+  ENFORCE=0 ./tidy-staged.sh || true
+fi
