@@ -188,8 +188,7 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> Hi
 
     if constexpr (verboseDebugging)
     {
-        std::println("rawDeviationDenominatorPart: n={} sum={} sumSquared={} radicand={}", n, sum, sumSquared,
-                     radicand);
+        println("rawDeviationDenominatorPart: n={} sum={} sumSquared={} radicand={}", n, sum, sumSquared, radicand);
     }
 
     return std::sqrt(radicand);
@@ -224,7 +223,7 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
     const auto numerator = toHPF(n) * *sigma_xy - sigma_x * sigma_y;
     if constexpr (verboseDebugging)
     {
-        std::println("n={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", n, sigma_x, sigma_y, *sigma_xy, numerator);
+        println("n={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", n, sigma_x, sigma_y, *sigma_xy, numerator);
     }
 
     const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(n));
@@ -247,9 +246,9 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
 
     if constexpr (verboseDebugging)
     {
-        std::println("coefficientCorrelation: n={} sigma_x={} sigma_y={} sigma_xy={} numerator={} denominator_x={} "
-                     "denominator_y={} denominator={}",
-                     n, sigma_x, sigma_y, *sigma_xy, numerator, *denominator_x, *denominator_y, denominator);
+        println("coefficientCorrelation: n={} sigma_x={} sigma_y={} sigma_xy={} numerator={} denominator_x={} "
+                "denominator_y={} denominator={}",
+                n, sigma_x, sigma_y, *sigma_xy, numerator, *denominator_x, *denominator_y, denominator);
     }
 
     return numerator / denominator;

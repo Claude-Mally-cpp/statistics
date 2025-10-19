@@ -95,10 +95,10 @@ TEST(StatisticsTest, Product_InsectCount)
     auto           result      = product(insectCount);
     EXPECT_EQ(result, 100000);
 #if 0
-    // To test warnings
+    // To testcppcheck warnings
     const auto testFloatConversion = 42.0000000042;
     int dangerousConversion = testFloatConversion;
-    std::println("float to int conversion: {} -> {}", testFloatConversion, dangerousConversion);
+    println("float to int conversion: {} -> {}", testFloatConversion, dangerousConversion);
 #endif
 }
 

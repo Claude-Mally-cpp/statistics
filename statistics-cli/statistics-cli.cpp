@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "print_compat.hpp"
+
 int main(int argc, char** argv)
 {
     CLI::App app{"Hobby Statistics CLI"};
@@ -23,7 +25,7 @@ int main(int argc, char** argv)
     if (summary->parsed())
     {
         auto summaryData = mally::statlib::summary(data);
-        std::println("Computed summary: {}", summaryData);
+        println("Computed summary: {}", summaryData);
     }
 
     return 0;
