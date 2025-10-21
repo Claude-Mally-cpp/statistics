@@ -27,6 +27,7 @@
 #include "HighPrecisionFloat.hpp"
 #include "numeric.hpp"
 #include "quartiles.hpp"
+#include "summaryStats.hpp"
 
 #include <algorithm>
 #include <array>
@@ -44,18 +45,6 @@ namespace mally::statlib
 inline constexpr bool verboseDebugging = false;
 
 using num::NumberRange;
-
-/// @brief Summary of basic descriptive statistics.
-struct SummaryStats
-{
-    std::size_t        count{};  ///< @brief Number of elements.
-    HighPrecisionFloat min{};    ///< @brief Minimum value.
-    HighPrecisionFloat q1{};     ///< @brief First quartile (Tukey lower hinge).
-    HighPrecisionFloat median{}; ///< @brief Median.
-    HighPrecisionFloat mean{};   ///< @brief Arithmetic mean.
-    HighPrecisionFloat q3{};     ///< @brief Third quartile (Tukey upper hinge).
-    HighPrecisionFloat max{};    ///< @brief Maximum value.
-};
 
 /// @brief Summary for an std::array without allocations.
 /// @tparam T arithmetic or HighPrecisionFloat.
@@ -287,34 +276,3 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
     return numerator / denominator;
 }
 } // namespace mally::statlib
-
-/// @brief Formatter for SummaryStats reusing one numeric spec for all values.
-template <> struct std::formatter<mally::statlib::SummaryStats, char>
-{
-    std::formatter<mally::statlib::HighPrecisionFloat, char> num_{};
-
-    /// @brief Parse user’s numeric spec (e.g. ".3f", ">12.6e").
-    constexpr auto parse(std::format_parse_context& ctx)
-    {
-        return num_.parse(ctx);
-    }
-
-    /// @brief Format as: n=… min=… q1=… median=… mean=… q3=… max=…
-    template <class FormatContext> auto format(const mally::statlib::SummaryStats& s, FormatContext& ctx) const
-    {
-        using std::format_to;
-        format_to(ctx.out(), "n={} min=", s.count);
-        num_.format(s.min, ctx);
-        format_to(ctx.out(), " q1=");
-        num_.format(s.q1, ctx);
-        format_to(ctx.out(), " median=");
-        num_.format(s.median, ctx);
-        format_to(ctx.out(), " mean=");
-        num_.format(s.mean, ctx);
-        format_to(ctx.out(), " q3=");
-        num_.format(s.q3, ctx);
-        format_to(ctx.out(), " max=");
-        num_.format(s.max, ctx);
-        return ctx.out();
-    }
-};
