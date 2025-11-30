@@ -20,7 +20,6 @@
 #endif
 #endif
 
-// std::print/println (C++23) is detected by __cpp_lib_print
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L)
 #define STAT_HAS_STD_PRINT 1
 #else
@@ -36,8 +35,16 @@
 #endif
 
 // Always include fmt as the fallback backend
+// Suppress GCC 15 false positive: tautological-compare in fmt/ranges.h template metaprogramming
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtautological-compare"
+#endif
 #include <fmt/core.h>
 #include <fmt/ranges.h>
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 namespace mally::statlib
 {
