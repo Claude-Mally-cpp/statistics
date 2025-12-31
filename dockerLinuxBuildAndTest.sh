@@ -116,14 +116,6 @@ run_build_and_test() {
   else
     run_and_report "${compiler^} ${buildType^} Cppcheck" \
       "${DOCKER[@]}" bash -lc '
-        # debug helper
-        if [ "${DEBUG:-0}" -eq 1 ]; then
-          echo "Mount info:"
-          mount | grep " /project " || true
-          echo "HEAD: $(git -C /project rev-parse --short HEAD 2>/dev/null || echo n/a)"
-          echo "test/test_statistics.cpp (60-70):"
-          sed -n "60,70p" test/test_statistics.cpp || true
-        fi
         set -e
         BUILD_DIR="'"$buildDir"'"
 
@@ -131,77 +123,22 @@ run_build_and_test() {
           echo "cppcheck not found in image"; exit 1
         fi
 
+        # Use compile_commands.json if available; fall back to dir scan
         if [[ -f "$BUILD_DIR/compile_commands.json" ]]; then
-          if command -v jq >/dev/null 2>&1; then
-            [ "${DEBUG:-0}" -eq 1 ] && echo "Using filtered compile_commands.json"
-            jq '"'"'[ .[] | select(.file | test("^(?:/project/)?(include|test)/")) ]'"'"' \
-              "$BUILD_DIR/compile_commands.json" > "$BUILD_DIR/compile_commands.local.json"
-
-            COUNT="$(jq -r "length" "$BUILD_DIR/compile_commands.local.json")"
-            [ "${DEBUG:-0}" -eq 1 ] && echo "Filtered compile DB entries: $COUNT"
-            XML="$BUILD_DIR/cppcheck.xml"
-
-            if [ "$COUNT" -eq 0 ]; then
-              [ "${DEBUG:-0}" -eq 1 ] && echo "Filtered DB empty; falling back to dir scan"
-              set +e
-              cppcheck include test -I include --language=c++ --std=c++20 \
-                --enable=warning,style,performance,portability,information,missingInclude \
-                --inline-suppr --suppress=missingIncludeSystem \
-                --quiet --xml --xml-version=2 2> "$XML"
-              rc=$?; set -e
-              [ "${DEBUG:-0}" -eq 1 ] && echo "cppcheck rc (fallback dir scan): $rc"
-            else
-              set +e
-              cppcheck \
-                --project="$BUILD_DIR/compile_commands.local.json" \
-                --enable=warning,style,performance,portability,information,missingInclude \
-                --inline-suppr --std=c++20 \
-                --suppress=missingIncludeSystem \
-                --quiet --xml --xml-version=2 2> "$XML"
-              rc=$?; set -e
-              [ "${DEBUG:-0}" -eq 1 ] && echo "cppcheck rc (project mode): $rc"
-            fi
-
-            if grep -q '\''severity="error"'\'' "$XML"; then
-              echo "cppcheck: found severity=error issues"; exit 2
-            else
-              exit 0
-            fi
-          else
-            [ "${DEBUG:-0}" -eq 1 ] && echo "jq not found; using full compile_commands.json"
-            XML="$BUILD_DIR/cppcheck.xml"
-            set +e
-            cppcheck \
-              --project="$BUILD_DIR/compile_commands.json" \
-              --enable=warning,style,performance,portability,information,missingInclude \
-              --inline-suppr --std=c++20 \
-              --suppress=missingIncludeSystem \
-              --quiet --xml --xml-version=2 2> "$XML"
-            rc=$?; set -e
-            [ "${DEBUG:-0}" -eq 1 ] && echo "cppcheck rc (unfiltered project): $rc"
-            if grep -q '\''severity="error"'\'' "$XML"; then
-              echo "cppcheck: found severity=error issues (unfiltered project)"; exit 2
-            else
-              exit 0
-            fi
-          fi
-        else
-          [ "${DEBUG:-0}" -eq 1 ] && echo "No compile_commands.json; scanning source dirs"
-          XML="$BUILD_DIR/cppcheck.xml"
           set +e
-          cppcheck include source test -I include --language=c++ --std=c++20 \
-            --suppress="*:*/_deps/*" --suppress="*:*/third_party/*" --suppress="*:*/external/*" \
+          cppcheck --project="$BUILD_DIR/compile_commands.json" \
             --enable=warning,style,performance,portability,information,missingInclude \
-            --inline-suppr --suppress=missingIncludeSystem \
-            --quiet --xml --xml-version=2 2> "$XML"
+            --inline-suppr --std=c++20 --suppress=missingIncludeSystem --quiet
           rc=$?; set -e
-          [ "${DEBUG:-0}" -eq 1 ] && echo "cppcheck rc (no project, dir scan): $rc"
-          if grep -q '\''severity="error"'\'' "$XML"; then
-            echo "cppcheck: found severity=error issues (no project, dir scan)"; exit 2
-          else
-            exit 0
-          fi
+        else
+          set +e
+          cppcheck include test -I include --language=c++ --std=c++20 \
+            --enable=warning,style,performance,portability,information,missingInclude \
+            --inline-suppr --suppress=missingIncludeSystem --quiet
+          rc=$?; set -e
         fi
+
+        [ $rc -ne 0 ] && exit $rc || exit 0
       '
   fi
 

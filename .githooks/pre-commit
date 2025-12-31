@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Collect staged C/C++ files
+mapfile -d '' FILES < <(git diff --cached --name-only -z --diff-filter=ACMR | \
+  grep -zE '\.(c|cc|cxx|cpp|h|hh|hpp|hxx)$' || true)
+
+# Skip if nothing relevant is staged
+if (( ${#FILES[@]} == 0 )); then
+  exit 0
+fi
+
+echo "Running clang-format check on staged files..."
+if ! printf '%s\0' "${FILES[@]}" | xargs -0 clang-format --dry-run --Werror >/dev/null; then
+  echo
+  echo "❌ Formatting required. Run: clang-format -i <files> (or ./auto-format.sh)"
+  echo "   Then re-stage and commit again."
+  exit 1
+fi
+
+echo "✅ Formatting looks good."
+
+# ---- clang-tidy (warning-only) ----
+if [ -x ./tidy-staged.sh ]; then
+  ENFORCE=0 ./tidy-staged.sh || true
+fi

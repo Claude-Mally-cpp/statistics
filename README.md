@@ -56,3 +56,63 @@ cppcheck ./include/* ./test/*
 ```
 
 Make sure `cppcheck` is available on the runner (for Windows use `choco install cppcheck -y`).
+
+## Enforcing Code Formatting Before Commit
+
+This project uses **clang-format** to ensure consistent code style.  
+You can install the formatting check as a local **Git pre-commit hook** so that
+any incorrectly formatted code is caught before you commit.
+
+### 1. Verify clang-format is installed
+On Windows (Git Bash, PowerShell, or CMD):
+```bash
+clang-format --version
+```
+
+If not found, install LLVM (https://github.com/llvm/llvm-project/releases
+) and
+select “Add LLVM to system PATH”.
+
+### 2. Enable the pre-commit hook
+
+Run once in the repository root:
+
+```bash
+mkdir -p .githooks
+git config core.hooksPath .githooks
+```
+
+### 3. Create .githooks/pre-commit
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Collect staged C/C++ files
+mapfile -d '' FILES < <(git diff --cached --name-only -z --diff-filter=ACMR | \
+  grep -zE '\.(c|cc|cxx|cpp|h|hh|hpp|hxx)$' || true)
+
+# Skip if nothing relevant is staged
+if (( ${#FILES[@]} == 0 )); then
+  exit 0
+fi
+
+echo "Running clang-format check on staged files..."
+if ! printf '%s\0' "${FILES[@]}" | xargs -0 clang-format --dry-run --Werror >/dev/null; then
+  echo
+  echo "❌ Formatting required. Run: clang-format -i <files> (or ./auto-format.sh)"
+  echo "   Then re-stage and commit again."
+  exit 1
+fi
+
+echo "✅ Formatting looks good."
+```
+
+### 4. Test it
+
+Edit any .cpp or .hpp file to break formatting and try:
+
+```bash
+git add .
+git commit -m "test hook"
+```

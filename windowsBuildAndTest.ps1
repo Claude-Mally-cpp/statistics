@@ -26,10 +26,10 @@ function RunStep {
     }
 }
 
-RunStep "Release Configure" { cmake -S . -B build -DCMAKE_BUILD_TYPE=Release }
-RunStep "Release Build" { cmake --build build --config Release }
-RunStep "Release Test" { .\build\Release\statistics_test.exe }
+RunStep "Release Configure" { cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release }
+RunStep "Release Build" { cmake --build build-release --config Release }
+RunStep "Release Test" { .\build-release\Release\statistics_test.exe }
 
-RunStep "Debug Configure" { cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug }
-RunStep "Debug Build" { cmake --build build --config Debug }
-RunStep "Debug Test" { .\build\Debug\statistics_test.exe }
+RunStep "Debug Configure" { cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug }
+RunStep "Debug Build" { cmake --build build-debug --config Debug }
+RunStep "Debug Test" { .\build-debug\Debug\statistics_test.exe }
