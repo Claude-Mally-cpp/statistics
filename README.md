@@ -44,8 +44,8 @@ available. They are not set up for Windows.
 PRESET=linux-clang-release ./tidy-prepare.sh
 
 # dry run (report only)
-PRESET=linux-clang-release ./tidy-modernize.sh
+PRESET=linux-clang-release ./clang-tidy-run-checks.sh
 
 # apply fixes
-PRESET=linux-clang-release ./tidy-modernize.sh --fix
+PRESET=linux-clang-release ./clang-tidy-run-checks.sh --fix
 ```
