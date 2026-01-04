@@ -154,7 +154,7 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> Hi
     const auto sum_ld        = toHPF(sum);
     const auto sumSquared_ld = toHPF(sumSquared);
 
-    const auto radicand = n_ld * sumSquared_ld - sum_ld * sum_ld;
+    const auto radicand = (n_ld * sumSquared_ld) - (sum_ld * sum_ld);
     if (radicand < 0)
     {
         return std::unexpected(std::format("{} * {} - {}^2={}", n, sumSquared, sum, radicand));
@@ -195,7 +195,7 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
     }
 
     const auto n         = toHPF(range_x.size());
-    const auto numerator = toHPF(n) * *sigma_xy - sigma_x * sigma_y;
+    const auto numerator = (toHPF(n) * *sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
         println("n={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", n, sigma_x, sigma_y, *sigma_xy, numerator);
@@ -257,7 +257,7 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
         return sigma_xy;
     }
 
-    const auto numerator   = *sigma_xy - (sigma_x * sigma_y) / toHPF(n);
+    const auto numerator   = *sigma_xy - ((sigma_x * sigma_y) / toHPF(n));
     const auto denominator = toHPF(n - 1);
     return numerator / denominator;
 }

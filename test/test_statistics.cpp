@@ -39,7 +39,7 @@ TEST(StatisticsTest, Correlation_BC)
     const auto returnsC = std::array{0.12, 0.11, 0.10};
     auto       result   = mally::statlib::correlationCoefficient(returnsB, returnsC);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
-    auto       expected  = -0.39735970711947155L;
+    const auto expected  = -0.39735970711947155L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
         << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
@@ -52,7 +52,7 @@ TEST(StatisticsTest, Covariance_TitresX_Marche)
     constexpr auto marketReturns = std::array{-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
     auto           result        = mally::statlib::covariance(returnsX, marketReturns);
     ASSERT_TRUE(result.has_value());
-    auto       expected  = 0.022571428571428576L;
+    const auto expected  = 0.022571428571428576L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
         << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
