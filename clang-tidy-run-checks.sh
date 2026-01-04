@@ -51,7 +51,7 @@ done
 
 (( ${#FILES[@]} )) || exit 0
 
-CHECKS=${CHECKS:-"modernize-*,readability-*,bugprone-*,performance-*"}
+CHECKS=${CHECKS:-""}
 
 ROOT=${ROOT:-"$(pwd)"}
 if command -v cygpath >/dev/null 2>&1; then
@@ -77,7 +77,11 @@ for f in "${FILES[@]}"; do
   fi
 done
 
-echo "Running clang-tidy with checks: ${CHECKS}"
+if [ -n "$CHECKS" ]; then
+  echo "Running clang-tidy with checks: ${CHECKS}"
+else
+  echo "Running clang-tidy with checks from .clang-tidy"
+fi
 if [ "$APPLY_FIX" = "1" ]; then
   echo "Applying fixes..."
 fi
@@ -88,12 +92,17 @@ if command -v cygpath >/dev/null 2>&1; then
   USE_RUN_CLANG_TIDY=0
 fi
 
+CHECKS_ARGS=()
+if [ -n "$CHECKS" ]; then
+  CHECKS_ARGS+=("-checks=$CHECKS")
+fi
+
 if [ "$USE_RUN_CLANG_TIDY" = "1" ] && command -v run-clang-tidy >/dev/null 2>&1; then
   # run-clang-tidy accepts file paths as positional arguments.
   printf '%s\0' "${WIN_FILES[@]}" | \
-    xargs -0 run-clang-tidy -p "$DB" -checks="$CHECKS" -header-filter="$HEADER_FILTER" "${EXTRA_ARGS[@]}"
+    xargs -0 run-clang-tidy -p "$DB" "${CHECKS_ARGS[@]}" -header-filter="$HEADER_FILTER" "${EXTRA_ARGS[@]}"
 else
   for f in "${WIN_FILES[@]}"; do
-    clang-tidy "$f" -p "$DB" -checks="$CHECKS" -header-filter="$HEADER_FILTER" "${EXTRA_ARGS[@]}"
+    clang-tidy "$f" -p "$DB" "${CHECKS_ARGS[@]}" -header-filter="$HEADER_FILTER" "${EXTRA_ARGS[@]}"
   done
 fi

@@ -1,7 +1,7 @@
 // test_statistics.cpp
-#include "print_compat.hpp"
 #include "statistics.hpp"
 
+#include <array>
 #include <gtest/gtest.h>
 
 // Test correlation between returnsA and returnsB

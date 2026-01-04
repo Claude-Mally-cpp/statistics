@@ -1,10 +1,14 @@
 ---
 Checks: >
   -*,
+  cppcoreguidelines-*,
   modernize-*,
   readability-*,
   bugprone-*,
-  performance-*
+  performance-*,
+  portability-*,
+  -portability-avoid-pragma-once,
+  misc-*
 WarningsAsErrors: ''
 HeaderFilterRegex: '^(include|test)/'
 ---
