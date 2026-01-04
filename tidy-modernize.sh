@@ -27,18 +27,39 @@ if [ $# -gt 0 ]; then
   exit 2
 fi
 
-DB=${DB:-"out/build/msvc-x64-debug"}
+PRESET=${PRESET:-linux-clang-release}
+DB=${DB:-"out/build/${PRESET}"}
 if [ ! -f "$DB/compile_commands.json" ]; then
   echo "No compile_commands.json. Run: ./tidy-prepare.sh"
   exit 0
 fi
 
-mapfile -d '' FILES < <(git ls-files -z \
+PROJECT_DIRS=${PROJECT_DIRS:-"include test"}
+read -r -a DIRS <<< "$PROJECT_DIRS"
+
+mapfile -d '' ALL_FILES < <(git ls-files -z \
   '*.c' '*.cc' '*.cxx' '*.cpp' '*.h' '*.hh' '*.hxx' '*.hpp' || true)
+
+FILES=()
+for f in "${ALL_FILES[@]}"; do
+  for d in "${DIRS[@]}"; do
+    if [[ "$f" == "$d/"* ]]; then
+      FILES+=("$f")
+      break
+    fi
+  done
+done
 
 (( ${#FILES[@]} )) || exit 0
 
 CHECKS=${CHECKS:-"modernize-*"}
+
+ROOT=${ROOT:-"$(pwd)"}
+if command -v cygpath >/dev/null 2>&1; then
+  ROOT="$(cygpath -m "$ROOT")"
+fi
+dir_regex=$(IFS='|'; printf '%s' "${DIRS[*]}")
+HEADER_FILTER=${HEADER_FILTER:-"^${ROOT}/(${dir_regex})/"}
 
 EXTRA_ARGS=()
 if [ "$APPLY_FIX" = "1" ]; then
@@ -71,9 +92,9 @@ fi
 if [ "$USE_RUN_CLANG_TIDY" = "1" ] && command -v run-clang-tidy >/dev/null 2>&1; then
   # run-clang-tidy accepts file paths as positional arguments.
   printf '%s\0' "${WIN_FILES[@]}" | \
-    xargs -0 run-clang-tidy -p "$DB" -checks="$CHECKS" "${EXTRA_ARGS[@]}"
+    xargs -0 run-clang-tidy -p "$DB" -checks="$CHECKS" -header-filter="$HEADER_FILTER" "${EXTRA_ARGS[@]}"
 else
   for f in "${WIN_FILES[@]}"; do
-    clang-tidy "$f" -p "$DB" -checks="$CHECKS" "${EXTRA_ARGS[@]}"
+    clang-tidy "$f" -p "$DB" -checks="$CHECKS" -header-filter="$HEADER_FILTER" "${EXTRA_ARGS[@]}"
   done
 fi
