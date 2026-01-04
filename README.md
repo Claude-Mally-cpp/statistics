@@ -33,3 +33,19 @@ To buld and test on windows release and debug
 # verbose output
 ./windowsBuildAndTest.ps1 --verbose
 ```
+
+## Code Modernization (clang-tidy)
+
+The modernization scripts are intended for WSL or Linux where `clang-tidy` is
+available. They are not set up for Windows.
+
+```sh
+# configure to generate compile_commands.json
+PRESET=linux-clang-release ./tidy-prepare.sh
+
+# dry run (report only)
+PRESET=linux-clang-release ./tidy-modernize.sh
+
+# apply fixes
+PRESET=linux-clang-release ./tidy-modernize.sh --fix
+```
