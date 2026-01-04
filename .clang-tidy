@@ -3,7 +3,8 @@ Checks: >
   -*,
   modernize-*,
   readability-*,
-  bugprone-*
+  bugprone-*,
+  performance-*
 WarningsAsErrors: ''
 HeaderFilterRegex: '^(include|test)/'
 ---

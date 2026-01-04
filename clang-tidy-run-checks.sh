@@ -29,7 +29,7 @@ fi
 PRESET=${PRESET:-linux-clang-release}
 DB=${DB:-"out/build/${PRESET}"}
 if [ ! -f "$DB/compile_commands.json" ]; then
-  echo "No compile_commands.json. Run: ./tidy-prepare.sh"
+  echo "No compile_commands.json. Run: ./clang-tidy-prepare.sh"
   exit 0
 fi
 
@@ -51,7 +51,7 @@ done
 
 (( ${#FILES[@]} )) || exit 0
 
-CHECKS=${CHECKS:-"modernize-*,readability-*,bugprone-*"}
+CHECKS=${CHECKS:-"modernize-*,readability-*,bugprone-*,performance-*"}
 
 ROOT=${ROOT:-"$(pwd)"}
 if command -v cygpath >/dev/null 2>&1; then

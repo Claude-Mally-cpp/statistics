@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+#
+# Prepare a compile_commands.json for clang-tidy.
 set -euo pipefail
 
 PRESET=${PRESET:-linux-clang-release}
