@@ -83,7 +83,8 @@ constexpr auto average(const NumberRange auto& range) -> HighPrecisionFloat
 /// @return product of the range of numbers
 constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
 {
-    return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 1.0L,
+    const auto initial = 1.0L;
+    return std::accumulate(std::ranges::begin(range), std::ranges::end(range), initial,
                            [](HighPrecisionFloat acc, auto val) -> auto { return acc * toHPF(val); });
 }
 
@@ -109,8 +110,8 @@ constexpr auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloa
 constexpr auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
 {
     return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 0.0L,
-                           [](HighPrecisionFloat acc, auto val)
-                           -> auto {
+                           [](HighPrecisionFloat acc, auto val) -> auto
+                           {
                                const auto valueSquared = toHPF(val) * toHPF(val);
                                return acc + valueSquared;
                            });
@@ -133,9 +134,9 @@ constexpr auto sumProduct(const NumberRange auto& rangeX, const NumberRange auto
         return std::unexpected("rangeX is empty!");
     }
 
-    auto total =
-        std::transform_reduce(std::ranges::begin(rangeX), std::ranges::end(rangeX), std::ranges::begin(rangeY), 0.0L,
-                              std::plus<>{}, [](auto x, auto y) -> HighPrecisionFloat { return toHPF(x) * toHPF(y); });
+    auto total = std::transform_reduce(std::ranges::begin(rangeX), std::ranges::end(rangeX), std::ranges::begin(rangeY),
+                                       0.0L, std::plus<>{}, [](auto x_value, auto y_value) -> HighPrecisionFloat
+                                       { return toHPF(x_value) * toHPF(y_value); });
 
     return total;
 }
@@ -162,8 +163,7 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> Hi
 
     if constexpr (verboseDebugging)
     {
-        println("rawDeviationDenominatorPart: n={} sum={} sumSquared={} radicand={}", n, sum, sumSquared,
-                     radicand);
+        println("rawDeviationDenominatorPart: n={} sum={} sumSquared={} radicand={}", n, sum, sumSquared, radicand);
     }
 
     return std::sqrt(radicand);
@@ -194,20 +194,20 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
         return sigma_xy;
     }
 
-    const auto n         = toHPF(range_x.size());
-    const auto numerator = (toHPF(n) * *sigma_xy) - (sigma_x * sigma_y);
+    const auto count         = toHPF(range_x.size());
+    const auto numerator = (toHPF(count) * *sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
-        println("n={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", n, sigma_x, sigma_y, *sigma_xy, numerator);
+        println("n={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, *sigma_xy, numerator);
     }
 
-    const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(n));
+    const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(count));
     if (not denominator_x)
     {
         return denominator_x;
     }
 
-    const auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(n));
+    const auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(count));
     if (not denominator_y)
     {
         return denominator_y;
@@ -221,9 +221,9 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
 
     if constexpr (verboseDebugging)
     {
-        println("coefficientCorrelation: n={} sigma_x={} sigma_y={} sigma_xy={} numerator={} denominator_x={} "
-                     "denominator_y={} denominator={}",
-                     n, sigma_x, sigma_y, *sigma_xy, numerator, *denominator_x, *denominator_y, denominator);
+        println("coefficientCorrelation: count={} sigma_x={} sigma_y={} sigma_xy={} numerator={} denominator_x={} "
+                "denominator_y={} denominator={}",
+                count, sigma_x, sigma_y, *sigma_xy, numerator, *denominator_x, *denominator_y, denominator);
     }
 
     return numerator / denominator;
@@ -244,9 +244,10 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
     }
 
     const auto n = sizeX;
-    if (n < 2)
+    const auto minDataPoints = 2;
+    if (n < minDataPoints)
     {
-        return std::unexpected(std::format("not enough data points: n={}", n));
+        return std::unexpected(std::format("not enough data points: nminDataPoints={}", minDataPoints));
     }
 
     const auto sigma_x  = sum(range_x);
