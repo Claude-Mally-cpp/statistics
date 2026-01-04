@@ -1,0 +1,8 @@
+---
+Checks: >
+  -*,
+  modernize-*,
+  readability-*
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(include|test)/'
+---
