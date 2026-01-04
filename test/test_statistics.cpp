@@ -12,7 +12,7 @@ TEST(StatisticsTest, Correlation_AB)
     auto                        result   = mally::statlib::correlationCoefficient(returnsA, returnsB);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
     // Use fixed expected value, update if implementation changes
-    auto       expected  = 0.21677749238102959L;
+    const auto expected  = 0.21677749238102959L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
         << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
@@ -26,10 +26,10 @@ TEST(StatisticsTest, Correlation_AC)
     const auto returnsC = std::array<double, 3>{0.12, 0.11, 0.10};
     auto       result   = mally::statlib::correlationCoefficient(returnsA, returnsC);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
-    auto       expected  = -0.9819805060619121L;
+    const auto expected  = -0.9819805060619121L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
-        << "Expected " << -0.981980 << ", got " << *result << ". Check calculation or expected value.";
+        << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
 }
 
 // Test correlation between returnsB and returnsC
@@ -62,7 +62,7 @@ TEST(StatisticsTest, Covariance_TitresX_Marche)
 // Test correlation between profits and employers
 TEST(StatisticsTest, Correlation_Profits_Employers)
 {
-    const auto profits   = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
+    const auto profits = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
                                     118300, 119700, 153000, 252800, 333300, 412000, 424300, 454000,  829000,  86500,
                                     176000, 227400, 471300, 681100, 747000, 859800, 939500, 1082000, 1102200, 1495400};
     const auto employers = std::array{7523,  8200,  12068, 9500,  5000, 18000, 4708,  13740, 95000, 8200,

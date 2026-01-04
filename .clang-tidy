@@ -2,7 +2,8 @@
 Checks: >
   -*,
   modernize-*,
-  readability-*
+  readability-*,
+  bugprone-*
 WarningsAsErrors: ''
 HeaderFilterRegex: '^(include|test)/'
 ---

@@ -243,11 +243,11 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
         return std::unexpected(std::format("sizeX={} != sizeY={}", sizeX, sizeY));
     }
 
-    const auto n = sizeX;
+    const auto count = sizeX;
     const auto minDataPoints = 2;
-    if (n < minDataPoints)
+    if (count < minDataPoints)
     {
-        return std::unexpected(std::format("not enough data points: nminDataPoints={}", minDataPoints));
+        return std::unexpected(std::format("not enough data points={}: nminDataPoints={}", count, minDataPoints));
     }
 
     const auto sigma_x  = sum(range_x);
@@ -258,8 +258,8 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
         return sigma_xy;
     }
 
-    const auto numerator   = *sigma_xy - ((sigma_x * sigma_y) / toHPF(n));
-    const auto denominator = toHPF(n - 1);
+    const auto numerator   = *sigma_xy - ((sigma_x * sigma_y) / toHPF(count));
+    const auto denominator = toHPF(count - 1);
     return numerator / denominator;
 }
 } // namespace mally::statlib
