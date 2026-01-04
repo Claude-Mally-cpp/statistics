@@ -8,7 +8,10 @@ Checks: >
   performance-*,
   portability-*,
   -portability-avoid-pragma-once,
-  misc-*
+  misc-*,
+  cert-*,
+  clang-analyzer-*,
+  hicpp-*
 WarningsAsErrors: ''
 HeaderFilterRegex: '^(include|test)/'
 ---
