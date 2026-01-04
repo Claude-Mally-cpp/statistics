@@ -93,10 +93,4 @@ TEST(StatisticsTest, Product_InsectCount)
     constexpr auto insectCount = std::array{10, 1, 1000, 1, 10};
     auto           result      = mally::statlib::product(insectCount);
     EXPECT_EQ(result, 100000);
-#if 0
-    // To test warnings
-    const auto testFloatConversion = 42.0000000042;
-    int dangerousConversion = testFloatConversion;
-    std::println("float to int conversion: {} -> {}", testFloatConversion, dangerousConversion);
-#endif
 }
