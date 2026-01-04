@@ -57,7 +57,7 @@ const auto verboseDebugging = false;
 constexpr auto sum(const NumberRange auto& range) -> HighPrecisionFloat
 {
     return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 0.0L,
-                           [](HighPrecisionFloat acc, auto val) { return acc + toHPF(val); });
+                           [](HighPrecisionFloat acc, auto val) -> auto { return acc + toHPF(val); });
 }
 
 /// @brief compute the average of a range of numbers
@@ -84,7 +84,7 @@ constexpr auto average(const NumberRange auto& range) -> HighPrecisionFloat
 constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
 {
     return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 1.0L,
-                           [](HighPrecisionFloat acc, auto val) { return acc * toHPF(val); });
+                           [](HighPrecisionFloat acc, auto val) -> auto { return acc * toHPF(val); });
 }
 
 /// @brief compute the geometric mean of a range of numbers
@@ -110,7 +110,7 @@ constexpr auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
 {
     return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 0.0L,
                            [](HighPrecisionFloat acc, auto val)
-                           {
+                           -> auto {
                                const auto valueSquared = toHPF(val) * toHPF(val);
                                return acc + valueSquared;
                            });
