@@ -72,6 +72,15 @@ run_build_and_test() {
   run_and_report "${compiler^} ${buildType^} Build" \
     "${DOCKER[@]}" cmake --build "$buildDir"
 
+  if [[ "$compiler" == "clang" ]]; then
+    run_and_report "${compiler^} ${buildType^} Clang-Tidy" \
+      "${DOCKER[@]}" bash -lc '
+        set -e
+        ./clang-tidy-prepare.sh
+        ./clang-tidy-run-checks.sh
+      '
+  fi
+
   # --- Cppcheck --------------------------------------------------------------
   if [[ "$compiler" == "gcc" ]]; then
     run_and_report "${compiler^} ${buildType^} Cppcheck" \
