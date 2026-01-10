@@ -3,7 +3,7 @@ set -euo pipefail
 
 show_usage() {
   cat <<'EOF'
-Usage: ./rebuildDockerImages.sh [--keepcache]
+Usage: bash ./rebuildDockerImages.sh [--keepcache]
 
 Build the GCC and Clang Docker images. By default, removes out/build and
 out/install to avoid stale CMake cache paths.

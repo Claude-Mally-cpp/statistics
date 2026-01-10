@@ -76,8 +76,8 @@ run_build_and_test() {
     run_and_report "${compiler^} ${buildType^} Clang-Tidy" \
       "${DOCKER[@]}" bash -lc '
         set -e
-        ./clang-tidy-prepare.sh
-        ./clang-tidy-run-checks.sh
+        bash ./clang-tidy-prepare.sh
+        bash ./clang-tidy-run-checks.sh
       '
   fi
 

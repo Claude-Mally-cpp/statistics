@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: ./clang-tidy-run-checks.sh [--fix]
+Usage: bash ./clang-tidy-run-checks.sh [--fix]
 
 Runs clang-tidy checks over the repo. Pass --fix to apply suggested changes.
 EOF
@@ -29,7 +29,7 @@ fi
 PRESET=${PRESET:-linux-clang-release}
 DB=${DB:-"out/build/${PRESET}"}
 if [ ! -f "$DB/compile_commands.json" ]; then
-  echo "No compile_commands.json. Run: ./clang-tidy-prepare.sh"
+  echo "No compile_commands.json. Run: bash ./clang-tidy-prepare.sh"
   exit 0
 fi
 

@@ -20,10 +20,10 @@ To build and test this project for multiple Linux toolchains using Docker, use t
 
 ```sh
 # terse output
-./dockerLinuxBuildAndTest.sh
+bash ./dockerLinuxBuildAndTest.sh
 
 # verbose output
-./dockerLinuxBuildAndTest.sh --verbose
+bash ./dockerLinuxBuildAndTest.sh --verbose
 ```
 
 To buld and test on windows release and debug
@@ -43,11 +43,11 @@ available. They are not set up for Windows.
 
 ```sh
 # configure to generate compile_commands.json
-PRESET=linux-clang-release ./clang-tidy-prepare.sh
+PRESET=linux-clang-release bash ./clang-tidy-prepare.sh
 
 # dry run (report only)
-PRESET=linux-clang-release ./clang-tidy-run-checks.sh
+PRESET=linux-clang-release bash ./clang-tidy-run-checks.sh
 
 # apply fixes
-PRESET=linux-clang-release ./clang-tidy-run-checks.sh --fix
+PRESET=linux-clang-release bash ./clang-tidy-run-checks.sh --fix
 ```
