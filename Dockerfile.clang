@@ -12,6 +12,7 @@ RUN apt update && apt install -y \
     curl \
     lsb-release \
     clang-19 \
+    clang-tidy-19 \
     libc++-19-dev \
     libc++abi-19-dev \
     cppcheck \
