@@ -12,6 +12,8 @@ docker build -f Dockerfile.gcc -t cpp-ci-gcc .
 docker build -f Dockerfile.clang -t cpp-ci-clang .
 ```
 
+Note: the trailing `.` is the build context;
+
 ### 2. Build and Test the Project
 
 To build and test this project for multiple Linux toolchains using Docker, use the provided script:
