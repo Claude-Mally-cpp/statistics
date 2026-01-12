@@ -20,7 +20,7 @@
 #endif
 #endif
 
-#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L)
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && STAT_HAS_STD_FORMAT
 #define STAT_HAS_STD_PRINT 1
 #else
 #define STAT_HAS_STD_PRINT 0
