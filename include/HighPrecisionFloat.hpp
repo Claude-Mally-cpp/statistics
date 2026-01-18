@@ -8,12 +8,12 @@
 
 namespace mally::statlib
 {
-
+// TODO: reconsider always using high precision internally.
 using HighPrecisionFloat  = long double;
 using HighPrecisionResult = std::expected<HighPrecisionFloat, std::string>;
 
 // Pass-through for HPF
-constexpr HighPrecisionFloat toHPF(HighPrecisionFloat v) noexcept
+constexpr auto toHPF(HighPrecisionFloat v) noexcept -> HighPrecisionFloat
 {
     return v;
 }
@@ -21,7 +21,7 @@ constexpr HighPrecisionFloat toHPF(HighPrecisionFloat v) noexcept
 // Accept only arithmetic scalars (prevents containers from instantiating)
 template <class T>
     requires std::is_arithmetic_v<std::remove_cvref_t<T>>
-constexpr HighPrecisionFloat toHPF(T v) noexcept
+constexpr auto toHPF(T v) noexcept -> HighPrecisionFloat
 {
     return static_cast<HighPrecisionFloat>(v);
 }
@@ -29,6 +29,6 @@ constexpr HighPrecisionFloat toHPF(T v) noexcept
 // Hard error if something “container-like” (has value_type) calls toHPF by mistake
 template <class R>
     requires requires { typename R::value_type; }
-HighPrecisionFloat toHPF(const R&) = delete;
+auto toHPF(const R&) -> HighPrecisionFloat = delete;
 
 } // namespace mally::statlib

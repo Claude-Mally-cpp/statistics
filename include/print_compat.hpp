@@ -1,7 +1,7 @@
 #pragma once
 
 // ---- feature detection -------------------------------------------------------
-#if defined(__has_include)
+#ifdef __has_include
 #if __has_include(<format>)
 #include <version>
 #endif
@@ -14,7 +14,7 @@
 #define STAT_HAS_STD_FORMAT 0
 #endif
 
-#if defined(__has_include)
+#ifdef __has_include
 #if __has_include(<print>)
 #include <version>
 #endif
@@ -84,13 +84,13 @@ inline void println(
 
 // Portable format() → std::string ---------------------------------------------
 template <class... Args>
-inline std::string format(
+inline auto format(
 #if STAT_HAS_STD_FORMAT
     std::format_string<Args...> fmt_str,
 #else
     fmt::format_string<Args...> fmt_str,
 #endif
-    Args&&... args)
+    Args&&... args) -> std::string
 {
 #if STAT_HAS_STD_FORMAT
     return std::format(fmt_str, std::forward<Args>(args)...);

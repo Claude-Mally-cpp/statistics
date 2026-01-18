@@ -38,10 +38,14 @@ constexpr auto medianSortedSlice(const std::array<T, N>& a, std::size_t lo, std:
     static_assert(std::is_convertible_v<T, HighPrecisionFloat>, "array element not convertible to HighPrecisionFloat");
     const std::size_t len = (hi >= lo) ? (hi - lo + 1) : 0;
     if (len == 0)
+    {
         return 0.0L;
+    }
     if (len & 1U)
-        return toHPF(a[lo + len / 2]);
-    const std::size_t midHi = lo + len / 2;
+    {
+        return toHPF(a[lo + (len / 2)]);
+    }
+    const std::size_t midHi = lo + (len / 2);
     const std::size_t midLo = midHi - 1;
     return (toHPF(a[midLo]) + toHPF(a[midHi])) / 2.0L;
 }
@@ -61,7 +65,7 @@ template <typename T, std::size_t N> constexpr auto medianSorted(const std::arra
     }
     else
     {
-        return (toHPF(a[N / 2 - 1]) + toHPF(a[N / 2])) / 2.0L;
+        return (toHPF(a[(N / 2) - 1]) + toHPF(a[N / 2])) / 2.0L;
     }
 }
 
@@ -75,7 +79,9 @@ constexpr auto toHPFArray(const std::array<T, N>& arr) -> std::array<HighPrecisi
 {
     std::array<HighPrecisionFloat, N> out{};
     for (std::size_t i = 0; i < N; ++i)
+    {
         out[i] = toHPF(arr[i]);
+    }
     return out;
 }
 
@@ -87,7 +93,9 @@ inline auto toHPFArray(const std::span<T, N>& s) -> std::array<HighPrecisionFloa
 {
     std::array<HighPrecisionFloat, N> out{};
     for (std::size_t i = 0; i < N; ++i)
+    {
         out[i] = toHPF(s[i]);
+    }
     return out;
 }
 
@@ -99,7 +107,9 @@ inline auto toHPFVector(const R& r) -> std::vector<HighPrecisionFloat>
     std::vector<HighPrecisionFloat> out;
     out.reserve(static_cast<std::size_t>(std::ranges::distance(r)));
     for (auto&& x : r)
+    {
         out.push_back(toHPF(x));
+    }
     return out;
 }
 
@@ -113,12 +123,16 @@ inline auto median(const R& r) -> HighPrecisionFloat
     std::vector<HighPrecisionFloat> hp;
     hp.reserve(static_cast<std::size_t>(std::ranges::distance(r)));
     for (auto&& x : r)
+    {
         hp.push_back(toHPF(x));
+    }
     if (hp.empty())
+    {
         return 0.0L;
+    }
     std::ranges::sort(hp);
     const auto n = hp.size();
-    return (n & 1U) ? hp[n / 2] : (hp[n / 2 - 1] + hp[n / 2]) / 2.0L;
+    return (n & 1U) ? hp[n / 2] : (hp[(n / 2) - 1] + hp[n / 2]) / 2.0L;
 }
 
 /// @brief Median of a sorted *array* or a sorted vector.
@@ -133,9 +147,11 @@ constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> HighPrecisio
 inline auto medianSortedSpan(std::span<const HighPrecisionFloat> sorted) -> HighPrecisionFloat
 {
     if (sorted.empty())
+    {
         return 0.0L;
+    }
     const auto n = sorted.size();
-    return (n & 1U) ? sorted[n / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0L;
+    return ((n & 1U) != 0u) ? sorted[n / 2] : (sorted[(n / 2) - 1] + sorted[n / 2]) / 2.0L;
 }
 
 /// @brief Tukey hinges on an already-sorted array<HPF, N>.
@@ -143,9 +159,14 @@ template <std::size_t N>
 constexpr auto quartilesSorted(const std::array<HighPrecisionFloat, N>& sorted) -> QuartileSummary
 {
     if constexpr (N == 0)
+    {
         return {};
+    }
     const HighPrecisionFloat med = detail::medianSorted(sorted);
-    std::size_t              loL = 0, loH, hiL, hiH = N - 1;
+    std::size_t              loL = 0;
+    std::size_t              loH;
+    std::size_t              hiL;
+    std::size_t              hiH = N - 1;
     if constexpr (N % 2 == 1)
     {
         const std::size_t mid = N / 2;
@@ -162,12 +183,12 @@ constexpr auto quartilesSorted(const std::array<HighPrecisionFloat, N>& sorted) 
     }
     else
     {
-        loH = N / 2 - 1;
+        loH = (N / 2) - 1;
         hiL = N / 2;
     }
     const HighPrecisionFloat q1 = detail::medianSortedSlice(sorted, loL, loH);
     const HighPrecisionFloat q3 = detail::medianSortedSlice(sorted, hiL, hiH);
-    return {q1, med, q3};
+    return {.q1 = q1, .median = med, .q3 = q3};
 }
 
 /// @brief Quartiles for std::array<T, N> (no heap allocations).
@@ -176,10 +197,14 @@ template <class T, std::size_t N>
 constexpr auto quartiles(const std::array<T, N>& data) -> QuartileSummary
 {
     if constexpr (N == 0)
+    {
         return {};
+    }
     std::array<HighPrecisionFloat, N> hp{};
     for (std::size_t i = 0; i < N; ++i)
+    {
         hp[i] = toHPF(data[i]);
+    }
     std::ranges::sort(hp);
     return quartilesSorted(hp);
 }
@@ -192,9 +217,13 @@ inline auto quartiles(const R& r) -> QuartileSummary
     std::vector<HighPrecisionFloat> hp;
     hp.reserve(static_cast<std::size_t>(std::ranges::distance(r)));
     for (auto&& x : r)
+    {
         hp.push_back(toHPF(x));
+    }
     if (hp.empty())
+    {
         return {};
+    }
     std::ranges::sort(hp);
     const auto n = hp.size();
 
@@ -202,16 +231,23 @@ inline auto quartiles(const R& r) -> QuartileSummary
     {
         const std::size_t len = (hi >= lo) ? (hi - lo + 1) : 0;
         if (len == 0)
+        {
             return 0.0L;
+        }
         if (len & 1U)
-            return hp[lo + len / 2];
-        const std::size_t midHi = lo + len / 2;
+        {
+            return hp[lo + (len / 2)];
+        }
+        const std::size_t midHi = lo + (len / 2);
         const std::size_t midLo = midHi - 1;
         return (hp[midLo] + hp[midHi]) / 2.0L;
     };
 
-    HighPrecisionFloat med = (n & 1U) ? hp[n / 2] : (hp[n / 2 - 1] + hp[n / 2]) / 2.0L;
-    std::size_t        loL = 0, loH, hiL, hiH = n - 1;
+    HighPrecisionFloat const med = (n & 1U) ? hp[n / 2] : (hp[(n / 2) - 1] + hp[n / 2]) / 2.0L;
+    std::size_t              loL = 0;
+    std::size_t              loH;
+    std::size_t              hiL;
+    std::size_t              hiH = n - 1;
     if (n & 1U)
     {
         const std::size_t mid = n / 2;
@@ -228,12 +264,12 @@ inline auto quartiles(const R& r) -> QuartileSummary
     }
     else
     {
-        loH = n / 2 - 1;
+        loH = (n / 2) - 1;
         hiL = n / 2;
     }
     const HighPrecisionFloat q1 = medianOfSlice(loL, loH);
     const HighPrecisionFloat q3 = medianOfSlice(hiL, hiH);
-    return {q1, med, q3};
+    return {.q1 = q1, .median = med, .q3 = q3};
 }
 
 } // namespace mally::statlib

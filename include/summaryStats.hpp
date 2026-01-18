@@ -23,14 +23,14 @@ struct SummaryStats
 
     /// @todo Add standard deviation and variance?
 
-    [[nodiscard]] std::string toString() const
+    [[nodiscard]] auto toString() const -> std::string
     {
         return format("n={}, min={}, q1={}, median={}, q3={}, max={}, mean={}", count, min, q1, median, q3, max, mean);
     }
 };
 
 // ---- shared core for both std::format and fmt::format ------------------------
-template <class OutIt> OutIt formatSummaryCore(const SummaryStats& s, OutIt out)
+template <class OutIt> auto formatSummaryCore(const SummaryStats& s, OutIt out) -> OutIt
 {
     return fmt::format_to(out, "n={}, min={}, q1={}, median={}, q3={}, max={}, mean={}", s.count, s.min, s.q1, s.median,
                           s.q3, s.max, s.mean);
@@ -57,7 +57,7 @@ template <> struct std::formatter<mally::statlib::SummaryStats, char>
 // ---- fmt::formatter fallback -------------------------------------------------
 template <> struct fmt::formatter<mally::statlib::SummaryStats>
 {
-    constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin())
+    static constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin())
     {
         return ctx.begin();
     }
