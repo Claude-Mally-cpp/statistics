@@ -38,7 +38,7 @@ To buld and test on windows release and debug
 
 ### VS Code + MSVC workflow (Windows)
 
-## Recommended flow (preferred): VS Code + CMake Tools
+#### Recommended flow (preferred): VS Code + CMake Tools
 
 Use this path when working in the editor (matches what you already tested):
 
@@ -49,7 +49,7 @@ Use this path when working in the editor (matches what you already tested):
    - status bar, or `Ctrl+Shift+P` -> `CMake: Select Configure Preset`
 5. Use CMake Tools commands: Configure, Build, then Run Tests.
 
-## Alternative: terminal/manual preset commands
+#### Alternative: terminal/manual preset commands
 
 Use these only if you prefer explicit commands in PowerShell:
 
