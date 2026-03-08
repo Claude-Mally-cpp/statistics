@@ -65,7 +65,9 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
         // Materialize as HPF and sort
         std::array<HighPrecisionFloat, N> hp{};
         for (std::size_t i = 0; i < N; ++i)
+        {
             hp[i] = toHPF(data[i]);
+        }
         std::ranges::sort(hp);
 
         // Min/Max from sorted array
@@ -123,7 +125,7 @@ constexpr auto summary(const R& range) -> SummaryStats
 constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
 {
     return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 1.0L,
-                           [](HighPrecisionFloat acc, auto val) { return acc * toHPF(val); });
+                           [](HighPrecisionFloat acc, auto val) -> auto { return acc * toHPF(val); });
 }
 
 /// @brief compute the geometric mean of a range of numbers
@@ -148,7 +150,7 @@ constexpr auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloa
 constexpr auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
 {
     return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 0.0L,
-                           [](HighPrecisionFloat acc, auto val)
+                           [](HighPrecisionFloat acc, auto val) -> auto
                            {
                                const auto valueSquared = toHPF(val) * toHPF(val);
                                return acc + valueSquared;
@@ -169,7 +171,7 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> Hi
     const auto sum_ld        = toHPF(sum);
     const auto sumSquared_ld = toHPF(sumSquared);
 
-    const auto radicand = n_ld * sumSquared_ld - sum_ld * sum_ld;
+    const auto radicand = (n_ld * sumSquared_ld) - (sum_ld * sum_ld);
     if (radicand < 0)
     {
         return std::unexpected(std::format("{} * {} - {}^2={}", n, sumSquared, sum, radicand));
@@ -209,7 +211,7 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
     }
 
     const auto n         = toHPF(range_x.size());
-    const auto numerator = toHPF(n) * *sigma_xy - sigma_x * sigma_y;
+    const auto numerator = (toHPF(n) * *sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
         println("n={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", n, sigma_x, sigma_y, *sigma_xy, numerator);
@@ -271,7 +273,7 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
         return sigma_xy;
     }
 
-    const auto numerator   = *sigma_xy - (sigma_x * sigma_y) / toHPF(n);
+    const auto numerator   = *sigma_xy - ((sigma_x * sigma_y) / toHPF(n));
     const auto denominator = toHPF(n - 1);
     return numerator / denominator;
 }

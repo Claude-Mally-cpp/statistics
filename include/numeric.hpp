@@ -23,7 +23,9 @@ template <NumberRange R> constexpr auto sum(const R& r) -> mally::statlib::HighP
 {
     mally::statlib::HighPrecisionFloat acc = 0.0L;
     for (auto&& x : r)
+    {
         acc += mally::statlib::toHPF(x);
+    }
     return acc;
 }
 
@@ -33,7 +35,9 @@ template <NumberRange R> constexpr auto average(const R& r) -> mally::statlib::H
 {
     const auto n = std::ranges::distance(r);
     if (n == 0)
+    {
         return 0.0L;
+    }
     return sum(r) / static_cast<mally::statlib::HighPrecisionFloat>(n);
 }
 
@@ -45,7 +49,9 @@ constexpr auto minMaxValue(const R& r)
     -> std::pair<mally::statlib::HighPrecisionFloat, mally::statlib::HighPrecisionFloat>
 {
     if (std::ranges::empty(r))
+    {
         return {0.0L, 0.0L};
+    }
     auto [itMin, itMax] = std::ranges::minmax_element(r);
     return {mally::statlib::toHPF(*itMin), mally::statlib::toHPF(*itMax)};
 }
@@ -56,18 +62,18 @@ constexpr auto minMaxValue(const R& r)
 template <NumberRange RX, NumberRange RY>
 constexpr auto sumProduct(const RX& x, const RY& y) -> mally::statlib::HighPrecisionResult
 {
-    auto       itx = std::ranges::begin(x);
-    auto       ity = std::ranges::begin(y);
-    const auto ex  = std::ranges::end(x);
-    const auto ey  = std::ranges::end(y);
+    auto       itx  = std::ranges::begin(x);
+    auto       ity  = std::ranges::begin(y);
+    const auto endx = std::ranges::end(x);
+    const auto endy = std::ranges::end(y);
 
     mally::statlib::HighPrecisionFloat acc = 0.0L;
-    for (; itx != ex && ity != ey; ++itx, ++ity)
+    for (; itx != endx && ity != endy; ++itx, ++ity)
     {
         acc += mally::statlib::toHPF(*itx) * mally::statlib::toHPF(*ity);
     }
 
-    if (itx != ex || ity != ey)
+    if (itx != endx || ity != endy)
     {
         return std::unexpected(std::string{"sumProduct: ranges have different lengths"});
     }

@@ -1,6 +1,8 @@
 // test_statistics.cpp
-#include "print_compat.hpp"
+#include "HighPrecisionFloat.hpp"
+#include "quartiles.hpp"
 #include "statistics.hpp"
+#include <array>
 #include <gtest/gtest.h>
 
 using namespace mally::statlib;

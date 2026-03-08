@@ -9,7 +9,8 @@
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl.exe",
-        "CMAKE_CXX_COMPILER": "cl.exe"
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "condition": {
         "type": "equals",
@@ -66,7 +67,9 @@
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++"
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "condition": {
         "type": "equals",
@@ -79,7 +82,8 @@
       "displayName": "Linux Debug",
       "inherits": "linux-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
@@ -87,7 +91,8 @@
       "displayName": "Linux Release",
       "inherits": "linux-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
@@ -98,7 +103,8 @@
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "condition": {
         "type": "equals",
@@ -114,7 +120,8 @@
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++"
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "condition": {
         "type": "equals",
@@ -170,14 +177,14 @@
       "installDir": "${sourceDir}/build/install/Debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_COMPILER": "cl.exe"
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     }
   ],
   "buildPresets": [
       { "name": "msvc-x64-debug",   "configurePreset": "msvc-x64-debug" },
       { "name": "msvc-x64-release", "configurePreset": "msvc-x64-release" },
-
       { "name": "linux-clang-debug",   "configurePreset": "linux-clang-debug" },
       { "name": "linux-clang-release", "configurePreset": "linux-clang-release" },
       { "name": "linux-gcc-debug",     "configurePreset": "linux-gcc-debug" },
@@ -216,5 +223,4 @@
       "output": { "outputOnFailure": true }
     }
   ]
-
 }
