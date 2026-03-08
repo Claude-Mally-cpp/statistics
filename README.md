@@ -38,18 +38,20 @@ To buld and test on windows release and debug
 
 ### VS Code + MSVC workflow (Windows)
 
-Recommended workflow when using Visual Studio/C++ toolchain in VS Code:
+## Recommended flow (preferred): VS Code + CMake Tools
 
-1. Install [Microsoft C++ Build Tools / Visual Studio](https://visualstudio.microsoft.com/) and ensure `cl.exe` is on PATH for your terminal session.
-2. Install the CMake Tools extension in VS Code.
+Use this path when working in the editor (matches what you already tested):
+
+1. Install [Microsoft C++ Build Tools / Visual Studio](https://visualstudio.microsoft.com/) and ensure `cl.exe` is available in your shell.
+2. Install the CMake Tools extension.
 3. Open this repository in VS Code.
-4. In the status bar or command palette, choose:
+4. Select `msvc-x64-debug` (or `msvc-x64-release`) from:
+   - status bar, or `Ctrl+Shift+P` -> `CMake: Select Configure Preset`
+5. Use CMake Tools commands: Configure, Build, then Run Tests.
 
-```text
-CMake: Select Configure Preset -> msvc-x64-debug
-```
+## Alternative: terminal/manual preset commands
 
-5. Configure, build, and test with either CMake Tools or terminal:
+Use these only if you prefer explicit commands in PowerShell:
 
 ```powershell
 cmake --preset msvc-x64-debug
