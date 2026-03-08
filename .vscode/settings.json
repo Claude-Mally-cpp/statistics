@@ -1,0 +1,7 @@
+{
+  "cmake.configureOnOpen": true,
+  "cmake.configureOnEdit": false,
+  "cmake.configureWithPresets": true,
+  "cmake.quickPickHistorySize": 25,
+  "cmake.presetSelectCount": 20
+}
