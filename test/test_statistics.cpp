@@ -65,7 +65,7 @@ TEST(StatisticsTest, Covariance_TitresX_Marche)
 // Test correlation between profits and employers
 TEST(StatisticsTest, Correlation_Profits_Employers)
 {
-    const auto profits   = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
+    const auto profits = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
                                     118300, 119700, 153000, 252800, 333300, 412000, 424300, 454000,  829000,  86500,
                                     176000, 227400, 471300, 681100, 747000, 859800, 939500, 1082000, 1102200, 1495400};
     const auto employers = std::array{7523,  8200,  12068, 9500,  5000, 18000, 4708,  13740, 95000, 8200,
@@ -228,7 +228,7 @@ TEST(StatisticsTest, Summary_QuartileConsistency)
 {
     const std::array data{1, 2, 3, 4, 5, 6};
     auto             quart = quartiles(data);
-    auto             summ = summary(data);
+    auto             summ  = summary(data);
 
     EXPECT_EQ(quart.q1, summ.q1);
     EXPECT_EQ(quart.median, summ.median);

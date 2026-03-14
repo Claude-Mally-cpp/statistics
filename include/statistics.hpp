@@ -76,9 +76,9 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
 
         // Quartiles from sorted array
         const auto qSorted = quartilesSorted(hpArray);
-        out.q1        = qSorted.q1;
-        out.median    = qSorted.median;
-        out.q3        = qSorted.q3;
+        out.q1             = qSorted.q1;
+        out.median         = qSorted.median;
+        out.q3             = qSorted.q3;
 
         // Mean (use numeric helper on the original array to avoid re-summing hp)
         out.mean = num::average(data);
@@ -110,9 +110,9 @@ constexpr auto summary(const R& range) -> SummaryStats
 
     // Quartiles via adapter (materializes to vector<HPF> internally)
     const auto qSorted = quartiles(range);
-    out.q1        = qSorted.q1;
-    out.median    = qSorted.median;
-    out.q3        = qSorted.q3;
+    out.q1             = qSorted.q1;
+    out.median         = qSorted.median;
+    out.q3             = qSorted.q3;
 
     return out;
 }
@@ -210,11 +210,12 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
         return sigma_xy;
     }
 
-    const auto count         = toHPF(range_x.size());
+    const auto count     = toHPF(range_x.size());
     const auto numerator = (count * *sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
-        println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, *sigma_xy, numerator);
+        println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, *sigma_xy,
+                numerator);
     }
 
     const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(count));

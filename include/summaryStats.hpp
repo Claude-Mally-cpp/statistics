@@ -32,8 +32,8 @@ struct SummaryStats
 // ---- shared core for both std::format and fmt::format ------------------------
 template <class OutIt> auto formatSummaryCore(const SummaryStats& summary, OutIt out) -> OutIt
 {
-    return fmt::format_to(out, "n={}, min={}, q1={}, median={}, q3={}, max={}, mean={}", summary.count, summary.min, summary.q1, summary.median,
-                          summary.q3, summary.max, summary.mean);
+    return fmt::format_to(out, "n={}, min={}, q1={}, median={}, q3={}, max={}, mean={}", summary.count, summary.min,
+                          summary.q1, summary.median, summary.q3, summary.max, summary.mean);
 }
 
 } // namespace mally::statlib

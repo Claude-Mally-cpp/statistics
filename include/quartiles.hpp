@@ -245,10 +245,10 @@ inline auto quartiles(const R& range) -> QuartileSummary
 
     HighPrecisionFloat const med =
         (count & 1U) ? hpVector[count / 2] : (hpVector[(count / 2) - 1] + hpVector[count / 2]) / 2.0L;
-    std::size_t              loL = 0;
-    std::size_t              loH;
-    std::size_t              hiL;
-    std::size_t              hiH = count - 1;
+    std::size_t loL = 0;
+    std::size_t loH;
+    std::size_t hiL;
+    std::size_t hiH = count - 1;
     if (count & 1U)
     {
         const std::size_t mid = count / 2;
