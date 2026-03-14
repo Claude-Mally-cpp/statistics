@@ -88,8 +88,8 @@ constexpr auto toHPFArray(const std::array<T, N>& arr) -> std::array<HighPrecisi
 
 /// @brief Convert std::span<T, N> with static extent to std::array<HighPrecisionFloat, N>.
 template <typename T, std::size_t N>
-    requires(N != std::dynamic_extent) && (N <= detail::maxStackHPFArraySize) &&
-            std::is_convertible_v<T, HighPrecisionFloat>
+    requires((N <= detail::maxStackHPFArraySize) &&
+            std::is_convertible_v<T, HighPrecisionFloat>)
 inline auto toHPFArray(const std::span<T, N>& spn) -> std::array<HighPrecisionFloat, N>
 {
     std::array<HighPrecisionFloat, N> out{};
