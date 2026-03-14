@@ -21,4 +21,6 @@ Checks: >
   -misc-non-private-member-variables-in-classes
 WarningsAsErrors: ''
 HeaderFilterRegex: '^(include|test)/'
+ExcludeHeaderFilterRegex: '(^|.*/)(out/build|build|_deps|third_party|external|vendor)/'
+SystemHeaders: false
 ---
