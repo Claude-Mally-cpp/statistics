@@ -86,7 +86,7 @@ if [ "$APPLY_FIX" = "1" ]; then
   echo "Applying fixes..."
 fi
 
-USE_RUN_CLANG_TIDY=1
+USE_RUN_CLANG_TIDY=0
 if command -v cygpath >/dev/null 2>&1; then
   # run-clang-tidy treats file args as regex; Windows paths are a bad fit.
   USE_RUN_CLANG_TIDY=0
@@ -103,6 +103,6 @@ if [ "$USE_RUN_CLANG_TIDY" = "1" ] && command -v run-clang-tidy >/dev/null 2>&1;
     xargs -0 run-clang-tidy -p "$DB" "${CHECKS_ARGS[@]}" -header-filter="$HEADER_FILTER" "${EXTRA_ARGS[@]}"
 else
   for f in "${WIN_FILES[@]}"; do
-    clang-tidy "$f" -p "$DB" "${CHECKS_ARGS[@]}" -header-filter="$HEADER_FILTER" "${EXTRA_ARGS[@]}"
+    clang-tidy --quiet "$f" -p "$DB" "${CHECKS_ARGS[@]}" -header-filter="$HEADER_FILTER" "${EXTRA_ARGS[@]}"
   done
 fi

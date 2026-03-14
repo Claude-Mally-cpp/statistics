@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <concepts>
 #include <ranges>
-#include <type_traits>
 #include <utility>
 
 namespace mally::statlib::num

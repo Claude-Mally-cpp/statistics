@@ -7,12 +7,6 @@
 #endif
 #endif
 
-#ifdef __has_include
-#if __has_include(<print>)
-#include <version>
-#endif
-#endif
-
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) &&                           \
     (__cpp_lib_format >= 201907L)
 #define STAT_HAS_STD_PRINT 1

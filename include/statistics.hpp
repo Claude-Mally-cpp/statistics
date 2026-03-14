@@ -32,10 +32,13 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <expected>
 #include <format>
 #include <numeric>
 #include <ranges>
 #include <type_traits>
+
 
 namespace mally::statlib
 {
