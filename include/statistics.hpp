@@ -35,6 +35,7 @@
 #include <cstddef>
 #include <expected>
 #include <format>
+#include <iterator>
 #include <numeric>
 #include <ranges>
 #include <type_traits>

@@ -7,7 +7,8 @@
 
 #include <algorithm>
 #include <array>
-#include <ranges>
+#include <cstddef>
+#include <iterator>
 #include <span>
 #include <type_traits>
 #include <vector>

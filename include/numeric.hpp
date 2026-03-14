@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <concepts>
+#include <iterator>
+#include <expected>
 #include <ranges>
 #include <utility>
 

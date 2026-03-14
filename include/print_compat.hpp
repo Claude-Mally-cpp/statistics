@@ -1,6 +1,7 @@
 #pragma once
 
 // ---- feature detection -------------------------------------------------------
+#include <string>
 #ifdef __has_include
 #if __has_include(<format>)
 #include <version>
@@ -29,7 +30,6 @@
 #pragma GCC diagnostic ignored "-Wtautological-compare"
 #endif
 #include <fmt/core.h>
-#include <fmt/ranges.h>
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
