@@ -8,18 +8,11 @@
 #endif
 #endif
 
-#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) &&                           \
-    (__cpp_lib_format >= 201907L)
-#define STAT_HAS_STD_PRINT 1
-#else
-#define STAT_HAS_STD_PRINT 0
-#endif
-
 // ---- portable API ------------------------------------------------------------
 #if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 #include <format>
 #endif
-#if STAT_HAS_STD_PRINT
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 #include <print>
 #endif
 
@@ -44,6 +37,12 @@ inline constexpr bool kHasStdFormat = true;
 inline constexpr bool kHasStdFormat = false;
 #endif
 
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
+inline constexpr bool kHasStdPrint = true;
+#else
+inline constexpr bool kHasStdPrint = false;
+#endif
+
 // Portable print/println -------------------------------------------------------
 template <class... Args>
 inline void print(
@@ -54,7 +53,7 @@ inline void print(
 #endif
     Args&&... args)
 {
-#if STAT_HAS_STD_PRINT
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::print(fmt_str, std::forward<Args>(args)...);
 #else
     fmt::print(fmt_str, std::forward<Args>(args)...);
@@ -70,7 +69,7 @@ inline void println(
 #endif
     Args&&... args)
 {
-#if STAT_HAS_STD_PRINT
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::println(fmt_str, std::forward<Args>(args)...);
 #else
     fmt::println(fmt_str, std::forward<Args>(args)...);
