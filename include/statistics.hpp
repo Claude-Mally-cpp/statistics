@@ -137,7 +137,7 @@ constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
 /// @return geometric mean of the range of numbers
 /// @details This function computes the average of a range of numbers.
 /// It usses a high precision floating point type to avoid precision loss.
-constexpr auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloat
+auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloat
 {
     if (not range.size())
     {
