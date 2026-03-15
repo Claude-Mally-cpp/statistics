@@ -59,12 +59,41 @@ run_build_and_test() {
   local buildType="$2"   # debug | release
   local preset="linux-${compiler}-${buildType}"
   local buildDir="out/build/$preset"
+  local installDir="out/install/$preset"
   local image="cpp-ci-${compiler}"
 
   # Pass flags into the container; bind mount repo
   local DOCKER=(docker run --rm \
     -e DEBUG="$DEBUG" -e VERBOSE="$VERBOSE" \
     -v "${HOST_PWD}:/project:rw" -w /project "$image")
+
+  # CMake caches absolute source/build paths. A cache created on the host under
+  # /home/... cannot be safely reused in the container under /project.
+  run_and_report "${compiler^} ${buildType^} Cache Check" \
+    "${DOCKER[@]}" bash -lc '
+      set -e
+      BUILD_DIR="'"$buildDir"'"
+      INSTALL_DIR="'"$installDir"'"
+      CACHE_FILE="$BUILD_DIR/CMakeCache.txt"
+      EXPECTED_SOURCE_DIR="/project"
+      EXPECTED_BUILD_DIR="/project/$BUILD_DIR"
+
+      if [[ ! -f "$CACHE_FILE" ]]; then
+        exit 0
+      fi
+
+      CACHE_SOURCE_DIR="$(sed -n "s/^CMAKE_HOME_DIRECTORY:INTERNAL=//p" "$CACHE_FILE" | head -n1)"
+      CACHE_BUILD_DIR="$(sed -n "s/^CMAKE_CACHEFILE_DIR:INTERNAL=//p" "$CACHE_FILE" | head -n1)"
+
+      if [[ "$CACHE_SOURCE_DIR" == "$EXPECTED_SOURCE_DIR" && "$CACHE_BUILD_DIR" == "$EXPECTED_BUILD_DIR" ]]; then
+        exit 0
+      fi
+
+      echo "Removing stale CMake cache for container path remap: $BUILD_DIR"
+      echo "  cached source: ${CACHE_SOURCE_DIR:-<missing>}"
+      echo "  cached build:  ${CACHE_BUILD_DIR:-<missing>}"
+      rm -rf "$BUILD_DIR" "$INSTALL_DIR"
+    '
 
   run_and_report "${compiler^} ${buildType^} Configure" \
     "${DOCKER[@]}" cmake --preset "$preset"
