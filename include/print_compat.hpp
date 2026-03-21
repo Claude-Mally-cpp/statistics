@@ -1,36 +1,18 @@
 #pragma once
 
 // ---- feature detection -------------------------------------------------------
+#include <string>
 #ifdef __has_include
 #if __has_include(<format>)
 #include <version>
 #endif
 #endif
 
-// std::format (C++20) is detected by __cpp_lib_format
-#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
-#define STAT_HAS_STD_FORMAT 1
-#else
-#define STAT_HAS_STD_FORMAT 0
-#endif
-
-#ifdef __has_include
-#if __has_include(<print>)
-#include <version>
-#endif
-#endif
-
-#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && STAT_HAS_STD_FORMAT
-#define STAT_HAS_STD_PRINT 1
-#else
-#define STAT_HAS_STD_PRINT 0
-#endif
-
 // ---- portable API ------------------------------------------------------------
-#if STAT_HAS_STD_FORMAT
+#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 #include <format>
 #endif
-#if STAT_HAS_STD_PRINT
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 #include <print>
 #endif
 
@@ -41,7 +23,6 @@
 #pragma GCC diagnostic ignored "-Wtautological-compare"
 #endif
 #include <fmt/core.h>
-#include <fmt/ranges.h>
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
@@ -49,17 +30,30 @@
 namespace mally::statlib
 {
 
+// std::format (C++20) is detected by __cpp_lib_format
+#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
+inline constexpr bool kHasStdFormat = true;
+#else
+inline constexpr bool kHasStdFormat = false;
+#endif
+
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
+inline constexpr bool kHasStdPrint = true;
+#else
+inline constexpr bool kHasStdPrint = false;
+#endif
+
 // Portable print/println -------------------------------------------------------
 template <class... Args>
 inline void print(
-#if STAT_HAS_STD_FORMAT
+#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::format_string<Args...> fmt_str,
 #else
     fmt::format_string<Args...> fmt_str,
 #endif
     Args&&... args)
 {
-#if STAT_HAS_STD_PRINT
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::print(fmt_str, std::forward<Args>(args)...);
 #else
     fmt::print(fmt_str, std::forward<Args>(args)...);
@@ -68,14 +62,14 @@ inline void print(
 
 template <class... Args>
 inline void println(
-#if STAT_HAS_STD_FORMAT
+#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::format_string<Args...> fmt_str,
 #else
     fmt::format_string<Args...> fmt_str,
 #endif
     Args&&... args)
 {
-#if STAT_HAS_STD_PRINT
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::println(fmt_str, std::forward<Args>(args)...);
 #else
     fmt::println(fmt_str, std::forward<Args>(args)...);
@@ -85,14 +79,14 @@ inline void println(
 // Portable format() → std::string ---------------------------------------------
 template <class... Args>
 inline auto format(
-#if STAT_HAS_STD_FORMAT
+#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::format_string<Args...> fmt_str,
 #else
     fmt::format_string<Args...> fmt_str,
 #endif
     Args&&... args) -> std::string
 {
-#if STAT_HAS_STD_FORMAT
+#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     return std::format(fmt_str, std::forward<Args>(args)...);
 #else
     return fmt::format(fmt_str, std::forward<Args>(args)...);

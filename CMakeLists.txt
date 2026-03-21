@@ -27,6 +27,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fmt)
 
+# Treat fmt headers as system includes so clang-tidy/analyzers do not report
+# third-party diagnostics from template instantiations in fetched sources.
+set(FMT_INCLUDE_DIRS $<TARGET_PROPERTY:fmt::fmt,INTERFACE_INCLUDE_DIRECTORIES>)
+
 # Fetch GoogleTest
 FetchContent_Declare(
   googletest
@@ -48,6 +52,7 @@ enable_testing()
 # Test executable
 add_executable(statistics_test test/test_statistics.cpp)
 target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main project_warnings)
+target_include_directories(statistics_test SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 
 include(GoogleTest)
 gtest_discover_tests(statistics_test)
@@ -64,6 +69,7 @@ target_link_libraries(statistics-cli
     fmt::fmt
     project_warnings
 )
+target_include_directories(statistics-cli SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 
 # Install the CLI executable
 install(TARGETS statistics-cli

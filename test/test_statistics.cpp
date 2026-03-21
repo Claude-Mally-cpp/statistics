@@ -65,7 +65,7 @@ TEST(StatisticsTest, Covariance_TitresX_Marche)
 // Test correlation between profits and employers
 TEST(StatisticsTest, Correlation_Profits_Employers)
 {
-    const auto profits   = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
+    const auto profits = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
                                     118300, 119700, 153000, 252800, 333300, 412000, 424300, 454000,  829000,  86500,
                                     176000, 227400, 471300, 681100, 747000, 859800, 939500, 1082000, 1102200, 1495400};
     const auto employers = std::array{7523,  8200,  12068, 9500,  5000, 18000, 4708,  13740, 95000, 8200,
@@ -96,12 +96,6 @@ TEST(StatisticsTest, Product_InsectCount)
     constexpr auto insectCount = std::array{10, 1, 1000, 1, 10};
     auto           result      = product(insectCount);
     EXPECT_EQ(result, 100000);
-#if 0
-    // To testcppcheck warnings
-    const auto testFloatConversion = 42.0000000042;
-    int dangerousConversion = testFloatConversion;
-    println("float to int conversion: {} -> {}", testFloatConversion, dangerousConversion);
-#endif
 }
 
 //
@@ -156,40 +150,40 @@ TEST(StatisticsTest, Median_SingleElement)
 TEST(StatisticsTest, Quartiles_OddData)
 {
     const std::array data{1, 2, 3, 4, 5};
-    auto             q = quartiles(data);
-    EXPECT_EQ(q.q1, 1.5L);
-    EXPECT_EQ(q.median, 3.0L);
-    EXPECT_EQ(q.q3, 4.5L);
+    auto             quart = quartiles(data);
+    EXPECT_EQ(quart.q1, 1.5L);
+    EXPECT_EQ(quart.median, 3.0L);
+    EXPECT_EQ(quart.q3, 4.5L);
 }
 
 // Basic quartile test for even count
 TEST(StatisticsTest, Quartiles_EvenData)
 {
     const std::array data{1, 2, 3, 4, 5, 6};
-    auto             q = quartiles(data);
-    EXPECT_EQ(q.q1, 2.0L);
-    EXPECT_EQ(q.median, 3.5L);
-    EXPECT_EQ(q.q3, 5.0L);
+    auto             quart = quartiles(data);
+    EXPECT_EQ(quart.q1, 2.0L);
+    EXPECT_EQ(quart.median, 3.5L);
+    EXPECT_EQ(quart.q3, 5.0L);
 }
 
 // Quartiles with unsorted input (should handle sorting internally)
 TEST(StatisticsTest, Quartiles_UnsortedData)
 {
     const std::array data{6, 1, 4, 2, 5, 3};
-    auto             q = quartiles(data);
-    EXPECT_EQ(q.q1, 2.0L);
-    EXPECT_EQ(q.median, 3.5L);
-    EXPECT_EQ(q.q3, 5.0L);
+    auto             quart = quartiles(data);
+    EXPECT_EQ(quart.q1, 2.0L);
+    EXPECT_EQ(quart.median, 3.5L);
+    EXPECT_EQ(quart.q3, 5.0L);
 }
 
 // Quartiles with empty range
 TEST(StatisticsTest, Quartiles_EmptyData)
 {
     const std::array<double, 0> data{};
-    auto                        q = quartiles(data);
-    EXPECT_EQ(q.q1, 0.0L);
-    EXPECT_EQ(q.median, 0.0L);
-    EXPECT_EQ(q.q3, 0.0L);
+    auto                        quart = quartiles(data);
+    EXPECT_EQ(quart.q1, 0.0L);
+    EXPECT_EQ(quart.median, 0.0L);
+    EXPECT_EQ(quart.q3, 0.0L);
 }
 
 //
@@ -200,39 +194,39 @@ TEST(StatisticsTest, Quartiles_EmptyData)
 TEST(StatisticsTest, Summary_Basic)
 {
     const std::array data{12.3, 9e4, -0.6666};
-    auto             s = summary(data);
+    auto             summ = summary(data);
 
-    EXPECT_NEAR(static_cast<double>(s.min), -0.6666, 1e-9);
-    EXPECT_NEAR(static_cast<double>(s.q1), 5.8167, 1e-3);
-    EXPECT_NEAR(static_cast<double>(s.median), 12.3, 1e-9);
-    EXPECT_NEAR(static_cast<double>(s.mean), 30003.8778, 1e-3);
-    EXPECT_NEAR(static_cast<double>(s.q3), 45006.15, 1e-2);
-    EXPECT_NEAR(static_cast<double>(s.max), 90000.0, 1e-9);
+    EXPECT_NEAR(static_cast<double>(summ.min), -0.6666, 1e-9);
+    EXPECT_NEAR(static_cast<double>(summ.q1), 5.8167, 1e-3);
+    EXPECT_NEAR(static_cast<double>(summ.median), 12.3, 1e-9);
+    EXPECT_NEAR(static_cast<double>(summ.mean), 30003.8778, 1e-3);
+    EXPECT_NEAR(static_cast<double>(summ.q3), 45006.15, 1e-2);
+    EXPECT_NEAR(static_cast<double>(summ.max), 90000.0, 1e-9);
 }
 
 // Empty dataset summary
 TEST(StatisticsTest, Summary_Empty)
 {
     const std::array<long, 0> data{};
-    auto                      s = summary(data);
-    EXPECT_EQ(s.min, 0.0L);
-    EXPECT_EQ(s.q1, 0.0L);
-    EXPECT_EQ(s.median, 0.0L);
-    EXPECT_EQ(s.mean, 0.0L);
-    EXPECT_EQ(s.q3, 0.0L);
-    EXPECT_EQ(s.max, 0.0L);
+    auto                      summ = summary(data);
+    EXPECT_EQ(summ.min, 0.0L);
+    EXPECT_EQ(summ.q1, 0.0L);
+    EXPECT_EQ(summ.median, 0.0L);
+    EXPECT_EQ(summ.mean, 0.0L);
+    EXPECT_EQ(summ.q3, 0.0L);
+    EXPECT_EQ(summ.max, 0.0L);
 }
 
 // Summary consistency: quartiles() vs summary()
 TEST(StatisticsTest, Summary_QuartileConsistency)
 {
     const std::array data{1, 2, 3, 4, 5, 6};
-    auto             q = quartiles(data);
-    auto             s = summary(data);
+    auto             quart = quartiles(data);
+    auto             summ  = summary(data);
 
-    EXPECT_EQ(q.q1, s.q1);
-    EXPECT_EQ(q.median, s.median);
-    EXPECT_EQ(q.q3, s.q3);
+    EXPECT_EQ(quart.q1, summ.q1);
+    EXPECT_EQ(quart.median, summ.median);
+    EXPECT_EQ(quart.q3, summ.q3);
 }
 
 // Additional tests: textbook examples and varied lengths
@@ -240,73 +234,73 @@ TEST(StatisticsTest, Summary_QuartileConsistency)
 TEST(StatisticsTest, Quartiles_1to9)
 {
     const std::array data{1, 2, 3, 4, 5, 6, 7, 8, 9};
-    auto             q = quartiles(data);
-    EXPECT_EQ(q.q1, 2.5L);
-    EXPECT_EQ(q.median, 5.0L);
-    EXPECT_EQ(q.q3, 7.5L);
+    auto             quart = quartiles(data);
+    EXPECT_EQ(quart.q1, 2.5L);
+    EXPECT_EQ(quart.median, 5.0L);
+    EXPECT_EQ(quart.q3, 7.5L);
 }
 
 // 1..8 (even count)
 TEST(StatisticsTest, Quartiles_1to8)
 {
     const std::array data{1, 2, 3, 4, 5, 6, 7, 8};
-    auto             q = quartiles(data);
-    EXPECT_EQ(q.q1, 2.5L);
-    EXPECT_EQ(q.median, 4.5L);
-    EXPECT_EQ(q.q3, 6.5L);
+    auto             quart = quartiles(data);
+    EXPECT_EQ(quart.q1, 2.5L);
+    EXPECT_EQ(quart.median, 4.5L);
+    EXPECT_EQ(quart.q3, 6.5L);
 }
 
 // Two element range
 TEST(StatisticsTest, Quartiles_TwoElements)
 {
     const std::array data{10, 20};
-    auto             q = quartiles(data);
-    EXPECT_EQ(q.q1, 10.0L);
-    EXPECT_EQ(q.median, 15.0L);
-    EXPECT_EQ(q.q3, 20.0L);
+    auto             quart = quartiles(data);
+    EXPECT_EQ(quart.q1, 10.0L);
+    EXPECT_EQ(quart.median, 15.0L);
+    EXPECT_EQ(quart.q3, 20.0L);
 }
 
 // Duplicate values
 TEST(StatisticsTest, Quartiles_Duplicates)
 {
     const std::array data{5, 5, 5, 5, 5, 5, 5};
-    auto             q = quartiles(data);
-    EXPECT_EQ(q.q1, 5.0L);
-    EXPECT_EQ(q.median, 5.0L);
-    EXPECT_EQ(q.q3, 5.0L);
+    auto             quart = quartiles(data);
+    EXPECT_EQ(quart.q1, 5.0L);
+    EXPECT_EQ(quart.median, 5.0L);
+    EXPECT_EQ(quart.q3, 5.0L);
 }
 
 // Small textbook case: 3 elements
 TEST(StatisticsTest, Quartiles_ThreeElements)
 {
     const std::array data{1, 3, 5};
-    auto             q = quartiles(data);
-    EXPECT_EQ(q.q1, 2.0L);
-    EXPECT_EQ(q.median, 3.0L);
-    EXPECT_EQ(q.q3, 4.0L);
+    auto             quart = quartiles(data);
+    EXPECT_EQ(quart.q1, 2.0L);
+    EXPECT_EQ(quart.median, 3.0L);
+    EXPECT_EQ(quart.q3, 4.0L);
 }
 
 // Summary checks for varied inputs
 TEST(StatisticsTest, Summary_Textbook)
 {
-    const std::array data{6, 7, 15, 36, 39, 40, 41}; // classic example
-    auto             s = summary(data);
-    EXPECT_EQ(s.min, 6.0L);
-    EXPECT_EQ(s.q1, 7.0L);
-    EXPECT_EQ(s.median, 36.0L);
-    EXPECT_NEAR(static_cast<double>(s.mean), 26.285714285714285, 1e-9);
-    EXPECT_EQ(s.q3, 40.0L);
-    EXPECT_EQ(s.max, 41.0L);
+    const std::array data{6, 7, 15, 36, 39, 40, 41};
+    auto             summ = summary(data);
+    EXPECT_EQ(summ.min, 6.0L);
+    EXPECT_EQ(summ.q1, 7.0L);
+    EXPECT_EQ(summ.median, 36.0L);
+    EXPECT_NEAR(static_cast<double>(summ.mean), 26.285714285714285, 1e-9);
+    EXPECT_EQ(summ.q3, 40.0L);
+    EXPECT_EQ(summ.max, 41.0L);
 }
 
 TEST(StatisticsTest, Summary_EvenCount)
 {
     const std::array data{1, 2, 3, 4, 5, 6, 7, 8};
-    auto             s = summary(data);
-    EXPECT_EQ(s.min, 1.0L);
-    EXPECT_EQ(s.q1, 2.5L);
-    EXPECT_EQ(s.median, 4.5L);
-    EXPECT_NEAR(static_cast<double>(s.mean), 4.5, 1e-12);
-    EXPECT_EQ(s.q3, 6.5L);
-    EXPECT_EQ(s.max, 8.0L);
+    auto             summ = summary(data);
+    EXPECT_EQ(summ.min, 1.0L);
+    EXPECT_EQ(summ.q1, 2.5L);
+    EXPECT_EQ(summ.median, 4.5L);
+    EXPECT_NEAR(static_cast<double>(summ.mean), 4.5, 1e-12);
+    EXPECT_EQ(summ.q3, 6.5L);
+    EXPECT_EQ(summ.max, 8.0L);
 }

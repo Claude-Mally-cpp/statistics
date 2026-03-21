@@ -32,10 +32,14 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <expected>
 #include <format>
+#include <iterator>
 #include <numeric>
 #include <ranges>
 #include <type_traits>
+
 
 namespace mally::statlib
 {
@@ -63,22 +67,22 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
     else
     {
         // Materialize as HPF and sort
-        std::array<HighPrecisionFloat, N> hp{};
+        std::array<HighPrecisionFloat, N> hpArray{};
         for (std::size_t i = 0; i < N; ++i)
         {
-            hp[i] = toHPF(data[i]);
+            hpArray[i] = toHPF(data[i]);
         }
-        std::ranges::sort(hp);
+        std::ranges::sort(hpArray);
 
         // Min/Max from sorted array
-        out.min = hp.front();
-        out.max = hp.back();
+        out.min = hpArray.front();
+        out.max = hpArray.back();
 
         // Quartiles from sorted array
-        const auto qs = quartilesSorted(hp);
-        out.q1        = qs.q1;
-        out.median    = qs.median;
-        out.q3        = qs.q3;
+        const auto qSorted = quartilesSorted(hpArray);
+        out.q1             = qSorted.q1;
+        out.median         = qSorted.median;
+        out.q3             = qSorted.q3;
 
         // Mean (use numeric helper on the original array to avoid re-summing hp)
         out.mean = num::average(data);
@@ -109,10 +113,10 @@ constexpr auto summary(const R& range) -> SummaryStats
     out.mean              = num::average(range);
 
     // Quartiles via adapter (materializes to vector<HPF> internally)
-    const auto qs = quartiles(range);
-    out.q1        = qs.q1;
-    out.median    = qs.median;
-    out.q3        = qs.q3;
+    const auto qSorted = quartiles(range);
+    out.q1             = qSorted.q1;
+    out.median         = qSorted.median;
+    out.q3             = qSorted.q3;
 
     return out;
 }
@@ -133,7 +137,7 @@ constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
 /// @return geometric mean of the range of numbers
 /// @details This function computes the average of a range of numbers.
 /// It usses a high precision floating point type to avoid precision loss.
-constexpr auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloat
+auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloat
 {
     if (not range.size())
     {
@@ -210,20 +214,21 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
         return sigma_xy;
     }
 
-    const auto n         = toHPF(range_x.size());
-    const auto numerator = (toHPF(n) * *sigma_xy) - (sigma_x * sigma_y);
+    const auto count     = toHPF(range_x.size());
+    const auto numerator = (count * *sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
-        println("n={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", n, sigma_x, sigma_y, *sigma_xy, numerator);
+        println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, *sigma_xy,
+                numerator);
     }
 
-    const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(n));
+    const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(count));
     if (not denominator_x)
     {
         return denominator_x;
     }
 
-    const auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(n));
+    const auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(count));
     if (not denominator_y)
     {
         return denominator_y;
@@ -237,9 +242,9 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
 
     if constexpr (verboseDebugging)
     {
-        println("coefficientCorrelation: n={} sigma_x={} sigma_y={} sigma_xy={} numerator={} denominator_x={} "
+        println("coefficientCorrelation: count={} sigma_x={} sigma_y={} sigma_xy={} numerator={} denominator_x={} "
                 "denominator_y={} denominator={}",
-                n, sigma_x, sigma_y, *sigma_xy, numerator, *denominator_x, *denominator_y, denominator);
+                count, sigma_x, sigma_y, *sigma_xy, numerator, *denominator_x, *denominator_y, denominator);
     }
 
     return numerator / denominator;
@@ -259,10 +264,10 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
         return std::unexpected(std::format("sizeX={} != sizeY={}", sizeX, sizeY));
     }
 
-    const auto n = sizeX;
-    if (n < 2)
+    const auto count = sizeX;
+    if (count < 2)
     {
-        return std::unexpected(std::format("not enough data points: n={}", n));
+        return std::unexpected(std::format("not enough data points: count={}", count));
     }
 
     const auto sigma_x  = num::sum(range_x);
@@ -273,8 +278,8 @@ auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y
         return sigma_xy;
     }
 
-    const auto numerator   = *sigma_xy - ((sigma_x * sigma_y) / toHPF(n));
-    const auto denominator = toHPF(n - 1);
+    const auto numerator   = *sigma_xy - ((sigma_x * sigma_y) / toHPF(count));
+    const auto denominator = toHPF(count - 1);
     return numerator / denominator;
 }
 } // namespace mally::statlib

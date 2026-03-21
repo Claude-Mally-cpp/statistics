@@ -3,6 +3,7 @@
 #pragma once
 
 #include "HighPrecisionFloat.hpp"
+#include "fmt/core.h"
 #include "print_compat.hpp"
 #include <cstddef>
 #include <string>
@@ -30,16 +31,29 @@ struct SummaryStats
 };
 
 // ---- shared core for both std::format and fmt::format ------------------------
-template <class OutIt> auto formatSummaryCore(const SummaryStats& s, OutIt out) -> OutIt
+template <class OutIt> auto formatSummaryCore(const SummaryStats& summary, OutIt out) -> OutIt
 {
-    return fmt::format_to(out, "n={}, min={}, q1={}, median={}, q3={}, max={}, mean={}", s.count, s.min, s.q1, s.median,
-                          s.q3, s.max, s.mean);
+    return fmt::format_to(out, "n={}, min={}, q1={}, median={}, q3={}, max={}, mean={}", summary.count, summary.min,
+                          summary.q1, summary.median, summary.q3, summary.max, summary.mean);
 }
 
 } // namespace mally::statlib
 
 // ---- std::format specialization (when available) -----------------------------
-#if STAT_HAS_STD_FORMAT
+// ---- fmt::formatter ----------------------------------------------------------
+template <> struct fmt::formatter<mally::statlib::SummaryStats>
+{
+    static constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.begin();
+    }
+    template <class FormatContext> auto format(const mally::statlib::SummaryStats& summary, FormatContext& ctx) const
+    {
+        return mally::statlib::formatSummaryCore(summary, ctx.out());
+    }
+};
+
+#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 #include <format>
 template <> struct std::formatter<mally::statlib::SummaryStats, char>
 {
@@ -48,22 +62,9 @@ template <> struct std::formatter<mally::statlib::SummaryStats, char>
     {
         return ctx.begin();
     }
-    auto format(const mally::statlib::SummaryStats& s, std::format_context& ctx) const
+    auto format(const mally::statlib::SummaryStats& summary, std::format_context& ctx) const
     {
-        return mally::statlib::formatSummaryCore(s, ctx.out());
-    }
-};
-#else
-// ---- fmt::formatter fallback -------------------------------------------------
-template <> struct fmt::formatter<mally::statlib::SummaryStats>
-{
-    static constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin())
-    {
-        return ctx.begin();
-    }
-    template <class FormatContext> auto format(const mally::statlib::SummaryStats& s, FormatContext& ctx) const
-    {
-        return mally::statlib::formatSummaryCore(s, ctx.out());
+        return mally::statlib::formatSummaryCore(summary, ctx.out());
     }
 };
 #endif
