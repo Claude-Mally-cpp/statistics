@@ -33,9 +33,13 @@ jobs:
 
 ## Fail on warnings
 
-If you later want stricter enforcement:
-modify your script to exit non-zero on warnings
-👉 Do this only after your warnings are stable.
+`clang-tidy-run-checks.sh` now passes `--warnings-as-errors=*` by default, so the workflow fails on any reported warning.
+
+If you need a softer local run, override it like this:
+
+```bash
+WARNINGS_AS_ERRORS='' bash ./clang-tidy-run-checks.sh
+```
 
 ## Future improvements
 
