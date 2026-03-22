@@ -52,6 +52,7 @@ done
 (( ${#FILES[@]} )) || exit 0
 
 CHECKS=${CHECKS:-""}
+WARNINGS_AS_ERRORS=${WARNINGS_AS_ERRORS:-"*"}
 
 ROOT=${ROOT:-"$(pwd)"}
 if command -v cygpath >/dev/null 2>&1; then
@@ -96,6 +97,9 @@ fi
 CHECKS_ARGS=()
 if [ -n "$CHECKS" ]; then
   CHECKS_ARGS+=("-checks=$CHECKS")
+fi
+if [ -n "$WARNINGS_AS_ERRORS" ]; then
+  CHECKS_ARGS+=("--warnings-as-errors=$WARNINGS_AS_ERRORS")
 fi
 
 if [ "$USE_RUN_CLANG_TIDY" = "1" ] && command -v run-clang-tidy >/dev/null 2>&1; then
