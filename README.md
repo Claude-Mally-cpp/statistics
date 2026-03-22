@@ -1,4 +1,9 @@
 # statistics
+
+[![clang-tidy](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-tidy.yml)
+[![CI](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Claude-Mally-cpp/statistics/blob/main/LICENSE)
+
 playing around with statistics
 
 > NOTE: This project documents the quartile convention in `CHANGELOG.md` (Tukey hinges, exclusive-median by default; small-sample exception for size==3).

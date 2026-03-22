@@ -62,6 +62,13 @@ dir_regex=$(IFS='|'; printf '%s' "${DIRS[*]}")
 HEADER_FILTER=${HEADER_FILTER:-"^${ROOT}/(${dir_regex})/"}
 EXCLUDE_HEADER_FILTER=${EXCLUDE_HEADER_FILTER:-'(^|.*/)(out/build|build|_deps|third_party|external|vendor)/'}
 
+HEADER_FILTER_ARGS=("-header-filter=$HEADER_FILTER")
+if clang-tidy --help 2>&1 | grep -q -- '--exclude-header-filter'; then
+  HEADER_FILTER_ARGS+=("-exclude-header-filter=$EXCLUDE_HEADER_FILTER")
+else
+  echo "clang-tidy does not support --exclude-header-filter; continuing without it"
+fi
+
 EXTRA_ARGS=()
 if [ "$APPLY_FIX" = "1" ]; then
   EXTRA_ARGS+=("-fix")
@@ -105,11 +112,11 @@ fi
 if [ "$USE_RUN_CLANG_TIDY" = "1" ] && command -v run-clang-tidy >/dev/null 2>&1; then
   # run-clang-tidy accepts file paths as positional arguments.
   printf '%s\0' "${WIN_FILES[@]}" | \
-    xargs -0 run-clang-tidy -p "$DB" "${CHECKS_ARGS[@]}" -header-filter="$HEADER_FILTER" \
-      -exclude-header-filter="$EXCLUDE_HEADER_FILTER" "${EXTRA_ARGS[@]}"
+    xargs -0 run-clang-tidy -p "$DB" "${CHECKS_ARGS[@]}" "${HEADER_FILTER_ARGS[@]}" \
+      "${EXTRA_ARGS[@]}"
 else
   for f in "${WIN_FILES[@]}"; do
-    clang-tidy --quiet "$f" -p "$DB" "${CHECKS_ARGS[@]}" -header-filter="$HEADER_FILTER" \
-      -exclude-header-filter="$EXCLUDE_HEADER_FILTER" "${EXTRA_ARGS[@]}"
+    clang-tidy --quiet "$f" -p "$DB" "${CHECKS_ARGS[@]}" "${HEADER_FILTER_ARGS[@]}" \
+      "${EXTRA_ARGS[@]}"
   done
 fi
