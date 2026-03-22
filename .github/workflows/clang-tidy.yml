@@ -13,7 +13,22 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-tidy cmake ninja-build
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            clang-19 \
+            clang-tidy-19 \
+            libc++-19-dev \
+            libc++abi-19-dev
+
+      - name: Select Clang 19 toolchain
+        run: |
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-19 100
+          clang --version
+          clang++ --version
+          clang-tidy --version
 
       - name: Prepare compile_commands.json
         run: bash ./clang-tidy-prepare.sh
