@@ -88,8 +88,7 @@ constexpr auto toHPFArray(const std::array<T, N>& arr) -> std::array<HighPrecisi
 
 /// @brief Convert std::span<T, N> with static extent to std::array<HighPrecisionFloat, N>.
 template <typename T, std::size_t N>
-    requires((N <= detail::maxStackHPFArraySize) &&
-            std::is_convertible_v<T, HighPrecisionFloat>)
+    requires((N <= detail::maxStackHPFArraySize) && std::is_convertible_v<T, HighPrecisionFloat>)
 inline auto toHPFArray(const std::span<T, N>& spn) -> std::array<HighPrecisionFloat, N>
 {
     std::array<HighPrecisionFloat, N> out{};
@@ -129,8 +128,7 @@ inline auto median(const R& range) -> HighPrecisionFloat
 }
 
 /// @brief Median of a sorted *array* or a sorted vector.
-template <typename T, std::size_t N>
-constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> HighPrecisionFloat
+template <typename T, std::size_t N> constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> HighPrecisionFloat
 {
     static_assert(std::is_convertible_v<T, HighPrecisionFloat>, "array element not convertible to HighPrecisionFloat");
     return detail::medianSorted(sorted);
@@ -148,8 +146,7 @@ inline auto medianSortedSpan(std::span<const HighPrecisionFloat> sorted) -> High
 }
 
 /// @brief Tukey hinges on an already-sorted array<HPF, N>.
-template <std::size_t N>
-constexpr auto quartilesSorted(const std::array<HighPrecisionFloat, N>& sorted) -> QuartileSummary
+template <std::size_t N> constexpr auto quartilesSorted(const std::array<HighPrecisionFloat, N>& sorted) -> QuartileSummary
 {
     if constexpr (N == 0)
     {
@@ -157,8 +154,8 @@ constexpr auto quartilesSorted(const std::array<HighPrecisionFloat, N>& sorted) 
     }
     const HighPrecisionFloat med = detail::medianSorted(sorted);
     std::size_t              loL = 0;
-    std::size_t              loH {};
-    std::size_t              hiL {};
+    std::size_t              loH{};
+    std::size_t              hiL{};
     std::size_t              hiH = N - 1;
     if constexpr (N % 2 == 1)
     {
@@ -231,12 +228,11 @@ inline auto quartiles(const R& range) -> QuartileSummary
         return (hpVector[midLo] + hpVector[midHi]) / 2.0L;
     };
 
-    HighPrecisionFloat const med =
-        (count & 1U) ? hpVector[count / 2] : (hpVector[(count / 2) - 1] + hpVector[count / 2]) / 2.0L;
-    std::size_t loL {};
-    std::size_t loH {};
-    std::size_t hiL {};
-    std::size_t hiH = count - 1;
+    HighPrecisionFloat const med = (count & 1U) ? hpVector[count / 2] : (hpVector[(count / 2) - 1] + hpVector[count / 2]) / 2.0L;
+    std::size_t              loL{};
+    std::size_t              loH{};
+    std::size_t              hiL{};
+    std::size_t              hiH = count - 1;
     if (count & 1U)
     {
         const std::size_t mid = count / 2;

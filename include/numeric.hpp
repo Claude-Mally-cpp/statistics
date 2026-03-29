@@ -16,18 +16,16 @@ namespace mally::statlib::num
 
 /// @brief Concept for ranges whose values convert to HighPrecisionFloat.
 template <class R>
-concept NumberRange = std::ranges::input_range<R> &&
-                      std::convertible_to<std::ranges::range_value_t<R>, mally::statlib::HighPrecisionFloat>;
+concept NumberRange = std::ranges::input_range<R> && std::convertible_to<std::ranges::range_value_t<R>, mally::statlib::HighPrecisionFloat>;
 
 /// @brief Sum of a numeric range in HighPrecisionFloat.
 /// @note O(n), single pass.
 template <NumberRange R> constexpr auto sum(const R& range) -> mally::statlib::HighPrecisionFloat
 {
-    return std::accumulate(std::ranges::begin(range), std::ranges::end(range), mally::statlib::HighPrecisionFloat{0.0L},
-                           [](mally::statlib::HighPrecisionFloat acc, auto&& val)
-                           {
-                               return acc + mally::statlib::toHPF(val);
-                           });
+    return std::accumulate(std::ranges::begin(range),
+                           std::ranges::end(range),
+                           mally::statlib::HighPrecisionFloat{0.0L},
+                           [](mally::statlib::HighPrecisionFloat acc, auto&& val) { return acc + mally::statlib::toHPF(val); });
 }
 
 /// @brief Arithmetic mean of a numeric range (0 for empty).
@@ -46,8 +44,7 @@ template <NumberRange R> constexpr auto average(const R& range) -> mally::statli
 /// @note Requires forward iteration; returns {0,0} for empty.
 template <class R>
     requires NumberRange<R> && std::ranges::forward_range<R>
-constexpr auto minMaxValue(const R& range)
-    -> std::pair<mally::statlib::HighPrecisionFloat, mally::statlib::HighPrecisionFloat>
+constexpr auto minMaxValue(const R& range) -> std::pair<mally::statlib::HighPrecisionFloat, mally::statlib::HighPrecisionFloat>
 {
     if (std::ranges::empty(range))
     {

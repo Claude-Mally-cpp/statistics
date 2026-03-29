@@ -66,19 +66,17 @@ TEST(StatisticsTest, Covariance_TitresX_Marche)
 // Test correlation between profits and employers
 TEST(StatisticsTest, Correlation_Profits_Employers)
 {
-    const auto profits = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
+    const auto profits   = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
                                     118300, 119700, 153000, 252800, 333300, 412000, 424300, 454000,  829000,  86500,
                                     176000, 227400, 471300, 681100, 747000, 859800, 939500, 1082000, 1102200, 1495400};
-    const auto employers = std::array{7523,  8200,  12068, 9500,  5000, 18000, 4708,  13740, 95000, 8200,
-                                      56000, 31404, 8578,  2900,  9100, 10200, 9548,  82300, 28334, 40929,
-                                      50816, 54100, 28200, 83100, 3418, 34400, 42100, 8527,  21300, 20100};
+    const auto employers = std::array{7523,  8200, 12068, 9500,  5000,  18000, 4708,  13740, 95000, 8200, 56000, 31404, 8578, 2900,  9100,
+                                      10200, 9548, 82300, 28334, 40929, 50816, 54100, 28200, 83100, 3418, 34400, 42100, 8527, 21300, 20100};
     auto       result    = correlationCoefficient(profits, employers);
     ASSERT_TRUE(result.has_value());
     const auto expected  = 0.05881462738716168;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
-        << "Expected " << expected << ", got " << *result
-        << ". Check calculation or expected value."; // Update expected value as needed
+        << "Expected " << expected << ", got " << *result << ". Check calculation or expected value."; // Update expected value as needed
     // Alternative: test with shuffled data, or edge cases
 }
 
