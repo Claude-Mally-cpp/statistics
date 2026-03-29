@@ -1,0 +1,37 @@
+name: clang
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [debug, release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f Dockerfile.clang -t cpp-ci-clang .
+
+      - name: Configure & Build (${{ matrix.config }})
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-clang
+          bash -lc "cmake --preset linux-clang-${{ matrix.config }} &&
+                    cmake --build out/build/linux-clang-${{ matrix.config }}"
+
+      - name: Run tests (${{ matrix.config }})
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-clang
+          ./out/build/linux-clang-${{ matrix.config }}/statistics_test

@@ -1,0 +1,45 @@
+name: cppcheck
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f Dockerfile.gcc -t cpp-ci-gcc .
+
+      - name: Configure project
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-gcc
+          bash -lc "cmake --preset linux-gcc-debug"
+
+      - name: Run cppcheck
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/project -w /project cpp-ci-gcc bash -s <<'BASH'
+          set -euo pipefail
+          BUILD_DIR="out/build/linux-gcc-debug"
+
+          cppcheck \
+            include test \
+            -I include \
+            -I "$BUILD_DIR/_deps/fmt-src/include" \
+            -I "$BUILD_DIR/_deps/googletest-src/googletest/include" \
+            --language=c++ \
+            --std=c++23 \
+            --enable=warning,style,performance,portability,information,missingInclude \
+            --inline-suppr \
+            --suppress=missingIncludeSystem \
+            -i "$BUILD_DIR/_deps" \
+            --error-exitcode=2 \
+            -q
+          BASH

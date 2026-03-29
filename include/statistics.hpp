@@ -40,7 +40,6 @@
 #include <ranges>
 #include <type_traits>
 
-
 namespace mally::statlib
 {
 
@@ -128,7 +127,9 @@ constexpr auto summary(const R& range) -> SummaryStats
 /// @return product of the range of numbers
 constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
 {
-    return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 1.0L,
+    return std::accumulate(std::ranges::begin(range),
+                           std::ranges::end(range),
+                           1.0L,
                            [](HighPrecisionFloat acc, auto val) -> auto { return acc * toHPF(val); });
 }
 
@@ -153,7 +154,9 @@ auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloat
 /// @return sum of squares of the range of numbers
 constexpr auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
 {
-    return std::accumulate(std::ranges::begin(range), std::ranges::end(range), 0.0L,
+    return std::accumulate(std::ranges::begin(range),
+                           std::ranges::end(range),
+                           0.0L,
                            [](HighPrecisionFloat acc, auto val) -> auto
                            {
                                const auto valueSquared = toHPF(val) * toHPF(val);
@@ -218,8 +221,7 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
     const auto numerator = (count * *sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
-        println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, *sigma_xy,
-                numerator);
+        println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, *sigma_xy, numerator);
     }
 
     const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(count));
@@ -244,7 +246,14 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
     {
         println("coefficientCorrelation: count={} sigma_x={} sigma_y={} sigma_xy={} numerator={} denominator_x={} "
                 "denominator_y={} denominator={}",
-                count, sigma_x, sigma_y, *sigma_xy, numerator, *denominator_x, *denominator_y, denominator);
+                count,
+                sigma_x,
+                sigma_y,
+                *sigma_xy,
+                numerator,
+                *denominator_x,
+                *denominator_y,
+                denominator);
     }
 
     return numerator / denominator;

@@ -1,7 +1,11 @@
 # statistics
 
 [![clang-tidy](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-tidy.yml)
-[![CI](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/ci.yml)
+[![clang-format](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-format.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-format.yml)
+[![msvc](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/msvc.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/msvc.yml)
+[![gcc](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/gcc.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/gcc.yml)
+[![clang](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang.yml)
+[![cppcheck](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/cppcheck.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/cppcheck.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Claude-Mally-cpp/statistics/blob/main/LICENSE)
 
 playing around with statistics
@@ -85,13 +89,40 @@ ctest --preset msvc-x64-release
   depend on a different quartile convention you should materialize and compute quartiles
   explicitly (the library exposes constexpr array-based helpers for `std::array` inputs).
 
-- To run static analysis locally (and in CI) on the reorganized layout use:
+- To run static analysis locally (and in CI) after configuring a build, use:
 
 ```sh
-cppcheck ./include/* ./test/*
+cppcheck include test \
+  -I include \
+  -I out/build/msvc-x64-debug/_deps/fmt-src/include \
+  -I out/build/msvc-x64-debug/_deps/googletest-src/googletest/include \
+  --language=c++ --std=c++23 \
+  --enable=warning,style,performance,portability,information,missingInclude \
+  --inline-suppr --suppress=missingIncludeSystem \
+  -i out/build/msvc-x64-debug/_deps
 ```
 
 Make sure `cppcheck` is available on the runner (for Windows use `choco install cppcheck -y`).
+
+## Local Verification
+
+Use the repo verification wrapper for the common local paths:
+
+```bash
+# fast local check
+./verify.sh quick
+
+# broader pre-CI pass
+./verify.sh full
+```
+
+`quick` runs the repo-wide format check.
+
+`full` runs:
+- format check
+- Windows build/test on Windows hosts
+- `cppcheck` when available and when a configured build tree with fetched deps already exists
+- Docker image rebuild plus Linux build/test when Docker is available
 
 ## Enforcing Code Formatting Before Commit
 
@@ -118,30 +149,10 @@ mkdir -p .githooks
 git config core.hooksPath .githooks
 ```
 
-### 3. Create .githooks/pre-commit
+### 3. Use the tracked pre-commit hook
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Collect staged C/C++ files
-mapfile -d '' FILES < <(git diff --cached --name-only -z --diff-filter=ACMR | \
-  grep -zE '\.(c|cc|cxx|cpp|h|hh|hpp|hxx)$' || true)
-
-# Skip if nothing relevant is staged
-if (( ${#FILES[@]} == 0 )); then
-  exit 0
-fi
-
-echo "Running clang-format check on staged files..."
-if ! printf '%s\0' "${FILES[@]}" | xargs -0 clang-format --dry-run --Werror >/dev/null; then
-  echo
-  echo "❌ Formatting required. Run: clang-format -i <files> (or ./auto-format.sh)"
-  echo "   Then re-stage and commit again."
-  exit 1
-fi
-
-echo "✅ Formatting looks good."
+chmod +x .githooks/pre-commit check-format-staged.sh verify.sh
 ```
 
 ### 4. Test it
