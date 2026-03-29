@@ -1,6 +1,7 @@
 # statistics
 
 [![clang-tidy](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-tidy.yml)
+[![clang-format](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-format.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-format.yml)
 [![msvc](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/msvc.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/msvc.yml)
 [![gcc](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/gcc.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/gcc.yml)
 [![clang](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang.yml)
@@ -103,6 +104,26 @@ cppcheck include test \
 
 Make sure `cppcheck` is available on the runner (for Windows use `choco install cppcheck -y`).
 
+## Local Verification
+
+Use the repo verification wrapper for the common local paths:
+
+```bash
+# fast local check
+./verify.sh quick
+
+# broader pre-CI pass
+./verify.sh full
+```
+
+`quick` runs the repo-wide format check.
+
+`full` runs:
+- format check
+- Windows build/test on Windows hosts
+- `cppcheck` when available and when a configured build tree with fetched deps already exists
+- Docker image rebuild plus Linux build/test when Docker is available
+
 ## Enforcing Code Formatting Before Commit
 
 This project uses **clang-format** to ensure consistent code style.  
@@ -128,30 +149,10 @@ mkdir -p .githooks
 git config core.hooksPath .githooks
 ```
 
-### 3. Create .githooks/pre-commit
+### 3. Use the tracked pre-commit hook
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Collect staged C/C++ files
-mapfile -d '' FILES < <(git diff --cached --name-only -z --diff-filter=ACMR | \
-  grep -zE '\.(c|cc|cxx|cpp|h|hh|hpp|hxx)$' || true)
-
-# Skip if nothing relevant is staged
-if (( ${#FILES[@]} == 0 )); then
-  exit 0
-fi
-
-echo "Running clang-format check on staged files..."
-if ! printf '%s\0' "${FILES[@]}" | xargs -0 clang-format --dry-run --Werror >/dev/null; then
-  echo
-  echo "❌ Formatting required. Run: clang-format -i <files> (or ./auto-format.sh)"
-  echo "   Then re-stage and commit again."
-  exit 1
-fi
-
-echo "✅ Formatting looks good."
+chmod +x .githooks/pre-commit check-format-staged.sh verify.sh
 ```
 
 ### 4. Test it
