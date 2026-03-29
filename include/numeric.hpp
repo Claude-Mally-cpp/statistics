@@ -7,7 +7,6 @@
 #include <concepts>
 #include <expected>
 #include <iterator>
-#include <numeric>
 #include <ranges>
 #include <utility>
 
@@ -22,10 +21,12 @@ concept NumberRange = std::ranges::input_range<R> && std::convertible_to<std::ra
 /// @note O(n), single pass.
 template <NumberRange R> constexpr auto sum(const R& range) -> mally::statlib::HighPrecisionFloat
 {
-    return std::accumulate(std::ranges::begin(range),
-                           std::ranges::end(range),
-                           mally::statlib::HighPrecisionFloat{0.0L},
-                           [](mally::statlib::HighPrecisionFloat acc, auto&& val) { return acc + mally::statlib::toHPF(val); });
+    mally::statlib::HighPrecisionFloat acc = 0.0L;
+    for (auto&& val : range)
+    {
+        acc += mally::statlib::toHPF(val);
+    }
+    return acc;
 }
 
 /// @brief Arithmetic mean of a numeric range (0 for empty).
