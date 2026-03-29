@@ -105,8 +105,14 @@ template <class R>
 inline auto toHPFVector(const R& range) -> std::vector<HighPrecisionFloat>
 {
     std::vector<HighPrecisionFloat> out;
-    out.reserve(static_cast<std::size_t>(std::ranges::distance(range)));
-    std::ranges::transform(range, std::back_inserter(out), [](auto&& value) { return toHPF(value); });
+    if constexpr (std::ranges::sized_range<R>)
+    {
+        out.reserve(static_cast<std::size_t>(std::ranges::size(range)));
+    }
+    for (auto&& value : range)
+    {
+        out.push_back(toHPF(value));
+    }
     return out;
 }
 
