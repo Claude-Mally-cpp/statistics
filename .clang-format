@@ -4,7 +4,7 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
-ColumnLimit: 120
+ColumnLimit: 140
 
 AllowShortFunctionsOnASingleLine: Empty
 BreakBeforeBraces: Allman
@@ -39,3 +39,16 @@ PointerAlignment: Left
 
 # Trailing commas (optional, helpful in multi-line init)
 Cpp11BracedListStyle: true
+
+BreakConstructorInitializers: BeforeComma
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+
+BreakBeforeBinaryOperators: NonAssignment
+
+AllowShortBlocksOnASingleLine: Never
+
+BinPackArguments: false
+BinPackParameters: false
+
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyReturnTypeOnItsOwnLine: 200
