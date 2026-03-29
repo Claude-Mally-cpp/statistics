@@ -1,0 +1,37 @@
+name: gcc
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [debug, release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f Dockerfile.gcc -t cpp-ci-gcc .
+
+      - name: Configure & Build (${{ matrix.config }})
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-gcc
+          bash -lc "cmake --preset linux-gcc-${{ matrix.config }} &&
+                    cmake --build out/build/linux-gcc-${{ matrix.config }}"
+
+      - name: Run tests (${{ matrix.config }})
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-gcc
+          ./out/build/linux-gcc-${{ matrix.config }}/statistics_test

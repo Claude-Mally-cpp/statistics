@@ -1,7 +1,10 @@
 # statistics
 
 [![clang-tidy](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang-tidy.yml)
-[![CI](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/ci.yml)
+[![msvc](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/msvc.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/msvc.yml)
+[![gcc](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/gcc.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/gcc.yml)
+[![clang](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/clang.yml)
+[![cppcheck](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/cppcheck.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/cppcheck.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Claude-Mally-cpp/statistics/blob/main/LICENSE)
 
 playing around with statistics
@@ -85,10 +88,17 @@ ctest --preset msvc-x64-release
   depend on a different quartile convention you should materialize and compute quartiles
   explicitly (the library exposes constexpr array-based helpers for `std::array` inputs).
 
-- To run static analysis locally (and in CI) on the reorganized layout use:
+- To run static analysis locally (and in CI) after configuring a build, use:
 
 ```sh
-cppcheck ./include/* ./test/*
+cppcheck include test \
+  -I include \
+  -I out/build/msvc-x64-debug/_deps/fmt-src/include \
+  -I out/build/msvc-x64-debug/_deps/googletest-src/googletest/include \
+  --language=c++ --std=c++23 \
+  --enable=warning,style,performance,portability,information,missingInclude \
+  --inline-suppr --suppress=missingIncludeSystem \
+  -i out/build/msvc-x64-debug/_deps
 ```
 
 Make sure `cppcheck` is available on the runner (for Windows use `choco install cppcheck -y`).
