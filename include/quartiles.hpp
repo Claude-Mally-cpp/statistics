@@ -107,10 +107,7 @@ inline auto toHPFVector(const R& range) -> std::vector<HighPrecisionFloat>
 {
     std::vector<HighPrecisionFloat> out;
     out.reserve(static_cast<std::size_t>(std::ranges::distance(range)));
-    for (auto&& value : range)
-    {
-        out.push_back(toHPF(value));
-    }
+    std::ranges::transform(range, std::back_inserter(out), [](auto&& value) { return toHPF(value); });
     return out;
 }
 
@@ -122,11 +119,6 @@ template <class R>
 inline auto median(const R& range) -> HighPrecisionFloat
 {
     std::vector<HighPrecisionFloat> hpVector = detail::toHPFVector(range);
-    hpVector.reserve(static_cast<std::size_t>(std::ranges::distance(range)));
-    for (auto&& value : range)
-    {
-        hpVector.push_back(toHPF(value));
-    }
     if (hpVector.empty())
     {
         return 0.0L;
@@ -216,11 +208,6 @@ template <class R>
 inline auto quartiles(const R& range) -> QuartileSummary
 {
     std::vector<HighPrecisionFloat> hpVector = detail::toHPFVector(range);
-    hpVector.reserve(static_cast<std::size_t>(std::ranges::distance(range)));
-    for (auto&& value : range)
-    {
-        hpVector.push_back(toHPF(value));
-    }
     if (hpVector.empty())
     {
         return {};
