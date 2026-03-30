@@ -12,6 +12,7 @@ RUN apt update && apt install -y \
     curl \
     lsb-release \
     clang-19 \
+    clang-tidy-19 \
     libc++-19-dev \
     libc++abi-19-dev \
     cppcheck \
@@ -19,7 +20,8 @@ RUN apt update && apt install -y \
 
 # Set Clang 19 as default
 RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100 \
- && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+ && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100 \
+ && update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-19 100
 
 # Create working directory
 WORKDIR /project
