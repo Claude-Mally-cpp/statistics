@@ -28,6 +28,7 @@
 #include "numeric.hpp"
 #include "quartiles.hpp"
 #include "summaryStats.hpp"
+#include "statistics_version.hpp"
 
 #include <algorithm>
 #include <array>
