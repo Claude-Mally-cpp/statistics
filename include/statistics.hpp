@@ -21,7 +21,6 @@
 ///   #include "statistics.hpp"
 ///   using namespace mally::statlib;
 ///   auto s = summary(myVector);
-// ... your existing includes ...
 #pragma once
 
 #include "HighPrecisionFloat.hpp"
