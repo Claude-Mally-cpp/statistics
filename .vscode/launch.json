@@ -14,6 +14,19 @@
       "externalConsole": false,
       "MIMode": "gdb",
       "preLaunchTask": "CMake: build"
+    },
+    {
+      "name": "Run statistics-cli (--version) [Windows]",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": [
+        "--version"
+      ],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "preLaunchTask": "CMake: build"
     }
   ]
 }
