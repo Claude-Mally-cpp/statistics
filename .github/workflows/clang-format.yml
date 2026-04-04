@@ -20,8 +20,11 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-22 main" | sudo tee /etc/apt/sources.list.d/llvm.list
           sudo apt-get update
           sudo apt-get install -y clang-format-22
-          sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-22 100
-          clang-format --version
 
       - name: Check formatting
-        run: bash ./check-format.sh
+        env:
+          CLANG_FORMAT: clang-format-22
+        run: |
+          which "$CLANG_FORMAT"
+          "$CLANG_FORMAT" --version
+          bash ./check-format.sh
