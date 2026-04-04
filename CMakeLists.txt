@@ -43,14 +43,34 @@ target_include_directories(
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# Fetch fmt
+# Find fmt: prefer a pre-installed package (produces an IMPORTED target that
+# can be referenced in CMake install exports); fall back to FetchContent for
+# development builds where fmt is not pre-installed.
 include(FetchContent)
-FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 12.1.0
-)
-FetchContent_MakeAvailable(fmt)
+find_package(fmt 12 CONFIG QUIET)
+if (NOT fmt_FOUND)
+  FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 12.1.0
+  )
+  FetchContent_MakeAvailable(fmt)
+endif()
+
+# Propagate fmt as a public (INTERFACE) dependency so consumers of the installed
+# statistics package automatically get the fmt include paths and link requirement
+# without having to add it manually.  When fmt was resolved via find_package the
+# fmt::fmt target is IMPORTED, which CMake allows in an install export set and
+# which consumers receive automatically via find_dependency(fmt) in
+# statisticsConfig.cmake.  When fmt was resolved via FetchContent (fallback for
+# development), BUILD_INTERFACE restricts the reference to the local build only
+# and avoids the "target not in any export set" CMake error; consumers of the
+# installed package still obtain fmt through find_dependency(fmt).
+if (fmt_FOUND)
+  target_link_libraries(statistics INTERFACE fmt::fmt)
+else()
+  target_link_libraries(statistics INTERFACE $<BUILD_INTERFACE:fmt::fmt>)
+endif()
 
 # Treat fmt headers as system includes so clang-tidy/analyzers do not report
 # third-party diagnostics from template instantiations in fetched sources.
