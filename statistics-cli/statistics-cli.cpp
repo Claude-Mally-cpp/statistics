@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "print_compat.hpp"
+#include "statistics_version.hpp"
 
 int main(int argc, char** argv)
 {
