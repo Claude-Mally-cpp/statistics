@@ -27,7 +27,6 @@
 #include "HighPrecisionFloat.hpp"
 #include "numeric.hpp"
 #include "quartiles.hpp"
-#include "statistics_version.hpp"
 #include "summaryStats.hpp"
 
 #include <algorithm>
