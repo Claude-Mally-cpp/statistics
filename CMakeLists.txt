@@ -1,9 +1,26 @@
 ﻿cmake_minimum_required(VERSION 3.25)
-project(statistics LANGUAGES CXX)
+project(
+  statistics
+  VERSION 0.0.1
+  DESCRIPTION "Modern C++ statistics library and CLI"
+  LANGUAGES CXX
+)
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(STATISTICS_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
+set(STATISTICS_GENERATED_VERSION_HEADER "${STATISTICS_GENERATED_INCLUDE_DIR}/statistics_version.hpp")
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/statistics_version.hpp.in"
+  "${STATISTICS_GENERATED_VERSION_HEADER}"
+  @ONLY
+)
 
 # Use libc++ globally when compiling with Clang
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -16,16 +33,44 @@ include(ProjectWarnings)
 
 # Header-only library
 add_library(statistics INTERFACE)
-target_include_directories(statistics INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-# Fetch fmt
-include(FetchContent)
-FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 10.2.1
+add_library(statistics::statistics ALIAS statistics)
+set_target_properties(statistics PROPERTIES EXPORT_NAME statistics)
+target_include_directories(
+  statistics
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${STATISTICS_GENERATED_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-FetchContent_MakeAvailable(fmt)
+
+# Find fmt: prefer a pre-installed package (produces an IMPORTED target that
+# can be referenced in CMake install exports); fall back to FetchContent for
+# development builds where fmt is not pre-installed.
+include(FetchContent)
+find_package(fmt 12 CONFIG QUIET)
+if (NOT fmt_FOUND)
+  FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 12.1.0
+  )
+  FetchContent_MakeAvailable(fmt)
+endif()
+
+# Propagate fmt as a public (INTERFACE) dependency so consumers of the installed
+# statistics package automatically get the fmt include paths and link requirement
+# without having to add it manually.  When fmt was resolved via find_package the
+# fmt::fmt target is IMPORTED, which CMake allows in an install export set and
+# which consumers receive automatically via find_dependency(fmt) in
+# statisticsConfig.cmake.  When fmt was resolved via FetchContent (fallback for
+# development), BUILD_INTERFACE restricts the reference to the local build only
+# and avoids the "target not in any export set" CMake error; consumers of the
+# installed package still obtain fmt through find_dependency(fmt).
+if (fmt_FOUND)
+  target_link_libraries(statistics INTERFACE fmt::fmt)
+else()
+  target_link_libraries(statistics INTERFACE $<BUILD_INTERFACE:fmt::fmt>)
+endif()
 
 # Treat fmt headers as system includes so clang-tidy/analyzers do not report
 # third-party diagnostics from template instantiations in fetched sources.
@@ -72,20 +117,56 @@ target_link_libraries(statistics-cli
 target_include_directories(statistics-cli SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 
 # Install the CLI executable
-install(TARGETS statistics-cli
-        RUNTIME DESTINATION bin
-        BUNDLE DESTINATION bin
-        LIBRARY DESTINATION lib
+install(
+  TARGETS statistics statistics-cli
+  EXPORT statisticsTargets
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 # Install headers (all .hpp files under include/)
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.hpp"
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  FILES_MATCHING PATTERN "*.hpp"
+)
+
+install(
+  FILES "${STATISTICS_GENERATED_VERSION_HEADER}"
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/statisticsConfigVersion.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY ExactVersion
+)
+
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/statisticsConfig.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/statisticsConfig.cmake"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/statistics"
+)
+
+install(
+  EXPORT statisticsTargets
+  FILE statisticsTargets.cmake
+  NAMESPACE statistics::
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/statistics"
+)
+
+install(
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/statisticsConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/statisticsConfigVersion.cmake"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/statistics"
 )
 
 # Optional: install the test runner for CI/local use
-install(TARGETS statistics_test
-        RUNTIME DESTINATION bin/tests
-        OPTIONAL
+install(
+  TARGETS statistics_test
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/tests
+  OPTIONAL
 )

@@ -43,15 +43,16 @@ inline constexpr bool kHasStdPrint = true;
 inline constexpr bool kHasStdPrint = false;
 #endif
 
-// Portable print/println -------------------------------------------------------
 template <class... Args>
-inline void print(
-#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
-    std::format_string<Args...> fmt_str,
+using PrintFormatString =
+#if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
+    std::format_string<Args...>;
 #else
-    fmt::format_string<Args...> fmt_str,
+    fmt::format_string<Args...>;
 #endif
-    Args&&... args)
+
+// Portable print/println -------------------------------------------------------
+template <class... Args> inline void print(PrintFormatString<Args...> fmt_str, Args&&... args)
 {
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::print(fmt_str, std::forward<Args>(args)...);
@@ -60,14 +61,7 @@ inline void print(
 #endif
 }
 
-template <class... Args>
-inline void println(
-#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
-    std::format_string<Args...> fmt_str,
-#else
-    fmt::format_string<Args...> fmt_str,
-#endif
-    Args&&... args)
+template <class... Args> inline void println(PrintFormatString<Args...> fmt_str, Args&&... args)
 {
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::println(fmt_str, std::forward<Args>(args)...);

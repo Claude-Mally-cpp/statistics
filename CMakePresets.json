@@ -67,8 +67,8 @@
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_COMPILER": "clang-22",
+        "CMAKE_CXX_COMPILER": "clang++-22",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "condition": {
@@ -102,8 +102,8 @@
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_COMPILER": "clang-22",
+        "CMAKE_CXX_COMPILER": "clang++-22",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "condition": {
@@ -186,7 +186,17 @@
       { "name": "msvc-x64-debug",   "configurePreset": "msvc-x64-debug" },
       { "name": "msvc-x64-release", "configurePreset": "msvc-x64-release" },
       { "name": "linux-clang-debug",   "configurePreset": "linux-clang-debug" },
+      {
+        "name": "linux-clang-debug-cli",
+        "configurePreset": "linux-clang-debug",
+        "targets": [ "statistics-cli" ]
+      },
       { "name": "linux-clang-release", "configurePreset": "linux-clang-release" },
+      {
+        "name": "linux-clang-release-cli",
+        "configurePreset": "linux-clang-release",
+        "targets": [ "statistics-cli" ]
+      },
       { "name": "linux-gcc-debug",     "configurePreset": "linux-gcc-debug" },
       { "name": "linux-gcc-release",   "configurePreset": "linux-gcc-release" },
       { "name": "local-msvc-debug",    "configurePreset": "local-msvc-debug" }

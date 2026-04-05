@@ -53,6 +53,7 @@ done
 
 CHECKS=${CHECKS:-""}
 WARNINGS_AS_ERRORS=${WARNINGS_AS_ERRORS:-"*"}
+CLANG_TIDY_BIN=${CLANG_TIDY_BIN:-clang-tidy}
 
 ROOT=${ROOT:-"$(pwd)"}
 if command -v cygpath >/dev/null 2>&1; then
@@ -63,10 +64,10 @@ HEADER_FILTER=${HEADER_FILTER:-"^${ROOT}/(${dir_regex})/"}
 EXCLUDE_HEADER_FILTER=${EXCLUDE_HEADER_FILTER:-'(^|.*/)(out/build|build|_deps|third_party|external|vendor)/'}
 
 HEADER_FILTER_ARGS=("-header-filter=$HEADER_FILTER")
-if clang-tidy --help 2>&1 | grep -q -- '--exclude-header-filter'; then
+if "$CLANG_TIDY_BIN" --help 2>&1 | grep -q -- '--exclude-header-filter'; then
   HEADER_FILTER_ARGS+=("-exclude-header-filter=$EXCLUDE_HEADER_FILTER")
 else
-  echo "clang-tidy does not support --exclude-header-filter; continuing without it"
+  echo "$CLANG_TIDY_BIN does not support --exclude-header-filter; continuing without it"
 fi
 
 EXTRA_ARGS=()
@@ -116,7 +117,7 @@ if [ "$USE_RUN_CLANG_TIDY" = "1" ] && command -v run-clang-tidy >/dev/null 2>&1;
       "${EXTRA_ARGS[@]}"
 else
   for f in "${WIN_FILES[@]}"; do
-    clang-tidy --quiet "$f" -p "$DB" "${CHECKS_ARGS[@]}" "${HEADER_FILTER_ARGS[@]}" \
+    "$CLANG_TIDY_BIN" --quiet "$f" -p "$DB" "${CHECKS_ARGS[@]}" "${HEADER_FILTER_ARGS[@]}" \
       "${EXTRA_ARGS[@]}"
   done
 fi

@@ -13,25 +13,29 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
+          sudo apt-get install -y wget gpg
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/llvm-archive-keyring.gpg >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-22 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
           sudo apt-get install -y \
             cmake \
             ninja-build \
-            clang-19 \
-            clang-tidy-19 \
-            libc++-19-dev \
-            libc++abi-19-dev
-
-      - name: Select Clang 19 toolchain
-        run: |
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
-          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-19 100
-          clang --version
-          clang++ --version
-          clang-tidy --version
+            clang-22 \
+            clang-tidy-22 \
+            libc++-22-dev \
+            libc++abi-22-dev
 
       - name: Prepare compile_commands.json
-        run: bash ./clang-tidy-prepare.sh
+        env:
+          CC: clang-22
+          CXX: clang++-22
+        run: |
+          clang-22 --version
+          clang++-22 --version
+          clang-tidy-22 --version
+          bash ./clang-tidy-prepare.sh
 
       - name: Run clang-tidy
+        env:
+          CLANG_TIDY_BIN: clang-tidy-22
         run: bash ./clang-tidy-run-checks.sh
