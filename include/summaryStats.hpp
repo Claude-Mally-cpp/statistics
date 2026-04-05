@@ -5,6 +5,7 @@
 #include "HighPrecisionFloat.hpp"
 #include "print_compat.hpp"
 #include <cstddef>
+#include <fmt/base.h>
 #include <fmt/format.h>
 #include <string>
 
