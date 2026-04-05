@@ -3,9 +3,9 @@
 #pragma once
 
 #include "HighPrecisionFloat.hpp"
-#include "fmt/core.h"
 #include "print_compat.hpp"
 #include <cstddef>
+#include <fmt/format.h>
 #include <string>
 
 namespace mally::statlib
