@@ -6,22 +6,22 @@ This note is for contributors working on this repository from Windows.
 
 The safest way to contribute from Windows is:
 
-1. Match the repository's `clang-format` major version locally.
-2. Run local formatting checks and local MSVC builds/tests.
-3. Use Docker for Linux `gcc` / `clang` validation when available.
+1. Run local MSVC builds/tests natively on Windows.
+2. Match the repository's LLVM 22 toolchain for formatting and optional local Clang tools.
+3. Use WSL or Docker for Linux `clang` / `gcc` validation when available.
 4. Let GitHub Actions be the final clean-runner authority.
 
 ## What matters most
 
-The most important tool to match exactly is `clang-format`.
+The most important Windows-side tool to match is `clang-format`.
 
-Formatting disagreements are usually caused by version drift, so contributors should keep their local `clang-format` on the same major version used by CI and Docker. For this repository, `19.x` is the intended target.
+Formatting disagreements are usually caused by version drift, so contributors should keep their local `clang-format` on the same major version used by CI and Docker. For this repository, the intended target is LLVM 22.
 
 ## Minimum Windows setup
 
 Contributors on Windows should aim to have:
 
-- `clang-format` 19.x
+- `clang-format` 22.x
 - MSVC build tools
 - CMake and Ninja
 
@@ -40,6 +40,8 @@ If Docker is available on your machine, also run:
 - `./rebuildDockerImages.sh`
 - `./dockerLinuxBuildAndTest.sh`
 
+If WSL is available, use it for the closest Linux Clang match to CI.
+
 ## About clang-tidy on Windows
 
 `clang-tidy` is optional for local Windows contributors.
@@ -53,7 +55,7 @@ If you do not have those tools set up yet, that is acceptable. In that case, rel
 
 - local formatting checks
 - local MSVC build/tests
-- Docker Linux checks when available
+- WSL or Docker Linux checks when available
 - CI for the remaining Clang-oriented validation
 
 ## LLVM installation note
@@ -64,10 +66,14 @@ Common options are:
 
 - install standalone LLVM and add it to `PATH`
 - use Visual Studio's LLVM/Clang tools if they are already present
+- install LLVM with `winget install LLVM.LLVM`
 
 ## Check your local toolchain
 
-```bash
+```powershell
+where clang
+where clang-format
+where clang-tidy
 clang-format --version
 clang --version
 clang-tidy --version
@@ -77,7 +83,7 @@ If only one of these is going to match CI reliably, make it `clang-format`.
 
 ## Practical contributor policy
 
-- Exact-match target: `clang-format` major version
+- Exact-match target: LLVM 22 tool versions, especially `clang-format`
 - Good local baseline: MSVC build/test plus formatting
-- Preferred cross-platform validation: Docker Linux build/test
+- Preferred cross-platform validation: WSL or Docker Linux build/test
 - Final authority: GitHub Actions
