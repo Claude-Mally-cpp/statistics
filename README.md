@@ -76,6 +76,57 @@ cmake --build --preset msvc-x64-release
 ctest --preset msvc-x64-release
 ```
 
+## Local Clang Toolchain Setup (WSL / Linux)
+
+To match the Docker image and CI exactly, install LLVM 22 on your local WSL or Linux
+machine using the same repository that `Dockerfile.clang` uses:
+
+```bash
+sudo apt-get update && sudo apt-get install -y wget gpg
+wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+  | gpg --dearmor \
+  | sudo tee /usr/share/keyrings/llvm-archive-keyring.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] \
+http://apt.llvm.org/noble/ llvm-toolchain-noble-22 main" \
+  | sudo tee /etc/apt/sources.list.d/llvm.list
+sudo apt-get update
+sudo apt-get install -y \
+  clang-22 \
+  clang-format-22 \
+  clang-tidy-22 \
+  libc++-22-dev \
+  libc++abi-22-dev
+```
+
+> **Note:** The commands above target Ubuntu 24.04 Noble (the same base image as
+> `Dockerfile.clang`). Adjust `noble` / `llvm-toolchain-noble-22` if you are on a
+> different Ubuntu release.
+
+After installation, verify that the versions match:
+
+```bash
+clang-22 --version
+clang++-22 --version
+clang-format-22 --version
+clang-tidy-22 --version
+```
+
+CMake presets (`linux-clang-*`) already pin `CMAKE_C_COMPILER=clang-22` and
+`CMAKE_CXX_COMPILER=clang++-22`, so no extra configuration is needed.
+
+To run `clang-tidy` locally with the same settings as CI:
+
+```bash
+bash ./clang-tidy-prepare.sh
+bash ./clang-tidy-run-checks.sh
+```
+
+To run the format check locally with the same settings as CI:
+
+```bash
+CLANG_FORMAT=clang-format-22 bash ./check-format.sh
+```
+
 ## Conventions and notes
 
 

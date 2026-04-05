@@ -10,40 +10,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache CMake dependencies
-        uses: actions/cache@v4
-        with:
-          path: out/build/linux-clang-release/_deps
-          key: ${{ runner.os }}-cmake-deps-linux-clang-release-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
-          restore-keys: |
-            ${{ runner.os }}-cmake-deps-linux-clang-release-
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget gpg
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/llvm-archive-keyring.gpg >/dev/null
-          echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-22 main" | sudo tee /etc/apt/sources.list.d/llvm.list
-          sudo apt-get update
-          sudo apt-get install -y \
-            cmake \
-            ninja-build \
-            clang-22 \
-            clang-tidy-22 \
-            libc++-22-dev \
-            libc++abi-22-dev
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.clang
+          load: true
+          tags: cpp-ci-clang:latest
+          cache-from: type=gha,scope=dockerfile-clang
+          cache-to: type=gha,mode=max,scope=dockerfile-clang
 
       - name: Prepare compile_commands.json
-        env:
-          CC: clang-22
-          CXX: clang++-22
-        run: |
-          clang-22 --version
-          clang++-22 --version
-          clang-tidy-22 --version
-          bash ./clang-tidy-prepare.sh
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-clang
+          bash -lc "clang-22 --version &&
+                    clang++-22 --version &&
+                    clang-tidy-22 --version &&
+                    bash ./clang-tidy-prepare.sh"
 
       - name: Run clang-tidy
-        env:
-          CLANG_TIDY_BIN: clang-tidy-22
-        run: bash ./clang-tidy-run-checks.sh
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          -e CLANG_TIDY_BIN=clang-tidy-22
+          cpp-ci-clang
+          bash ./clang-tidy-run-checks.sh
