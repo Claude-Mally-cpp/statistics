@@ -1,7 +1,6 @@
 #pragma once
 
 // ---- feature detection -------------------------------------------------------
-#include <fmt/base.h>
 #include <string>
 #ifdef __has_include
 #if __has_include(<format>)
