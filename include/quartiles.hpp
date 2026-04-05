@@ -160,10 +160,10 @@ template <std::size_t N> constexpr auto quartilesSorted(const std::array<HighPre
         return {};
     }
     const HighPrecisionFloat med = detail::medianSorted(sorted);
-    std::size_t              loL = 0;
+    const std::size_t        loL = 0;
     std::size_t              loH{};
     std::size_t              hiL{};
-    std::size_t              hiH = N - 1;
+    const std::size_t        hiH = N - 1;
     if constexpr (N % 2 == 1)
     {
         const std::size_t mid = N / 2;
@@ -236,10 +236,10 @@ inline auto quartiles(const R& range) -> QuartileSummary
     };
 
     HighPrecisionFloat const med = (count & 1U) ? hpVector[count / 2] : (hpVector[(count / 2) - 1] + hpVector[count / 2]) / 2.0L;
-    std::size_t              loL{};
+    const std::size_t        loL{};
     std::size_t              loH{};
     std::size_t              hiL{};
-    std::size_t              hiH = count - 1;
+    const std::size_t        hiH = count - 1;
     if (count & 1U)
     {
         const std::size_t mid = count / 2;
