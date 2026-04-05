@@ -25,17 +25,17 @@ jobs:
             libc++-22-dev \
             libc++abi-22-dev
 
-      - name: Select Clang 22 toolchain
-        run: |
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-22 100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 100
-          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-22 100
-          clang --version
-          clang++ --version
-          clang-tidy --version
-
       - name: Prepare compile_commands.json
-        run: bash ./clang-tidy-prepare.sh
+        env:
+          CC: clang-22
+          CXX: clang++-22
+        run: |
+          clang-22 --version
+          clang++-22 --version
+          clang-tidy-22 --version
+          bash ./clang-tidy-prepare.sh
 
       - name: Run clang-tidy
+        env:
+          CLANG_TIDY_BIN: clang-tidy-22
         run: bash ./clang-tidy-run-checks.sh
