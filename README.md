@@ -35,7 +35,7 @@ To build and test this project for multiple Linux toolchains using Docker, use t
 ./dockerLinuxBuildAndTest.sh --verbose
 ```
 
-To buld and test on windows release and debug
+To build and test on Windows release and debug:
 
 ```powershell
 # terse output
@@ -45,41 +45,14 @@ To buld and test on windows release and debug
 ./windowsBuildAndTest.ps1 --verbose
 ```
 
-### VS Code + MSVC workflow (Windows)
+## Tooling Workflows
 
-#### Recommended flow (preferred): VS Code + CMake Tools
+### WSL / Linux: LLVM 22 workflow
 
-Use this path when working in the editor (matches what you already tested):
+Use this path when you want local Clang, `clang-format`, and `clang-tidy` behavior
+to match the Docker image and Linux CI.
 
-1. Install [Microsoft C++ Build Tools / Visual Studio](https://visualstudio.microsoft.com/) and ensure `cl.exe` is available in your shell.
-2. Install the CMake Tools extension.
-3. Open this repository in VS Code.
-4. Select `msvc-x64-debug` (or `msvc-x64-release`) from:
-   - status bar, or `Ctrl+Shift+P` -> `CMake: Select Configure Preset`
-5. Use CMake Tools commands: Configure, Build, then Run Tests.
-
-#### Alternative: terminal/manual preset commands
-
-Use these only if you prefer explicit commands in PowerShell:
-
-```powershell
-cmake --preset msvc-x64-debug
-cmake --build --preset msvc-x64-debug
-ctest --preset msvc-x64-debug
-```
-
-For release:
-
-```powershell
-cmake --preset msvc-x64-release
-cmake --build --preset msvc-x64-release
-ctest --preset msvc-x64-release
-```
-
-## Local Clang Toolchain Setup (WSL / Linux)
-
-To match the Docker image and CI exactly, install LLVM 22 on your local WSL or Linux
-machine using the same repository that `Dockerfile.clang` uses:
+Install LLVM 22 from the same apt repository used by `Dockerfile.clang`:
 
 ```bash
 sudo apt-get update && sudo apt-get install -y wget gpg
@@ -98,11 +71,7 @@ sudo apt-get install -y \
   libc++abi-22-dev
 ```
 
-> **Note:** The commands above target Ubuntu 24.04 Noble (the same base image as
-> `Dockerfile.clang`). Adjust `noble` / `llvm-toolchain-noble-22` if you are on a
-> different Ubuntu release.
-
-After installation, verify that the versions match:
+Verify the installed tools:
 
 ```bash
 clang-22 --version
@@ -111,21 +80,80 @@ clang-format-22 --version
 clang-tidy-22 --version
 ```
 
-CMake presets (`linux-clang-*`) already pin `CMAKE_C_COMPILER=clang-22` and
-`CMAKE_CXX_COMPILER=clang++-22`, so no extra configuration is needed.
-
-To run `clang-tidy` locally with the same settings as CI:
+The Linux Clang presets already pin the versioned compiler names:
 
 ```bash
-bash ./clang-tidy-prepare.sh
-bash ./clang-tidy-run-checks.sh
+cmake --preset linux-clang-debug
+cmake --build --preset linux-clang-debug
+ctest --preset linux-clang-debug
 ```
 
-To run the format check locally with the same settings as CI:
+To run local checks with the same binaries CI expects:
 
 ```bash
 CLANG_FORMAT=clang-format-22 bash ./check-format.sh
+bash ./clang-tidy-prepare.sh
+CLANG_TIDY_BIN=clang-tidy-22 bash ./clang-tidy-run-checks.sh
 ```
+
+> **Note:** The commands above target Ubuntu 24.04 Noble, matching
+> `Dockerfile.clang`. Adjust `noble` / `llvm-toolchain-noble-22` if your local
+> Ubuntu release differs.
+
+### Windows: recommended workflow
+
+Use Windows primarily for native MSVC configure/build/test. Use WSL or Docker for
+Linux Clang parity.
+
+Recommended local Windows setup:
+
+1. Install [Microsoft C++ Build Tools / Visual Studio](https://visualstudio.microsoft.com/) and ensure `cl.exe` is available.
+2. Install the VS Code CMake Tools extension if you work from the editor.
+3. Optionally install LLVM tools if you want local `clang-format` or ad hoc Clang tooling.
+
+For a simple LLVM install on Windows:
+
+```powershell
+winget install LLVM.LLVM
+```
+
+Then verify what Windows resolves:
+
+```powershell
+where clang
+where clang-format
+where clang-tidy
+clang-format --version
+```
+
+Preferred VS Code + CMake Tools flow:
+
+1. Open the repository in VS Code.
+2. Select `msvc-x64-debug` or `msvc-x64-release`.
+3. Run Configure, Build, and Test from CMake Tools.
+
+Equivalent PowerShell commands:
+
+```powershell
+cmake --preset msvc-x64-debug
+cmake --build --preset msvc-x64-debug
+ctest --preset msvc-x64-debug
+```
+
+For release:
+
+```powershell
+cmake --preset msvc-x64-release
+cmake --build --preset msvc-x64-release
+ctest --preset msvc-x64-release
+```
+
+### Practical contributor split
+
+- Windows native: MSVC build/test
+- WSL or Linux: LLVM 22 format/tidy/build workflow
+- Docker: closest match to Linux CI
+- GitHub Actions: final clean-runner authority
 
 ## Conventions and notes
 
