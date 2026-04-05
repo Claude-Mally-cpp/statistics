@@ -16,8 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Docker image
-        run: docker build -f Dockerfile.gcc -t cpp-ci-gcc .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.gcc
+          load: true
+          tags: cpp-ci-gcc:latest
+          cache-from: type=gha,scope=dockerfile-gcc
+          cache-to: type=gha,mode=max,scope=dockerfile-gcc
 
       - name: Configure & Build (${{ matrix.config }})
         run: >

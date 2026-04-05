@@ -10,6 +10,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache CMake dependencies
+        uses: actions/cache@v4
+        with:
+          path: out/build/linux-clang-release/_deps
+          key: ${{ runner.os }}-cmake-deps-linux-clang-release-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-deps-linux-clang-release-
+
       - name: Install tools
         run: |
           sudo apt-get update
