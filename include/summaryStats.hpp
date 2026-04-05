@@ -25,13 +25,19 @@ struct SummaryStats
 
     /// @todo Add standard deviation and variance?
 
+    /// @brief Convert the summary to a human-readable string.
+    /// @return Formatted summary string containing count, quartiles, extrema, and mean.
     [[nodiscard]] auto toString() const -> std::string
     {
         return format("n={}, min={}, q1={}, median={}, q3={}, max={}, mean={}", count, min, q1, median, q3, max, mean);
     }
 };
 
-// ---- shared core for both std::format and fmt::format ------------------------
+/// @brief Shared formatting helper used by both `fmt::formatter` and `std::formatter`.
+/// @tparam OutIt Output iterator type used by the formatting backend.
+/// @param summary Summary value to format.
+/// @param out Output iterator destination.
+/// @return Advanced output iterator after writing the formatted representation.
 template <class OutIt> auto formatSummaryCore(const SummaryStats& summary, OutIt out) -> OutIt
 {
     return fmt::format_to(out,
@@ -47,8 +53,7 @@ template <class OutIt> auto formatSummaryCore(const SummaryStats& summary, OutIt
 
 } // namespace mally::statlib
 
-// ---- std::format specialization (when available) -----------------------------
-// ---- fmt::formatter ----------------------------------------------------------
+/// @brief `fmt` formatter specialization for `SummaryStats`.
 template <> struct fmt::formatter<mally::statlib::SummaryStats>
 {
     static constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin())
@@ -63,6 +68,7 @@ template <> struct fmt::formatter<mally::statlib::SummaryStats>
 
 #if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 #include <format>
+/// @brief `std::formatter` specialization for `SummaryStats` when `std::format` is available.
 template <> struct std::formatter<mally::statlib::SummaryStats, char>
 {
     // Only "{}" supported for now; extend parse() if you add specifiers.

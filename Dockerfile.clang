@@ -8,8 +8,10 @@ RUN apt update && apt install -y \
     cmake \
     cppcheck \
     curl \
+    doxygen \
     git \
     gnupg \
+    graphviz \
     jq \
     lsb-release \
     ninja-build \

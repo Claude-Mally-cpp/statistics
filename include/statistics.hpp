@@ -119,11 +119,10 @@ constexpr auto summary(const R& range) -> SummaryStats
     return out;
 }
 
-/// @brief compute the product of a range of numbers
-/// @param range input range of numbers
-/// @details This function computes the product of a range of numbers.
-/// It uses a high precision floating point type to avoid precision loss.
-/// @return product of the range of numbers
+/// @brief Compute the product of a range of numbers.
+/// @param range Input range of numbers.
+/// @details Uses `HighPrecisionFloat` accumulation to reduce precision loss.
+/// @return Product of all values in `range`.
 constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
 {
     return std::accumulate(std::ranges::begin(range),
@@ -132,11 +131,10 @@ constexpr auto product(const NumberRange auto& range) -> HighPrecisionFloat
                            [](HighPrecisionFloat acc, auto val) -> auto { return acc * toHPF(val); });
 }
 
-/// @brief compute the geometric mean of a range of numbers
-/// @param range input range of numbers
-/// @return geometric mean of the range of numbers
-/// @details This function computes the average of a range of numbers.
-/// It usses a high precision floating point type to avoid precision loss.
+/// @brief Compute the geometric mean of a range of numbers.
+/// @param range Input range of numbers.
+/// @details Uses `HighPrecisionFloat` intermediates to reduce precision loss.
+/// @return Geometric mean of the values in `range`, or `0.0L` for an empty range.
 auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloat
 {
     if (not range.size())
@@ -148,9 +146,9 @@ auto geometricMean(const NumberRange auto& range) -> HighPrecisionFloat
     return std::powl(totalProduct, 1.0 / toHPF(range.size()));
 }
 
-/// @brief compute the sum of squares of a range of numbers
-/// @param range input range of numbers
-/// @return sum of squares of the range of numbers
+/// @brief Compute the sum of squares of a range of numbers.
+/// @param range Input range of numbers.
+/// @return Sum of squared values in `range`.
 constexpr auto sumSquared(const NumberRange auto& range) -> HighPrecisionFloat
 {
     return std::accumulate(std::ranges::begin(range),
@@ -258,10 +256,10 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
     return numerator / denominator;
 }
 
-/// @brief compute the covariance of two ranges of numbers
-/// @param range_x input range x of numbers
-/// @param range_y input range y of numbers
-/// @return covariance of the two ranges of numbers
+/// @brief Compute the sample covariance of two numeric ranges.
+/// @param range_x Input range x.
+/// @param range_y Input range y.
+/// @return Covariance on success, or an error if the inputs have mismatched sizes or too few elements.
 auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y) -> HighPrecisionResult
 {
     const auto sizeX = std::ranges::distance(range_x);

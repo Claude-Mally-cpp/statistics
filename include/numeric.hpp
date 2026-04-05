@@ -14,10 +14,12 @@ namespace mally::statlib::num
 {
 
 /// @brief Concept for ranges whose values convert to HighPrecisionFloat.
+/// @tparam R Candidate range type.
 template <class R>
 concept NumberRange = std::ranges::input_range<R> && std::convertible_to<std::ranges::range_value_t<R>, mally::statlib::HighPrecisionFloat>;
 
 /// @brief Sum of a numeric range in HighPrecisionFloat.
+/// @param range Input range of numeric values.
 /// @note O(n), single pass.
 template <NumberRange R> constexpr auto sum(const R& range) -> mally::statlib::HighPrecisionFloat
 {
@@ -30,6 +32,7 @@ template <NumberRange R> constexpr auto sum(const R& range) -> mally::statlib::H
 }
 
 /// @brief Arithmetic mean of a numeric range (0 for empty).
+/// @param range Input range of numeric values.
 /// @note O(n); uses HighPrecisionFloat accumulation.
 template <NumberRange R> constexpr auto average(const R& range) -> mally::statlib::HighPrecisionFloat
 {
@@ -42,6 +45,7 @@ template <NumberRange R> constexpr auto average(const R& range) -> mally::statli
 }
 
 /// @brief Min & max values of a range as HighPrecisionFloat.
+/// @param range Input range of numeric values.
 /// @note Requires forward iteration; returns {0,0} for empty.
 template <class R>
     requires NumberRange<R> && std::ranges::forward_range<R>
@@ -56,6 +60,8 @@ constexpr auto minMaxValue(const R& range) -> std::pair<mally::statlib::HighPrec
 }
 
 /// @brief Σ xrange_i * yrange_i as HighPrecisionFloat, with size checking.
+/// @param xrange Left-hand input range.
+/// @param yrange Right-hand input range.
 /// @returns HighPrecisionResult{sum} on success; unexpected on size mismatch.
 /// @note Works with single-pass ranges; detects mismatch if one ends earlier.
 template <NumberRange RX, NumberRange RY>

@@ -25,9 +25,9 @@ namespace mally::statlib
 /// @brief Q1/median/Q3 summary.
 struct QuartileSummary
 {
-    HighPrecisionFloat q1{};
-    HighPrecisionFloat median{};
-    HighPrecisionFloat q3{};
+    HighPrecisionFloat q1{};     ///< @brief First quartile.
+    HighPrecisionFloat median{}; ///< @brief Median.
+    HighPrecisionFloat q3{};     ///< @brief Third quartile.
 };
 
 namespace detail
@@ -134,14 +134,14 @@ inline auto median(const R& range) -> HighPrecisionFloat
     return (count & 1U) ? hpVector[count / 2] : (hpVector[(count / 2) - 1] + hpVector[count / 2]) / 2.0L;
 }
 
-/// @brief Median of a sorted *array* or a sorted vector.
+/// @brief Median of an already-sorted array.
 template <typename T, std::size_t N> constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> HighPrecisionFloat
 {
     static_assert(std::is_convertible_v<T, HighPrecisionFloat>, "array element not convertible to HighPrecisionFloat");
     return detail::medianSorted(sorted);
 }
 
-/// @brief Overload for sorted std::span<HighPrecisionFloat>
+/// @brief Median of an already-sorted `std::span<HighPrecisionFloat>`.
 inline auto medianSortedSpan(std::span<const HighPrecisionFloat> sorted) -> HighPrecisionFloat
 {
     if (sorted.empty())
@@ -152,7 +152,7 @@ inline auto medianSortedSpan(std::span<const HighPrecisionFloat> sorted) -> High
     return ((count & 1U) != 0U) ? sorted[count / 2] : (sorted[(count / 2) - 1] + sorted[count / 2]) / 2.0L;
 }
 
-/// @brief Tukey hinges on an already-sorted array<HPF, N>.
+/// @brief Compute Tukey hinges for an already-sorted `std::array<HighPrecisionFloat, N>`.
 template <std::size_t N> constexpr auto quartilesSorted(const std::array<HighPrecisionFloat, N>& sorted) -> QuartileSummary
 {
     if constexpr (N == 0)
