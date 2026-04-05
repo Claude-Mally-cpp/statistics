@@ -53,10 +53,7 @@ using PrintFormatString =
 #endif
 
 // Portable print/println -------------------------------------------------------
-template <class... Args>
-inline void print(
-    PrintFormatString<Args...> fmt_str,
-    Args&&... args)
+template <class... Args> inline void print(PrintFormatString<Args...> fmt_str, Args&&... args)
 {
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::print(fmt_str, std::forward<Args>(args)...);
@@ -65,10 +62,7 @@ inline void print(
 #endif
 }
 
-template <class... Args>
-inline void println(
-    PrintFormatString<Args...> fmt_str,
-    Args&&... args)
+template <class... Args> inline void println(PrintFormatString<Args...> fmt_str, Args&&... args)
 {
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
     std::println(fmt_str, std::forward<Args>(args)...);
