@@ -6,7 +6,6 @@
 #include "fmt/core.h"
 #include "print_compat.hpp"
 #include <cstddef>
-#include <fmt/base.h>
 #include <string>
 
 namespace mally::statlib

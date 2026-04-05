@@ -22,7 +22,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtautological-compare"
 #endif
-#include <fmt/base.h>
 #include <fmt/core.h>
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
