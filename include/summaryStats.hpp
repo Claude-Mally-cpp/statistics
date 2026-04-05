@@ -65,11 +65,11 @@ template <> struct fmt::formatter<mally::statlib::SummaryStats>
 template <> struct std::formatter<mally::statlib::SummaryStats, char>
 {
     // Only "{}" supported for now; extend parse() if you add specifiers.
-    constexpr auto parse(std::format_parse_context& ctx)
+    static constexpr auto parse(std::format_parse_context& ctx)
     {
         return ctx.begin();
     }
-    auto format(const mally::statlib::SummaryStats& summary, std::format_context& ctx) const
+    static auto format(const mally::statlib::SummaryStats& summary, std::format_context& ctx)
     {
         return mally::statlib::formatSummaryCore(summary, ctx.out());
     }
