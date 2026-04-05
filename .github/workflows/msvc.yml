@@ -20,6 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache CMake dependencies
+        uses: actions/cache@v4
+        with:
+          path: out/build/${{ matrix.preset }}/_deps
+          key: ${{ runner.os }}-cmake-deps-${{ matrix.preset }}-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-deps-${{ matrix.preset }}-
+
       - name: Install Ninja
         shell: pwsh
         run: choco install ninja -y
