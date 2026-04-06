@@ -105,9 +105,9 @@ TEST(StatisticsTest, Correlation_BigBankAssets_Employees)
 }
 
 // Synthetic cancellation-prone dataset with large offset and small deltas.
-// Disabled by default: it is intended as a stress case for evaluating whether
-// the current one-pass formula and precision choice are numerically adequate.
-TEST(StatisticsTest, DISABLED_Correlation_LargeOffsetSmallVariance)
+// Disabled by default: it compares the current one-pass implementation against
+// a centered two-pass reference that is numerically more stable for this shape.
+TEST(StatisticsTest, DISABLED_Correlation_LargeOffsetCenteredReference)
 {
     const std::array<long double, 6> x{
         1.0e12L + 1200.0L,
@@ -127,10 +127,40 @@ TEST(StatisticsTest, DISABLED_Correlation_LargeOffsetSmallVariance)
         1.0e12L + 1255.0L,
     };
 
+    const auto centeredReference = [&]() -> long double
+    {
+        constexpr auto count = static_cast<long double>(x.size());
+
+        long double meanX = 0.0L;
+        long double meanY = 0.0L;
+        for (std::size_t i = 0; i < x.size(); ++i)
+        {
+            meanX += x[i];
+            meanY += y[i];
+        }
+        meanX /= count;
+        meanY /= count;
+
+        long double sumXX = 0.0L;
+        long double sumYY = 0.0L;
+        long double sumXY = 0.0L;
+        for (std::size_t i = 0; i < x.size(); ++i)
+        {
+            const auto dx = x[i] - meanX;
+            const auto dy = y[i] - meanY;
+            sumXX += dx * dx;
+            sumYY += dy * dy;
+            sumXY += dx * dy;
+        }
+
+        return sumXY / std::sqrt(sumXX * sumYY);
+    }();
+
     auto result = correlationCoefficient(x, y);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
-    EXPECT_TRUE(std::isfinite(static_cast<double>(*result)));
-    EXPECT_LE(std::abs(*result), 1.0L);
+    EXPECT_TRUE(std::isfinite(static_cast<double>(centeredReference)));
+    EXPECT_LE(std::abs(centeredReference), 1.0L);
+    EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(centeredReference), 1e-12);
 }
 
 // Test product of productTest
