@@ -3,7 +3,7 @@ set -euo pipefail
 
 MODE="generate"
 if [[ $# -gt 1 ]]; then
-  echo "Usage: $0 [--verify|--clean]"
+  echo "Usage: $0 [--verify|--verify-all|--clean]"
   exit 2
 fi
 
@@ -15,8 +15,11 @@ if [[ $# -eq 1 ]]; then
     --clean)
       MODE="clean"
       ;;
+    --verify-all)
+      MODE="verify-all"
+      ;;
     *)
-      echo "Usage: $0 [--verify|--clean]"
+      echo "Usage: $0 [--verify|--verify-all|--clean]"
       exit 2
       ;;
   esac
@@ -43,14 +46,37 @@ doxygen --version
 
 if [[ "$MODE" == "verify" ]]; then
   echo "Verifying Doxygen configuration and warnings"
+elif [[ "$MODE" == "verify-all" ]]; then
+  echo "Verifying Doxygen configuration and listing all warnings"
 else
   echo "Generating Doxygen HTML documentation"
 fi
 
-doxygen "$DOXYFILE"
+if [[ "$MODE" == "verify-all" ]]; then
+  WARN_LOG="$(mktemp)"
+  if doxygen - <<EOF >/dev/null; then
+@INCLUDE = $DOXYFILE
+WARN_LOGFILE = $WARN_LOG
+EOF
+    :
+  fi
+
+  if [[ -s "$WARN_LOG" ]]; then
+    echo "Doxygen reported warnings:"
+    cat "$WARN_LOG"
+    rm -f "$WARN_LOG"
+    exit 1
+  fi
+
+  rm -f "$WARN_LOG"
+else
+  doxygen "$DOXYFILE"
+fi
 
 if [[ "$MODE" == "verify" ]]; then
   echo "Doxygen verification passed"
+elif [[ "$MODE" == "verify-all" ]]; then
+  echo "Doxygen verification passed with no warnings"
 else
   echo "Generated HTML docs under $OUTPUT_DIR/html"
 fi

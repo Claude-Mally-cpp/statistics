@@ -5,15 +5,15 @@
 /// @date 2025-04-11
 ///
 /// Notes and conventions
-/// - Header location: this file is intended to be installed/used from the project's
-///   `include/` directory. When building, add the repository root `include` folder to
-///   your compiler's include path and then `#include "statistics.hpp"`.
+/// - Header location: this file is intended to be installed and used from the project's
+///   "include" directory. When building, add the repository root include folder to
+///   your compiler's include path and then include "statistics.hpp".
 /// - Quartile convention: this library computes quartiles using the Tukey hinge style.
 ///   By default the implementation uses the exclusive-median variant (the median element
 ///   is excluded from both lower and upper halves when computing Q1 and Q3). For a
 ///   very small sample (size == 3) a small-sample special-case is applied and the
 ///   median is included in both halves to match common textbook examples. See
-///   `quartiles.hpp` and the unit tests under `test/test_statistics.cpp` for details.
+///   quartiles.hpp and the unit tests under test/test_statistics.cpp for details.
 /// - Summary output: `summary(range)` returns min, Q1, median, mean, Q3 and max; mean
 ///   is computed with `average(range)` which returns 0 on empty ranges.
 ///
@@ -50,7 +50,10 @@ using num::NumberRange;
 
 /// @brief Summary for an std::array without allocations.
 /// @tparam T arithmetic or HighPrecisionFloat.
+/// @tparam N Array extent.
+/// @param data Input array of numeric values.
 /// @note Converts to HPF, sorts a local array, reuses quartilesSorted().
+/// @return Summary statistics for `data`.
 template <class T, std::size_t N>
     requires(std::is_arithmetic_v<std::remove_cvref_t<T>> || std::is_same_v<std::remove_cvref_t<T>, HighPrecisionFloat>)
 constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
@@ -89,8 +92,11 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
 }
 
 /// @brief Summary for a generic numeric range (vectors, spans, views…).
+/// @tparam R Numeric input range type.
+/// @param range Input range of numeric values.
 /// @details Uses numeric helpers and the range-generic quartiles adapter.
 /// @note Requires input_range; min/max needs forward iteration (met by std::vector).
+/// @return Summary statistics for `range`, or a zero-initialized summary for an empty range.
 template <class R>
     requires num::NumberRange<R>
 constexpr auto summary(const R& range) -> SummaryStats
@@ -189,6 +195,10 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> Hi
     return std::sqrt(radicand);
 }
 
+/// @brief Compute the Pearson correlation coefficient of two numeric ranges.
+/// @param range_x First input range.
+/// @param range_y Second input range.
+/// @return Correlation coefficient on success, or an error if the inputs differ in size, have too few elements, or yield an invalid denominator.
 auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange auto& range_y) -> HighPrecisionResult
 {
     const auto sizeX = std::ranges::distance(range_x);

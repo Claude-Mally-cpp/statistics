@@ -53,7 +53,7 @@ template <class OutIt> auto formatSummaryCore(const SummaryStats& summary, OutIt
 
 } // namespace mally::statlib
 
-/// @brief `fmt` formatter specialization for `SummaryStats`.
+/// @cond DOXYGEN_SKIP
 template <> struct fmt::formatter<mally::statlib::SummaryStats>
 {
     static constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin())
@@ -68,7 +68,6 @@ template <> struct fmt::formatter<mally::statlib::SummaryStats>
 
 #if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 #include <format>
-/// @brief `std::formatter` specialization for `SummaryStats` when `std::format` is available.
 template <> struct std::formatter<mally::statlib::SummaryStats, char>
 {
     // Only "{}" supported for now; extend parse() if you add specifiers.
@@ -82,3 +81,4 @@ template <> struct std::formatter<mally::statlib::SummaryStats, char>
     }
 };
 #endif
+/// @endcond
