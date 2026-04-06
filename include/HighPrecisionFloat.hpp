@@ -7,17 +7,25 @@
 
 namespace mally::statlib
 {
-// TODO: reconsider always using high precision internally.
+/// @brief Internal floating-point type used for numeric accumulation and results.
+/// @note Currently aliased to `long double`.
 using HighPrecisionFloat  = long double;
+
+/// @brief Result type for computations that may fail with a textual diagnostic.
 using HighPrecisionResult = std::expected<HighPrecisionFloat, std::string>;
 
-// Pass-through for HPF
+/// @brief Pass through an existing high-precision value unchanged.
+/// @param value Value already represented as `HighPrecisionFloat`.
+/// @return The same value.
 constexpr auto toHPF(HighPrecisionFloat value) noexcept -> HighPrecisionFloat
 {
     return value;
 }
 
-// Accept only arithmetic scalars (prevents containers from instantiating)
+/// @brief Convert an arithmetic scalar to `HighPrecisionFloat`.
+/// @tparam T Arithmetic input type.
+/// @param value Input value.
+/// @return `value` converted to `HighPrecisionFloat`.
 template <class T>
     requires std::is_arithmetic_v<std::remove_cvref_t<T>>
 constexpr auto toHPF(T value) noexcept -> HighPrecisionFloat
@@ -25,7 +33,8 @@ constexpr auto toHPF(T value) noexcept -> HighPrecisionFloat
     return static_cast<HighPrecisionFloat>(value);
 }
 
-// Hard error if something “container-like” (has value_type) calls toHPF by mistake
+/// @brief Deleted overload to prevent accidental conversion of container-like types.
+/// @tparam R Type with a nested `value_type`.
 template <class R>
     requires requires { typename R::value_type; }
 auto toHPF(const R&) -> HighPrecisionFloat = delete;

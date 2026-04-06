@@ -14,11 +14,14 @@ namespace mally::statlib::num
 {
 
 /// @brief Concept for ranges whose values convert to HighPrecisionFloat.
+/// @tparam R Candidate range type.
 template <class R>
 concept NumberRange = std::ranges::input_range<R> && std::convertible_to<std::ranges::range_value_t<R>, mally::statlib::HighPrecisionFloat>;
 
 /// @brief Sum of a numeric range in HighPrecisionFloat.
+/// @param range Input range of numeric values.
 /// @note O(n), single pass.
+/// @return Sum of all values in `range`.
 template <NumberRange R> constexpr auto sum(const R& range) -> mally::statlib::HighPrecisionFloat
 {
     mally::statlib::HighPrecisionFloat acc = 0.0L;
@@ -30,7 +33,9 @@ template <NumberRange R> constexpr auto sum(const R& range) -> mally::statlib::H
 }
 
 /// @brief Arithmetic mean of a numeric range (0 for empty).
+/// @param range Input range of numeric values.
 /// @note O(n); uses HighPrecisionFloat accumulation.
+/// @return Arithmetic mean of `range`, or `0.0L` when the range is empty.
 template <NumberRange R> constexpr auto average(const R& range) -> mally::statlib::HighPrecisionFloat
 {
     const auto count = std::ranges::distance(range);
@@ -42,7 +47,9 @@ template <NumberRange R> constexpr auto average(const R& range) -> mally::statli
 }
 
 /// @brief Min & max values of a range as HighPrecisionFloat.
+/// @param range Input range of numeric values.
 /// @note Requires forward iteration; returns {0,0} for empty.
+/// @return Pair `{min, max}` converted to `HighPrecisionFloat`, or `{0.0L, 0.0L}` for an empty range.
 template <class R>
     requires NumberRange<R> && std::ranges::forward_range<R>
 constexpr auto minMaxValue(const R& range) -> std::pair<mally::statlib::HighPrecisionFloat, mally::statlib::HighPrecisionFloat>
@@ -56,6 +63,8 @@ constexpr auto minMaxValue(const R& range) -> std::pair<mally::statlib::HighPrec
 }
 
 /// @brief Σ xrange_i * yrange_i as HighPrecisionFloat, with size checking.
+/// @param xrange Left-hand input range.
+/// @param yrange Right-hand input range.
 /// @returns HighPrecisionResult{sum} on success; unexpected on size mismatch.
 /// @note Works with single-pass ranges; detects mismatch if one ends earlier.
 template <NumberRange RX, NumberRange RY>

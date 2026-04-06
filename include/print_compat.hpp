@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file print_compat.hpp
+/// @brief Portable formatting and printing helpers that prefer the standard library and fall back to `fmt`.
+
 // ---- feature detection -------------------------------------------------------
 #include <string>
 #ifdef __has_include
@@ -30,19 +33,22 @@
 namespace mally::statlib
 {
 
-// std::format (C++20) is detected by __cpp_lib_format
+/// @brief Whether `std::format` support is available.
 #if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 inline constexpr bool kHasStdFormat = true;
 #else
 inline constexpr bool kHasStdFormat = false;
 #endif
 
+/// @brief Whether `std::print` / `std::println` support is available.
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 inline constexpr bool kHasStdPrint = true;
 #else
 inline constexpr bool kHasStdPrint = false;
 #endif
 
+/// @brief Format-string type matched to the active print backend.
+/// @tparam Args Argument types accepted by the format string.
 template <class... Args>
 using PrintFormatString =
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
@@ -51,7 +57,10 @@ using PrintFormatString =
     fmt::format_string<Args...>;
 #endif
 
-// Portable print/println -------------------------------------------------------
+/// @brief Print formatted text without a trailing newline.
+/// @tparam Args Argument types.
+/// @param fmt_str Format string compatible with the active backend.
+/// @param args Format arguments.
 template <class... Args> inline void print(PrintFormatString<Args...> fmt_str, Args&&... args)
 {
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
@@ -61,6 +70,10 @@ template <class... Args> inline void print(PrintFormatString<Args...> fmt_str, A
 #endif
 }
 
+/// @brief Print formatted text followed by a newline.
+/// @tparam Args Argument types.
+/// @param fmt_str Format string compatible with the active backend.
+/// @param args Format arguments.
 template <class... Args> inline void println(PrintFormatString<Args...> fmt_str, Args&&... args)
 {
 #if defined(__cpp_lib_print) && (__cpp_lib_print >= 202207L) && defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
@@ -70,7 +83,11 @@ template <class... Args> inline void println(PrintFormatString<Args...> fmt_str,
 #endif
 }
 
-// Portable format() → std::string ---------------------------------------------
+/// @brief Format arguments into a `std::string`.
+/// @tparam Args Argument types.
+/// @param fmt_str Format string compatible with the active backend.
+/// @param args Format arguments.
+/// @return Formatted string.
 template <class... Args>
 inline auto format(
 #if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
