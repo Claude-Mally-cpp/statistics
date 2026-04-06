@@ -18,6 +18,12 @@ namespace mally::statlib::num
 template <class R>
 concept NumberRange = std::ranges::input_range<R> && std::convertible_to<std::ranges::range_value_t<R>, mally::statlib::HighPrecisionFloat>;
 
+/// @brief Concept for forward-iterable ranges whose values convert to HighPrecisionFloat.
+/// @details Use this for algorithms that traverse the range more than once.
+/// @tparam R Candidate range type.
+template <class R>
+concept ForwardNumberRange = NumberRange<R> && std::ranges::forward_range<R>;
+
 /// @brief Sum of a numeric range in HighPrecisionFloat.
 /// @param range Input range of numeric values.
 /// @note O(n), single pass.
@@ -34,9 +40,9 @@ template <NumberRange R> constexpr auto sum(const R& range) -> mally::statlib::H
 
 /// @brief Arithmetic mean of a numeric range (0 for empty).
 /// @param range Input range of numeric values.
-/// @note O(n); uses HighPrecisionFloat accumulation.
+/// @note O(n); uses HighPrecisionFloat accumulation. Requires forward iteration (traverses twice).
 /// @return Arithmetic mean of `range`, or `0.0L` when the range is empty.
-template <NumberRange R> constexpr auto average(const R& range) -> mally::statlib::HighPrecisionFloat
+template <ForwardNumberRange R> constexpr auto average(const R& range) -> mally::statlib::HighPrecisionFloat
 {
     const auto count = std::ranges::distance(range);
     if (count == 0)
