@@ -3,6 +3,7 @@
 #include "quartiles.hpp"
 #include "statistics.hpp"
 #include <array>
+#include <forward_list>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -324,6 +325,45 @@ TEST(StatisticsTest, Summary_VectorThreeElements)
 {
     const std::vector<int> data{1, 3, 5};
     auto                   summ = summary(data);
+    EXPECT_EQ(summ.min, 1.0L);
+    EXPECT_EQ(summ.q1, 2.0L);
+    EXPECT_EQ(summ.median, 3.0L);
+    EXPECT_EQ(summ.mean, 3.0L);
+    EXPECT_EQ(summ.q3, 4.0L);
+    EXPECT_EQ(summ.max, 5.0L);
+}
+
+//
+// ---- Forward-range regression tests ----
+// These tests verify that multi-pass algorithms work correctly with forward-only
+// ranges (e.g. std::forward_list), which is the minimum iterator category required.
+//
+
+// correlationCoefficient with std::forward_list (forward-only range)
+TEST(StatisticsTest, Correlation_ForwardList)
+{
+    const std::forward_list<double> a = {0.07, 0.09, 0.10};
+    const std::forward_list<double> b = {0.085, 0.07, 0.095};
+    auto                            result = correlationCoefficient(a, b);
+    ASSERT_TRUE(result.has_value()) << "Failed: " << result.error();
+    EXPECT_NEAR(static_cast<double>(*result), 0.21677749238102959, 1e-10);
+}
+
+// covariance with std::forward_list (forward-only range)
+TEST(StatisticsTest, Covariance_ForwardList)
+{
+    const std::forward_list<double> x = {-0.10, -0.05, 0.00, 0.08, 0.14, 0.20, 0.25};
+    const std::forward_list<double> y = {-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
+    auto                            result = covariance(x, y);
+    ASSERT_TRUE(result.has_value()) << "Failed: " << result.error();
+    EXPECT_NEAR(static_cast<double>(*result), 0.022571428571428576, 1e-10);
+}
+
+// summary with std::forward_list (forward-only range)
+TEST(StatisticsTest, Summary_ForwardList)
+{
+    const std::forward_list<int> data = {1, 3, 5};
+    auto                         summ = summary(data);
     EXPECT_EQ(summ.min, 1.0L);
     EXPECT_EQ(summ.q1, 2.0L);
     EXPECT_EQ(summ.median, 3.0L);

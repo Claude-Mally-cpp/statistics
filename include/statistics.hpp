@@ -47,6 +47,7 @@ namespace mally::statlib
 inline constexpr bool verboseDebugging = false;
 
 using num::NumberRange;
+using num::ForwardNumberRange;
 
 /// @brief Summary for an std::array without allocations.
 /// @tparam T arithmetic or HighPrecisionFloat.
@@ -95,10 +96,10 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
 /// @tparam R Numeric input range type.
 /// @param range Input range of numeric values.
 /// @details Uses numeric helpers and the range-generic quartiles adapter.
-/// @note Requires input_range; min/max needs forward iteration (met by std::vector).
+/// @note Requires forward iteration; the range is traversed multiple times for min/max, mean, and quartiles.
 /// @return Summary statistics for `range`, or a zero-initialized summary for an empty range.
 template <class R>
-    requires num::NumberRange<R>
+    requires num::ForwardNumberRange<R>
 constexpr auto summary(const R& range) -> SummaryStats
 {
     SummaryStats out{};
@@ -199,7 +200,7 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> Hi
 /// @param range_x First input range.
 /// @param range_y Second input range.
 /// @return Correlation coefficient on success, or an error if the inputs differ in size, have too few elements, or yield an invalid denominator.
-auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange auto& range_y) -> HighPrecisionResult
+auto correlationCoefficient(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y) -> HighPrecisionResult
 {
     const auto sizeX = std::ranges::distance(range_x);
     const auto sizeY = std::ranges::distance(range_y);
@@ -224,20 +225,21 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
         return sigma_xy;
     }
 
-    const auto count     = toHPF(range_x.size());
+    const auto n         = static_cast<std::size_t>(sizeX);
+    const auto count     = toHPF(n);
     const auto numerator = (count * *sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
         println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, *sigma_xy, numerator);
     }
 
-    const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, static_cast<std::size_t>(count));
+    const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, n);
     if (not denominator_x)
     {
         return denominator_x;
     }
 
-    const auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, static_cast<std::size_t>(count));
+    const auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, n);
     if (not denominator_y)
     {
         return denominator_y;
@@ -270,7 +272,7 @@ auto correlationCoefficient(const NumberRange auto& range_x, const NumberRange a
 /// @param range_x Input range x.
 /// @param range_y Input range y.
 /// @return Covariance on success, or an error if the inputs have mismatched sizes or too few elements.
-auto covariance(const NumberRange auto& range_x, const NumberRange auto& range_y) -> HighPrecisionResult
+auto covariance(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y) -> HighPrecisionResult
 {
     const auto sizeX = std::ranges::distance(range_x);
     const auto sizeY = std::ranges::distance(range_y);
