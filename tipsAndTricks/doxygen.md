@@ -62,10 +62,11 @@ dot -V
 
 This repo should use one script, `doxygen-docs.sh`, for the common paths:
 
-- default: generate docs into `out/docs/doxygen`
-- `--verify`: run Doxygen with warnings enabled and fail the command on warnings
+- default: generate docs into `out/docs/doxygen` using the repo `Doxyfile`
+- `--verify`: run the same documentation generation as an explicit verification step for local checks and CI
 - `--clean`: remove generated docs output
 
+With the current repo `Doxyfile`, warnings are treated as errors (`WARN_AS_ERROR = YES`), so both the default command and `--verify` fail if Doxygen emits warnings. `--verify` is still useful as the dedicated “validation” mode for CI and pre-push checks.
 Typical usage:
 
 ```bash
