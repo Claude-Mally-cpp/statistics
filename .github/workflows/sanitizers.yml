@@ -1,0 +1,48 @@
+name: sanitizers
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  asan-ubsan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.clang
+          load: true
+          tags: cpp-ci-clang:latest
+          cache-from: type=gha,scope=dockerfile-clang
+          cache-to: type=gha,mode=max,scope=dockerfile-clang
+
+      - name: Configure & Build (ASan + UBSan)
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-clang
+          bash -lc "cmake --preset linux-clang-asan &&
+                    cmake --build out/build/linux-clang-asan"
+
+      - name: Run tests (ASan + UBSan)
+        run: >
+          docker run --rm
+          -v ${{ github.workspace }}:/project
+          -w /project
+          -e ASAN_OPTIONS=halt_on_error=1:detect_leaks=0
+          -e UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1
+          cpp-ci-clang
+          bash -lc "ctest --preset linux-clang-asan"
