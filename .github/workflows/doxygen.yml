@@ -1,8 +1,18 @@
 name: doxygen
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: doxygen-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   docs-check:
@@ -32,8 +42,28 @@ jobs:
           cpp-ci-clang
           bash ./doxygen-docs.sh --verify
 
-      - name: Generate Doxygen docs artifact
-        if: github.event_name == 'workflow_dispatch'
+  docs-publish:
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    needs: docs-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.clang
+          load: true
+          tags: cpp-ci-clang:latest
+          cache-from: type=gha,scope=dockerfile-clang
+          cache-to: type=gha,mode=max,scope=dockerfile-clang
+
+      - name: Generate Doxygen docs
         run: >
           docker run --rm
           -v ${{ github.workspace }}:/project
@@ -42,9 +72,30 @@ jobs:
           bash ./doxygen-docs.sh
 
       - name: Upload Doxygen HTML artifact
-        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: doxygen-html
           path: out/docs/doxygen/html
           if-no-files-found: error
+
+      - name: Upload GitHub Pages artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out/docs/doxygen/html
+
+  deploy-docs:
+    if: github.ref == 'refs/heads/main'
+    needs: docs-publish
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy GitHub Pages site
+        id: deployment
+        uses: actions/deploy-pages@v4

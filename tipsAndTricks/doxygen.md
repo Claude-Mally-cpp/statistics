@@ -58,6 +58,84 @@ doxygen --version
 dot -V
 ```
 
+If `doxygen --version` works but `dot -V` reports that `dot` is not recognized,
+Graphviz is either missing from `PATH` or the Windows package registration is
+stale.
+
+Check the expected install path first:
+
+```powershell
+Test-Path 'C:\Program Files\Graphviz\bin\dot.exe'
+& 'C:\Program Files\Graphviz\bin\dot.exe' -V
+where.exe dot
+```
+
+If `Test-Path` returns `False`, do not keep retrying `winget install
+Graphviz.Graphviz`. A common failure mode is that Windows and `winget` still
+show Graphviz as installed, but the real files are gone and the uninstall entry
+points at a missing file such as `C:\Program Files\Graphviz\Uninstall.exe`.
+
+In that case, use the official Windows installer from the Graphviz release
+page:
+
+- <https://gitlab.com/graphviz/graphviz/-/releases>
+
+Download the Windows `.exe` installer asset, not a source archive. For example:
+
+- `windows_10_cmake_Release_graphviz-install-14.1.4-win64.exe`
+
+Verify the download checksum before running it. If the release also provides a
+`.sha256` file, compute the local SHA-256 and compare it with the published
+value:
+
+```powershell
+Get-FileHash .\windows_10_cmake_Release_graphviz-install-14.1.4-win64.exe -Algorithm SHA256
+```
+
+Example expected hash from the matching `.sha256` file:
+
+```text
+48512fbb2fbdf6e98400de8ad325e34be6b242b5a4fd412da62fd42115948bae
+```
+
+Example full comparison:
+
+```powershell
+$actual = (Get-FileHash .\windows_10_cmake_Release_graphviz-install-14.1.4-win64.exe -Algorithm SHA256).Hash.ToLower()
+$expected = (Get-Content .\windows_10_cmake_Release_graphviz-install-14.1.4-win64.exe.sha256).Split()[0].ToLower()
+$actual
+$expected
+$actual -eq $expected
+```
+
+If the last command returns `True`, run the installer and then verify again:
+
+```powershell
+Test-Path 'C:\Program Files\Graphviz\bin\dot.exe'
+& 'C:\Program Files\Graphviz\bin\dot.exe' -V
+```
+
+If `dot.exe` exists but `dot -V` still fails, add Graphviz to the user `PATH`,
+restart PowerShell, and verify again:
+
+```powershell
+[Environment]::SetEnvironmentVariable(
+  'Path',
+  [Environment]::GetEnvironmentVariable('Path','User') + ';C:\Program Files\Graphviz\bin',
+  'User'
+)
+dot -V
+where.exe dot
+```
+
+If you only need Doxygen to find Graphviz, set the path explicitly in
+`Doxyfile`:
+
+```text
+HAVE_DOT = YES
+DOT_PATH = C:\Program Files\Graphviz\bin
+```
+
 ## 2. Bash entrypoint
 
 This repo should use one script, `doxygen-docs.sh`, for the common paths:
