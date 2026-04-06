@@ -38,6 +38,7 @@
 #include <numeric>
 #include <ranges>
 #include <type_traits>
+#include <vector>
 
 namespace mally::statlib
 {
@@ -53,7 +54,8 @@ using num::ForwardNumberRange;
 /// @tparam T arithmetic or HighPrecisionFloat.
 /// @tparam N Array extent.
 /// @param data Input array of numeric values.
-/// @note Converts to HPF, sorts a local array, reuses quartilesSorted().
+/// @note Converts to HPF, accumulates sum while materializing, sorts a local array,
+///       then derives min/max from the sorted endpoints and quartiles via quartilesSorted().
 /// @return Summary statistics for `data`.
 template <class T, std::size_t N>
     requires(std::is_arithmetic_v<std::remove_cvref_t<T>> || std::is_same_v<std::remove_cvref_t<T>, HighPrecisionFloat>)
@@ -68,17 +70,20 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
     }
     else
     {
-        // Materialize as HPF and sort
+        // Materialize as HPF and accumulate sum in one pass
         std::array<HighPrecisionFloat, N> hpArray{};
+        HighPrecisionFloat                sumAcc = 0.0L;
         for (std::size_t i = 0; i < N; ++i)
         {
             hpArray[i] = toHPF(data[i]);
+            sumAcc += hpArray[i];
         }
         std::ranges::sort(hpArray);
 
-        // Min/Max from sorted array
-        out.min = hpArray.front();
-        out.max = hpArray.back();
+        // Min/max from sorted endpoints; mean from accumulated sum
+        out.min  = hpArray.front();
+        out.max  = hpArray.back();
+        out.mean = sumAcc / static_cast<HighPrecisionFloat>(N);
 
         // Quartiles from sorted array
         const auto qSorted = quartilesSorted(hpArray);
@@ -86,8 +91,6 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
         out.median         = qSorted.median;
         out.q3             = qSorted.q3;
 
-        // Mean (use numeric helper on the original array to avoid re-summing hp)
-        out.mean = num::average(data);
         return out;
     }
 }
@@ -95,8 +98,11 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
 /// @brief Summary for a generic numeric range (vectors, spans, views…).
 /// @tparam R Numeric input range type.
 /// @param range Input range of numeric values.
-/// @details Uses numeric helpers and the range-generic quartiles adapter.
-/// @note Requires forward iteration; the range is traversed multiple times for min/max, mean, and quartiles.
+/// @details Materializes to an HPF vector in one pass (accumulating the sum), sorts once,
+///          then derives min/max from the sorted endpoints and quartiles via
+///          quartilesFromSortedSpan().  This avoids repeated range traversals and redundant
+///          heap allocations compared with calling individual helpers separately.
+/// @note Requires forward iteration for the empty-check; the range body is single-pass.
 /// @return Summary statistics for `range`, or a zero-initialized summary for an empty range.
 template <class R>
     requires num::ForwardNumberRange<R>
@@ -109,19 +115,33 @@ constexpr auto summary(const R& range) -> SummaryStats
         return out;
     }
 
-    out.count = static_cast<std::size_t>(std::ranges::distance(range));
+    // One pass: materialize to HPF vector and accumulate the sum simultaneously
+    std::vector<HighPrecisionFloat> hpVec;
+    if constexpr (std::ranges::sized_range<R>)
+    {
+        hpVec.reserve(static_cast<std::size_t>(std::ranges::size(range)));
+    }
+    HighPrecisionFloat sumAcc = 0.0L;
+    for (auto&& val : range)
+    {
+        const auto hp = toHPF(val);
+        hpVec.push_back(hp);
+        sumAcc += hp;
+    }
 
-    // Min/Max & Mean via helpers (HPF-safe)
-    auto [minVal, maxVal] = num::minMaxValue(range);
-    out.min               = minVal;
-    out.max               = maxVal;
-    out.mean              = num::average(range);
+    out.count = hpVec.size();
 
-    // Quartiles via adapter (materializes to vector<HPF> internally)
-    const auto qSorted = quartiles(range);
-    out.q1             = qSorted.q1;
-    out.median         = qSorted.median;
-    out.q3             = qSorted.q3;
+    // Sort once; min and max are the endpoints of the sorted sequence
+    std::ranges::sort(hpVec);
+    out.min  = hpVec.front();
+    out.max  = hpVec.back();
+    out.mean = sumAcc / static_cast<HighPrecisionFloat>(out.count);
+
+    // Reuse the sorted data for all three quartiles
+    const auto q = quartilesFromSortedSpan(hpVec);
+    out.q1       = q.q1;
+    out.median   = q.median;
+    out.q3       = q.q3;
 
     return out;
 }
@@ -199,38 +219,48 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> Hi
 /// @brief Compute the Pearson correlation coefficient of two numeric ranges.
 /// @param range_x First input range.
 /// @param range_y Second input range.
+/// @details Uses a single fused pass to accumulate n, sigma_x, sigma_y, sigma_x2, sigma_y2,
+///          and sigma_xy simultaneously, avoiding the five separate traversals of the
+///          original implementation.
 /// @return Correlation coefficient on success, or an error if the inputs differ in size, have too few elements, or yield an invalid denominator.
 auto correlationCoefficient(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y) -> HighPrecisionResult
 {
-    const auto sizeX = std::ranges::distance(range_x);
-    const auto sizeY = std::ranges::distance(range_y);
+    // Fused single pass: count n and accumulate all five sums simultaneously
+    HighPrecisionFloat sigma_x{}, sigma_y{}, sigma_x2{}, sigma_y2{}, sigma_xy{};
+    std::size_t        n{};
 
-    if (sizeX != sizeY)
+    auto       itx  = std::ranges::begin(range_x);
+    auto       ity  = std::ranges::begin(range_y);
+    const auto endx = std::ranges::end(range_x);
+    const auto endy = std::ranges::end(range_y);
+
+    for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        return std::unexpected(std::format("sizeX={} != sizeY()={}", sizeX, sizeY));
+        const auto xi = toHPF(*itx);
+        const auto yi = toHPF(*ity);
+        sigma_x  += xi;
+        sigma_y  += yi;
+        sigma_x2 += xi * xi;
+        sigma_y2 += yi * yi;
+        sigma_xy += xi * yi;
+        ++n;
     }
 
-    if (sizeX < 2)
+    if (itx != endx || ity != endy)
     {
-        return std::unexpected(std::format("not enough data points: n={}", sizeX));
+        return std::unexpected(std::format("correlationCoefficient: ranges have different lengths"));
     }
 
-    const auto sigma_x  = num::sum(range_x);
-    const auto sigma_y  = num::sum(range_y);
-    const auto sigma_x2 = sumSquared(range_x);
-    const auto sigma_y2 = sumSquared(range_y);
-    const auto sigma_xy = num::sumProduct(range_x, range_y);
-    if (not sigma_xy)
+    if (n < 2)
     {
-        return sigma_xy;
+        return std::unexpected(std::format("not enough data points: n={}", n));
     }
 
-    const auto n         = static_cast<std::size_t>(sizeX);
     const auto count     = toHPF(n);
-    const auto numerator = (count * *sigma_xy) - (sigma_x * sigma_y);
+    const auto numerator = (count * sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
-        println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, *sigma_xy, numerator);
+        println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, sigma_xy, numerator);
     }
 
     const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, n);
@@ -258,7 +288,7 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
                 count,
                 sigma_x,
                 sigma_y,
-                *sigma_xy,
+                sigma_xy,
                 numerator,
                 *denominator_x,
                 *denominator_y,
@@ -271,33 +301,44 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
 /// @brief Compute the sample covariance of two numeric ranges.
 /// @param range_x Input range x.
 /// @param range_y Input range y.
+/// @details Uses a single fused pass to accumulate n, sigma_x, sigma_y, and sigma_xy
+///          simultaneously, avoiding the three separate traversals of the original
+///          implementation.
 /// @return Covariance on success, or an error if the inputs have mismatched sizes or too few elements.
 auto covariance(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y) -> HighPrecisionResult
 {
-    const auto sizeX = std::ranges::distance(range_x);
-    const auto sizeY = std::ranges::distance(range_y);
+    // Fused single pass: count n and accumulate sigma_x, sigma_y, sigma_xy simultaneously
+    HighPrecisionFloat sigma_x{}, sigma_y{}, sigma_xy{};
+    std::size_t        n{};
 
-    if (sizeX != sizeY)
+    auto       itx  = std::ranges::begin(range_x);
+    auto       ity  = std::ranges::begin(range_y);
+    const auto endx = std::ranges::end(range_x);
+    const auto endy = std::ranges::end(range_y);
+
+    for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        return std::unexpected(std::format("sizeX={} != sizeY={}", sizeX, sizeY));
+        const auto xi = toHPF(*itx);
+        const auto yi = toHPF(*ity);
+        sigma_x  += xi;
+        sigma_y  += yi;
+        sigma_xy += xi * yi;
+        ++n;
     }
 
-    const auto count = sizeX;
-    if (count < 2)
+    if (itx != endx || ity != endy)
     {
-        return std::unexpected(std::format("not enough data points: count={}", count));
+        return std::unexpected(std::format("covariance: ranges have different lengths"));
     }
 
-    const auto sigma_x  = num::sum(range_x);
-    const auto sigma_y  = num::sum(range_y);
-    const auto sigma_xy = num::sumProduct(range_x, range_y);
-    if (not sigma_xy)
+    if (n < 2)
     {
-        return sigma_xy;
+        return std::unexpected(std::format("not enough data points: count={}", n));
     }
 
-    const auto numerator   = *sigma_xy - ((sigma_x * sigma_y) / toHPF(count));
-    const auto denominator = toHPF(count - 1);
+    const auto count       = toHPF(n);
+    const auto numerator   = sigma_xy - ((sigma_x * sigma_y) / count);
+    const auto denominator = toHPF(n - 1);
     return numerator / denominator;
 }
 } // namespace mally::statlib

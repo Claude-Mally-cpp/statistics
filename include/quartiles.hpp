@@ -182,6 +182,66 @@ inline auto medianSortedSpan(std::span<const HighPrecisionFloat> sorted) -> High
     return ((count & 1U) != 0U) ? sorted[count / 2] : (sorted[(count / 2) - 1] + sorted[count / 2]) / 2.0L;
 }
 
+/// @brief Compute Tukey hinges for an already-sorted span of HighPrecisionFloat.
+/// @param sorted Sorted span of high-precision values.
+/// @return Quartile summary containing Q1, median, and Q3, or zero-initialized if the span is empty.
+/// @note Applies the same exclusive-median Tukey hinge convention as `quartilesSorted`, including
+///       the special-case for n==3.
+inline auto quartilesFromSortedSpan(std::span<const HighPrecisionFloat> sorted) -> QuartileSummary
+{
+    if (sorted.empty())
+    {
+        return {};
+    }
+
+    const auto count = sorted.size();
+
+    const HighPrecisionFloat med = medianSortedSpan(sorted);
+
+    const std::size_t loL{};
+    std::size_t       loH{};
+    std::size_t       hiL{};
+    const std::size_t hiH = count - 1;
+
+    if (count & 1U)
+    {
+        const std::size_t mid = count / 2;
+        if (count == 3U)
+        {
+            loH = mid;
+            hiL = mid;
+        }
+        else
+        {
+            loH = mid - 1;
+            hiL = mid + 1;
+        }
+    }
+    else
+    {
+        loH = (count / 2) - 1;
+        hiL = count / 2;
+    }
+
+    const auto medianOfSlice = [&](std::size_t low, std::size_t high) -> HighPrecisionFloat
+    {
+        const std::size_t len = (high < low) ? 0 : (high - low + 1);
+        if (len == 0)
+        {
+            return 0.0L;
+        }
+        if (len & 1U)
+        {
+            return sorted[low + (len / 2)];
+        }
+        const std::size_t midHi = low + (len / 2);
+        const std::size_t midLo = midHi - 1;
+        return (sorted[midLo] + sorted[midHi]) / 2.0L;
+    };
+
+    return {.q1 = medianOfSlice(loL, loH), .median = med, .q3 = medianOfSlice(hiL, hiH)};
+}
+
 /// @brief Compute Tukey hinges for an already-sorted `std::array<HighPrecisionFloat, N>`.
 /// @tparam N Array extent.
 /// @param sorted Sorted input array.
@@ -257,51 +317,7 @@ inline auto quartiles(const R& range) -> QuartileSummary
         return {};
     }
     std::ranges::sort(hpVector);
-    const auto count = hpVector.size();
-
-    const auto medianOfSlice = [&](std::size_t low, std::size_t high) -> HighPrecisionFloat
-    {
-        const std::size_t len = (high >= low) ? (high - low + 1) : 0;
-        if (len == 0)
-        {
-            return 0.0L;
-        }
-        if (len & 1U)
-        {
-            return hpVector[low + (len / 2)];
-        }
-        const std::size_t midHi = low + (len / 2);
-        const std::size_t midLo = midHi - 1;
-        return (hpVector[midLo] + hpVector[midHi]) / 2.0L;
-    };
-
-    HighPrecisionFloat const med = (count & 1U) ? hpVector[count / 2] : (hpVector[(count / 2) - 1] + hpVector[count / 2]) / 2.0L;
-    const std::size_t        loL{};
-    std::size_t              loH{};
-    std::size_t              hiL{};
-    const std::size_t        hiH = count - 1;
-    if (count & 1U)
-    {
-        const std::size_t mid = count / 2;
-        if (count == 3U)
-        {
-            loH = mid;
-            hiL = mid;
-        }
-        else
-        {
-            loH = mid - 1;
-            hiL = mid + 1;
-        }
-    }
-    else
-    {
-        loH = (count / 2) - 1;
-        hiL = count / 2;
-    }
-    const HighPrecisionFloat quart1 = medianOfSlice(loL, loH);
-    const HighPrecisionFloat quart3 = medianOfSlice(hiL, hiH);
-    return {.q1 = quart1, .median = med, .q3 = quart3};
+    return quartilesFromSortedSpan(hpVector);
 }
 
 } // namespace mally::statlib
