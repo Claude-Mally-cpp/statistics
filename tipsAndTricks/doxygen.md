@@ -3,7 +3,7 @@
 This note describes a practical Doxygen workflow for this repository.
 
 The goal is to make documentation generation deterministic and easy to verify
-locally before adding a dedicated documentation CI signal.
+locally and in CI.
 
 ## 1. Local installation
 
