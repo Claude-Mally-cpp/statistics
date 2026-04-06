@@ -3,6 +3,7 @@
 #include "quartiles.hpp"
 #include "statistics.hpp"
 #include <array>
+#include <cmath>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -78,6 +79,58 @@ TEST(StatisticsTest, Correlation_Profits_Employers)
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
         << "Expected " << expected << ", got " << *result << ". Check calculation or expected value."; // Update expected value as needed
     // Alternative: test with shuffled data, or edge cases
+}
+
+// Large-scale realistic dataset: big-bank assets vs employee count
+TEST(StatisticsTest, Correlation_BigBankAssets_Employees)
+{
+    const std::array<long double, 4> assets{
+        4.4e12L,
+        3.4e12L,
+        2.4e12L,
+        1.9e12L,
+    };
+
+    const std::array<long double, 4> employees{
+        320000.0L,
+        213000.0L,
+        229000.0L,
+        217000.0L,
+    };
+
+    auto result = correlationCoefficient(assets, employees);
+    ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
+    EXPECT_TRUE(std::isfinite(static_cast<double>(*result)));
+    EXPECT_LE(std::abs(*result), 1.0L);
+}
+
+// Synthetic cancellation-prone dataset with large offset and small deltas.
+// Disabled by default: it is intended as a stress case for evaluating whether
+// the current one-pass formula and precision choice are numerically adequate.
+TEST(StatisticsTest, DISABLED_Correlation_LargeOffsetSmallVariance)
+{
+    const std::array<long double, 6> x{
+        1.0e12L + 1200.0L,
+        1.0e12L + 1350.0L,
+        1.0e12L + 1280.0L,
+        1.0e12L + 1410.0L,
+        1.0e12L + 1330.0L,
+        1.0e12L + 1260.0L,
+    };
+
+    const std::array<long double, 6> y{
+        1.0e12L + 1180.0L,
+        1.0e12L + 1360.0L,
+        1.0e12L + 1270.0L,
+        1.0e12L + 1405.0L,
+        1.0e12L + 1325.0L,
+        1.0e12L + 1255.0L,
+    };
+
+    auto result = correlationCoefficient(x, y);
+    ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
+    EXPECT_TRUE(std::isfinite(static_cast<double>(*result)));
+    EXPECT_LE(std::abs(*result), 1.0L);
 }
 
 // Test product of productTest
