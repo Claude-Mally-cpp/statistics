@@ -2,7 +2,6 @@
 
 ## Documentation
 
-- Add a Doxygen configuration file and generate API docs from CI so public-header comment regressions are easier to spot.
 - Decide whether generated docs should be published as a GitHub Pages site, a CI artifact, or both.
 - Expand Doxygen coverage for the public API surface, especially around error-returning functions and quartile conventions.
 - Add a short contributor note describing the preferred Doxygen style for templates, concepts, and inline utility aliases.
