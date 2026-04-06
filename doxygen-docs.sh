@@ -54,21 +54,26 @@ fi
 
 if [[ "$MODE" == "verify-all" ]]; then
   WARN_LOG="$(mktemp)"
-  if doxygen - <<EOF >/dev/null; then
+  set +e
+  doxygen - <<EOF >/dev/null
 @INCLUDE = $DOXYFILE
 WARN_LOGFILE = $WARN_LOG
 EOF
-    :
-  fi
+  DOXYGEN_EXIT_CODE=$?
+  set -e
 
+  HAS_WARNINGS=0
   if [[ -s "$WARN_LOG" ]]; then
     echo "Doxygen reported warnings:"
     cat "$WARN_LOG"
-    rm -f "$WARN_LOG"
-    exit 1
+    HAS_WARNINGS=1
   fi
 
   rm -f "$WARN_LOG"
+
+  if [[ $HAS_WARNINGS -ne 0 || $DOXYGEN_EXIT_CODE -ne 0 ]]; then
+    exit 1
+  fi
 else
   doxygen "$DOXYFILE"
 fi
