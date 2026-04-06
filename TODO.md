@@ -26,5 +26,5 @@
 
 ## CI / Quality
 
-- Add a documentation-focused CI job that fails on Doxygen warnings once the comment baseline is in better shape.
+- Decide whether CI should also publish generated Doxygen docs (for example as a GitHub Pages site, a CI artifact, or both) now that pull requests already verify doc generation and warnings.
 - Consider grouping formatting, tidy, and documentation checks so contributor-facing failures are easier to interpret.
