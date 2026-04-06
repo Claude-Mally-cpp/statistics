@@ -163,6 +163,69 @@ TEST(StatisticsTest, DISABLED_Correlation_LargeOffsetCenteredReference)
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(centeredReference), 1e-12);
 }
 
+// Near-perfect positive correlation should stay close to +1 and remain within
+// the mathematically valid range.
+TEST(StatisticsTest, Correlation_NearlyPerfectPositive)
+{
+    const std::array<long double, 8> x{
+        10.0L,
+        20.0L,
+        30.0L,
+        40.0L,
+        50.0L,
+        60.0L,
+        70.0L,
+        80.0L,
+    };
+
+    const std::array<long double, 8> y{
+        10.000001L,
+        20.000000L,
+        30.000001L,
+        39.999999L,
+        50.000001L,
+        60.000000L,
+        70.000001L,
+        79.999999L,
+    };
+
+    const auto centeredReference = [&]() -> long double
+    {
+        constexpr auto count = static_cast<long double>(x.size());
+
+        long double meanX = 0.0L;
+        long double meanY = 0.0L;
+        for (std::size_t i = 0; i < x.size(); ++i)
+        {
+            meanX += x[i];
+            meanY += y[i];
+        }
+        meanX /= count;
+        meanY /= count;
+
+        long double sumXX = 0.0L;
+        long double sumYY = 0.0L;
+        long double sumXY = 0.0L;
+        for (std::size_t i = 0; i < x.size(); ++i)
+        {
+            const auto dx = x[i] - meanX;
+            const auto dy = y[i] - meanY;
+            sumXX += dx * dx;
+            sumYY += dy * dy;
+            sumXY += dx * dy;
+        }
+
+        return sumXY / std::sqrt(sumXX * sumYY);
+    }();
+
+    auto result = correlationCoefficient(x, y);
+    ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
+    EXPECT_TRUE(std::isfinite(static_cast<double>(*result)));
+    EXPECT_LE(std::abs(*result), 1.0L);
+    EXPECT_GT(*result, 0.999999999L);
+    EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(centeredReference), 1e-12);
+}
+
 // Test product of productTest
 TEST(StatisticsTest, Product_Simple)
 {
