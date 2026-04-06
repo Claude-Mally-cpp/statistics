@@ -35,6 +35,7 @@ jobs:
       - name: Configure & Build (${{ matrix.config }})
         run: >
           docker run --rm
+          --user $(id -u):$(id -g)
           -v ${{ github.workspace }}:/project
           -w /project
           cpp-ci-clang
@@ -44,6 +45,7 @@ jobs:
       - name: Run tests (${{ matrix.config }})
         run: >
           docker run --rm
+          --user $(id -u):$(id -g)
           -v ${{ github.workspace }}:/project
           -w /project
           cpp-ci-clang
@@ -53,6 +55,7 @@ jobs:
         if: matrix.config == 'release' && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
         run: >
           docker run --rm
+          --user $(id -u):$(id -g)
           -v ${{ github.workspace }}:/project
           -w /project
           cpp-ci-clang
