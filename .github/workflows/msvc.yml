@@ -65,6 +65,7 @@ jobs:
           $zipPath = "$stageDir.zip"
           Remove-Item -LiteralPath $stageDir -Recurse -Force -ErrorAction SilentlyContinue
           Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path "out/artifacts" -Force | Out-Null
           New-Item -ItemType Directory -Path $stageDir | Out-Null
           Copy-Item -Path "out/package/${{ matrix.preset }}/*" -Destination $stageDir -Recurse
           Copy-Item -Path README.md, LICENSE -Destination $stageDir
