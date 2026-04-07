@@ -1,4 +1,4 @@
-#Doxygen Workflow
+# Doxygen Workflow
 
 This note describes a practical Doxygen workflow for this repository.
 
