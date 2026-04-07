@@ -15,6 +15,7 @@
 namespace mally::statlib::num
 {
 
+/// @cond DOXYGEN_SKIP
 template <class R> using RangeValueType = std::remove_cvref_t<std::ranges::range_value_t<R>>;
 
 template <class R> using RangePublicResultType = mally::statlib::PublicResultType<RangeValueType<R>>;
@@ -26,6 +27,7 @@ template <class RX, class RY> using PairRangeValueType = std::common_type_t<Rang
 template <class RX, class RY> using PairPublicResultType = mally::statlib::PublicResultType<PairRangeValueType<RX, RY>>;
 
 template <class RX, class RY> using PairCalculationFloat = mally::statlib::CalculationFloat<PairRangeValueType<RX, RY>>;
+/// @endcond
 
 /// @brief Concept for ranges whose values are arithmetic.
 /// @tparam R Candidate range type.

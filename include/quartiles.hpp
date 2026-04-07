@@ -33,8 +33,10 @@ template <class T> struct QuartileSummary
 namespace detail
 {
 
+/// @cond DOXYGEN_SKIP
 template <class T> using QuartileCalculationFloat = CalculationFloat<T>;
 template <class T> using QuartilePublicResultType = PublicResultType<T>;
+/// @endcond
 
 /// @brief Median of an already-sorted inclusive slice [low..high] in an array.
 /// @tparam T Array element type.
