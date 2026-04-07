@@ -166,14 +166,23 @@ template <NumberRange R> constexpr auto product(const R& range) -> num::RangePub
 /// @return Geometric mean of the values in `range`, or `0.0` for an empty range.
 template <NumberRange R> auto geometricMean(const R& range) -> num::RangePublicResultType<R>
 {
-    if (not range.size())
+    auto        totalProduct = num::RangeCalculationFloat<R>{1.0};
+    std::size_t count        = 0;
+
+    for (const auto& val : range)
+    {
+        totalProduct *= static_cast<num::RangeCalculationFloat<R>>(val);
+        ++count;
+    }
+
+    if (count == 0)
     {
         return static_cast<num::RangePublicResultType<R>>(0.0);
     }
 
-    const auto totalProduct = static_cast<num::RangeCalculationFloat<R>>(product(range));
-    const auto value =
-        std::pow(totalProduct, num::RangeCalculationFloat<R>{1.0} / static_cast<num::RangeCalculationFloat<R>>(range.size()));
+    const auto value = std::pow(totalProduct,
+                                num::RangeCalculationFloat<R>{1.0}
+                                    / static_cast<num::RangeCalculationFloat<R>>(count));
     return static_cast<num::RangePublicResultType<R>>(value);
 }
 
