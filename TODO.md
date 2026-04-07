@@ -14,13 +14,13 @@
 
 ## API / Design Questions
 
-- Reconsider whether unconditional conversion to `HighPrecisionFloat` is the right default for all algorithms.
+- Reconsider whether unconditional widening to `long double` is the right default for all algorithms.
 - Document the tradeoff explicitly:
   - better numeric stability and one internal representation
   - possible performance cost, wider ABI surface, and different behavior across platforms where `long double` differs
 - Evaluate alternatives:
-  - keep `HighPrecisionFloat` as the internal default but make it easier to swap or configure
-  - use native input/result types in more paths and reserve `HighPrecisionFloat` for selected algorithms
+  - keep `long double` as the default widened type but make it easier to swap or configure
+  - use native input/result types in more paths and reserve `long double` for selected algorithms
   - expose a policy or traits-based customization point for accumulation/result type
 
 ## CI / Quality

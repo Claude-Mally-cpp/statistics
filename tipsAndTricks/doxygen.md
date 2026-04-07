@@ -206,6 +206,6 @@ Later options:
 
 - The first version should focus on deterministic generation and warning
   visibility, not on publishing a polished docs site.
-- `HighPrecisionFloat` and the unconditional conversion strategy should stay out
+- unconditional widening to `long double` and related numeric-policy choices should stay out
   of the initial Doxygen rollout. It is worth documenting as a design-review
   question, but it should not block docs generation.

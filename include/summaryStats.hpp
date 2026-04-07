@@ -2,7 +2,6 @@
 /// @brief Summary statistics structure and formatter specializations.
 #pragma once
 
-#include "HighPrecisionFloat.hpp"
 #include "print_compat.hpp"
 #include <cstddef>
 #include <fmt/base.h>
@@ -13,15 +12,15 @@ namespace mally::statlib
 {
 
 /// @brief Summary of basic descriptive statistics.
-struct SummaryStats
+template <class T> struct SummaryStats
 {
-    std::size_t        count{};  ///< @brief Number of elements.
-    HighPrecisionFloat min{};    ///< @brief Minimum value.
-    HighPrecisionFloat q1{};     ///< @brief First quartile (Tukey lower hinge).
-    HighPrecisionFloat median{}; ///< @brief Median.
-    HighPrecisionFloat mean{};   ///< @brief Arithmetic mean.
-    HighPrecisionFloat q3{};     ///< @brief Third quartile (Tukey upper hinge).
-    HighPrecisionFloat max{};    ///< @brief Maximum value.
+    std::size_t count{};  ///< @brief Number of elements.
+    T           min{};    ///< @brief Minimum value.
+    T           q1{};     ///< @brief First quartile (Tukey lower hinge).
+    T           median{}; ///< @brief Median.
+    T           mean{};   ///< @brief Arithmetic mean.
+    T           q3{};     ///< @brief Third quartile (Tukey upper hinge).
+    T           max{};    ///< @brief Maximum value.
 
     /// @todo Add standard deviation and variance?
 
@@ -34,11 +33,12 @@ struct SummaryStats
 };
 
 /// @brief Shared formatting helper used by both `fmt::formatter` and `std::formatter`.
+/// @tparam T Public result value type.
 /// @tparam OutIt Output iterator type used by the formatting backend.
 /// @param summary Summary value to format.
 /// @param out Output iterator destination.
 /// @return Advanced output iterator after writing the formatted representation.
-template <class OutIt> auto formatSummaryCore(const SummaryStats& summary, OutIt out) -> OutIt
+template <class T, class OutIt> auto formatSummaryCore(const SummaryStats<T>& summary, OutIt out) -> OutIt
 {
     return fmt::format_to(out,
                           "n={}, min={}, q1={}, median={}, q3={}, max={}, mean={}",
@@ -54,13 +54,13 @@ template <class OutIt> auto formatSummaryCore(const SummaryStats& summary, OutIt
 } // namespace mally::statlib
 
 /// @cond DOXYGEN_SKIP
-template <> struct fmt::formatter<mally::statlib::SummaryStats>
+template <class T> struct fmt::formatter<mally::statlib::SummaryStats<T>>
 {
     static constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin())
     {
         return ctx.begin();
     }
-    template <class FormatContext> auto format(const mally::statlib::SummaryStats& summary, FormatContext& ctx) const
+    template <class FormatContext> auto format(const mally::statlib::SummaryStats<T>& summary, FormatContext& ctx) const
     {
         return mally::statlib::formatSummaryCore(summary, ctx.out());
     }
@@ -68,14 +68,14 @@ template <> struct fmt::formatter<mally::statlib::SummaryStats>
 
 #if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
 #include <format>
-template <> struct std::formatter<mally::statlib::SummaryStats, char>
+template <class T> struct std::formatter<mally::statlib::SummaryStats<T>, char>
 {
     // Only "{}" supported for now; extend parse() if you add specifiers.
     static constexpr auto parse(std::format_parse_context& ctx)
     {
         return ctx.begin();
     }
-    static auto format(const mally::statlib::SummaryStats& summary, std::format_context& ctx)
+    static auto format(const mally::statlib::SummaryStats<T>& summary, std::format_context& ctx)
     {
         return mally::statlib::formatSummaryCore(summary, ctx.out());
     }
