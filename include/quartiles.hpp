@@ -2,6 +2,7 @@
 /// @brief Functions to compute quartiles (Q1, median, Q3) of numeric ranges.
 
 #pragma once
+#include "CalculationFloat.hpp"
 #include "numeric.hpp"
 
 #include <algorithm>
@@ -24,78 +25,78 @@ namespace mally::statlib
 /// @brief Q1/median/Q3 summary.
 struct QuartileSummary
 {
-    long double q1{};     ///< @brief First quartile.
-    long double median{}; ///< @brief Median.
-    long double q3{};     ///< @brief Third quartile.
+    CalculationFloat q1{};     ///< @brief First quartile.
+    CalculationFloat median{}; ///< @brief Median.
+    CalculationFloat q3{};     ///< @brief Third quartile.
 };
 
 namespace detail
 {
 
 /// @brief Median of an already-sorted inclusive slice [low..high] in an array.
-/// @tparam T Array element type convertible to `long double`.
+/// @tparam T Array element type convertible to `CalculationFloat`.
 /// @tparam N Array extent.
 /// @param array Sorted input array.
 /// @param low Inclusive lower index.
 /// @param high Inclusive upper index.
-/// @return Median of the slice, or `0.0L` if the slice is empty.
+/// @return Median of the slice, or `0.0` if the slice is empty.
 template <typename T, std::size_t N>
-constexpr auto medianSortedSlice(const std::array<T, N>& array, std::size_t low, std::size_t high) -> long double
+constexpr auto medianSortedSlice(const std::array<T, N>& array, std::size_t low, std::size_t high) -> CalculationFloat
 {
-    static_assert(std::is_convertible_v<T, long double>, "array element not convertible to long double");
+    static_assert(std::is_convertible_v<T, CalculationFloat>, "array element not convertible to CalculationFloat");
     const std::size_t len = (high >= low) ? (high - low + 1) : 0;
     if (len == 0)
     {
-        return 0.0L;
+        return 0.0;
     }
     if (len & 1U)
     {
-        return static_cast<long double>(array[low + (len / 2)]);
+        return static_cast<CalculationFloat>(array[low + (len / 2)]);
     }
     const std::size_t midHi = low + (len / 2);
     const std::size_t midLo = midHi - 1;
-    return (static_cast<long double>(array[midLo]) + static_cast<long double>(array[midHi])) / 2.0L;
+    return (static_cast<CalculationFloat>(array[midLo]) + static_cast<CalculationFloat>(array[midHi])) / 2.0;
 }
 
 /// @brief Median of an already-sorted whole array.
-/// @tparam T Array element type convertible to `long double`.
+/// @tparam T Array element type convertible to `CalculationFloat`.
 /// @tparam N Array extent.
 /// @param array Sorted input array.
-/// @return Median of `array`, or `0.0L` when `N == 0`.
-template <typename T, std::size_t N> constexpr auto medianSorted(const std::array<T, N>& array) -> long double
+/// @return Median of `array`, or `0.0` when `N == 0`.
+template <typename T, std::size_t N> constexpr auto medianSorted(const std::array<T, N>& array) -> CalculationFloat
 {
-    static_assert(std::is_convertible_v<T, long double>, "array element not convertible to long double");
+    static_assert(std::is_convertible_v<T, CalculationFloat>, "array element not convertible to CalculationFloat");
 
     if constexpr (N == 0)
     {
-        return 0.0L;
+        return 0.0;
     }
     else if constexpr (N % 2 == 1)
     {
-        return static_cast<long double>(array[N / 2]);
+        return static_cast<CalculationFloat>(array[N / 2]);
     }
     else
     {
-        return (static_cast<long double>(array[(N / 2) - 1]) + static_cast<long double>(array[N / 2])) / 2.0L;
+        return (static_cast<CalculationFloat>(array[(N / 2) - 1]) + static_cast<CalculationFloat>(array[N / 2])) / 2.0;
     }
 }
 
-/// @brief Convert any dynamic (or unknown-extent) NumberRange to `std::vector<long double>`.
+/// @brief Convert any dynamic (or unknown-extent) NumberRange to `std::vector<CalculationFloat>`.
 /// @tparam R Numeric input range type.
 /// @param range Input range.
-/// @return Vector containing all values converted to `long double`.
+/// @return Vector containing all values converted to `CalculationFloat`.
 template <class R>
     requires num::NumberRange<R>
-inline auto materializeLongDoubleVector(const R& range) -> std::vector<long double>
+inline auto materializeCalculationVector(const R& range) -> std::vector<CalculationFloat>
 {
-    std::vector<long double> out;
+    std::vector<CalculationFloat> out;
     if constexpr (std::ranges::sized_range<R>)
     {
         out.reserve(static_cast<std::size_t>(std::ranges::size(range)));
     }
     for (auto&& value : range)
     {
-        out.push_back(static_cast<long double>(value));
+        out.push_back(static_cast<CalculationFloat>(value));
     }
     return out;
 }
@@ -105,51 +106,51 @@ inline auto materializeLongDoubleVector(const R& range) -> std::vector<long doub
 /// @brief Median of a (possibly unsorted) range. Materializes/sorts when needed.
 /// @tparam R Numeric input range type.
 /// @param range Input range.
-/// @return Median of `range`, or `0.0L` if the range is empty.
+/// @return Median of `range`, or `0.0` if the range is empty.
 template <class R>
     requires num::NumberRange<R>
-inline auto median(const R& range) -> long double
+inline auto median(const R& range) -> CalculationFloat
 {
-    std::vector<long double> sortedValues = detail::materializeLongDoubleVector(range);
+    std::vector<CalculationFloat> sortedValues = detail::materializeCalculationVector(range);
     if (sortedValues.empty())
     {
-        return 0.0L;
+        return 0.0;
     }
     std::ranges::sort(sortedValues);
     const auto count = sortedValues.size();
-    return (count & 1U) ? sortedValues[count / 2] : (sortedValues[(count / 2) - 1] + sortedValues[count / 2]) / 2.0L;
+    return (count & 1U) ? sortedValues[count / 2] : (sortedValues[(count / 2) - 1] + sortedValues[count / 2]) / 2.0;
 }
 
 /// @brief Median of an already-sorted array.
-/// @tparam T Array element type convertible to `long double`.
+/// @tparam T Array element type convertible to `CalculationFloat`.
 /// @tparam N Array extent.
 /// @param sorted Sorted input array.
 /// @return Median of `sorted`.
-template <typename T, std::size_t N> constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> long double
+template <typename T, std::size_t N> constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> CalculationFloat
 {
-    static_assert(std::is_convertible_v<T, long double>, "array element not convertible to long double");
+    static_assert(std::is_convertible_v<T, CalculationFloat>, "array element not convertible to CalculationFloat");
     return detail::medianSorted(sorted);
 }
 
-/// @brief Median of an already-sorted `std::span<const long double>`.
+/// @brief Median of an already-sorted `std::span<const CalculationFloat>`.
 /// @param sorted Sorted input span.
-/// @return Median of `sorted`, or `0.0L` if the span is empty.
-inline auto medianSortedSpan(std::span<const long double> sorted) -> long double
+/// @return Median of `sorted`, or `0.0` if the span is empty.
+inline auto medianSortedSpan(std::span<const CalculationFloat> sorted) -> CalculationFloat
 {
     if (sorted.empty())
     {
-        return 0.0L;
+        return 0.0;
     }
     const auto count = sorted.size();
-    return ((count & 1U) != 0U) ? sorted[count / 2] : (sorted[(count / 2) - 1] + sorted[count / 2]) / 2.0L;
+    return ((count & 1U) != 0U) ? sorted[count / 2] : (sorted[(count / 2) - 1] + sorted[count / 2]) / 2.0;
 }
 
-/// @brief Compute Tukey hinges for an already-sorted span of `long double`.
+/// @brief Compute Tukey hinges for an already-sorted span of `CalculationFloat`.
 /// @param sorted Sorted span of values.
 /// @return Quartile summary containing Q1, median, and Q3, or zero-initialized if the span is empty.
 /// @note Applies the same exclusive-median Tukey hinge convention as `quartilesSorted`, including
 ///       the special-case for n==3.
-inline auto quartilesFromSortedSpan(std::span<const long double> sorted) -> QuartileSummary
+inline auto quartilesFromSortedSpan(std::span<const CalculationFloat> sorted) -> QuartileSummary
 {
     if (sorted.empty())
     {
@@ -158,7 +159,7 @@ inline auto quartilesFromSortedSpan(std::span<const long double> sorted) -> Quar
 
     const auto count = sorted.size();
 
-    const long double med = medianSortedSpan(sorted);
+    const CalculationFloat med = medianSortedSpan(sorted);
 
     const std::size_t loL{};
     std::size_t       loH{};
@@ -185,12 +186,12 @@ inline auto quartilesFromSortedSpan(std::span<const long double> sorted) -> Quar
         hiL = count / 2;
     }
 
-    const auto medianOfSlice = [&](std::size_t low, std::size_t high) -> long double
+    const auto medianOfSlice = [&](std::size_t low, std::size_t high) -> CalculationFloat
     {
         const std::size_t len = (high < low) ? 0 : (high - low + 1);
         if (len == 0)
         {
-            return 0.0L;
+            return 0.0;
         }
         if (len & 1U)
         {
@@ -198,27 +199,27 @@ inline auto quartilesFromSortedSpan(std::span<const long double> sorted) -> Quar
         }
         const std::size_t midHi = low + (len / 2);
         const std::size_t midLo = midHi - 1;
-        return (sorted[midLo] + sorted[midHi]) / 2.0L;
+        return (sorted[midLo] + sorted[midHi]) / 2.0;
     };
 
     return {.q1 = medianOfSlice(loL, loH), .median = med, .q3 = medianOfSlice(hiL, hiH)};
 }
 
-/// @brief Compute Tukey hinges for an already-sorted `std::array<long double, N>`.
+/// @brief Compute Tukey hinges for an already-sorted `std::array<CalculationFloat, N>`.
 /// @tparam N Array extent.
 /// @param sorted Sorted input array.
 /// @return Quartile summary containing Q1, median, and Q3.
-template <std::size_t N> constexpr auto quartilesSorted(const std::array<long double, N>& sorted) -> QuartileSummary
+template <std::size_t N> constexpr auto quartilesSorted(const std::array<CalculationFloat, N>& sorted) -> QuartileSummary
 {
     if constexpr (N == 0)
     {
         return {};
     }
-    const long double med = detail::medianSorted(sorted);
-    const std::size_t loL = 0;
-    std::size_t       loH{};
-    std::size_t       hiL{};
-    const std::size_t hiH = N - 1;
+    const CalculationFloat med = detail::medianSorted(sorted);
+    const std::size_t      loL = 0;
+    std::size_t            loH{};
+    std::size_t            hiL{};
+    const std::size_t      hiH = N - 1;
     if constexpr (N % 2 == 1)
     {
         const std::size_t mid = N / 2;
@@ -238,8 +239,8 @@ template <std::size_t N> constexpr auto quartilesSorted(const std::array<long do
         loH = (N / 2) - 1;
         hiL = N / 2;
     }
-    const long double quart1 = detail::medianSortedSlice(sorted, loL, loH);
-    const long double quart3 = detail::medianSortedSlice(sorted, hiL, hiH);
+    const CalculationFloat quart1 = detail::medianSortedSlice(sorted, loL, loH);
+    const CalculationFloat quart3 = detail::medianSortedSlice(sorted, hiL, hiH);
     return {.q1 = quart1, .median = med, .q3 = quart3};
 }
 
@@ -256,10 +257,10 @@ constexpr auto quartiles(const std::array<T, N>& data) -> QuartileSummary
     {
         return {};
     }
-    std::array<long double, N> sortedValues{};
+    std::array<CalculationFloat, N> sortedValues{};
     for (std::size_t i = 0; i < N; ++i)
     {
-        sortedValues[i] = static_cast<long double>(data[i]);
+        sortedValues[i] = static_cast<CalculationFloat>(data[i]);
     }
     std::ranges::sort(sortedValues);
     return quartilesSorted(sortedValues);
@@ -273,7 +274,7 @@ template <class R>
     requires num::NumberRange<R>
 inline auto quartiles(const R& range) -> QuartileSummary
 {
-    std::vector<long double> sortedValues = detail::materializeLongDoubleVector(range);
+    std::vector<CalculationFloat> sortedValues = detail::materializeCalculationVector(range);
     if (sortedValues.empty())
     {
         return {};

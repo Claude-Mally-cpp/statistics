@@ -1,6 +1,6 @@
-﻿/// @file statistics.hpp : minimalist statistics library
+/// @file statistics.hpp : minimalist statistics library
 /// @brief This file contains functions to compute statistics on range(s) of numbers.
-/// @details The functions use widened floating-point intermediates where needed.
+/// @details The functions use the library's calculation-precision policy where needed.
 /// @author Claude Mally
 /// @date 2025-04-11
 ///
@@ -23,6 +23,7 @@
 ///   auto s = summary(myVector);
 #pragma once
 
+#include "CalculationFloat.hpp"
 #include "numeric.hpp"
 #include "quartiles.hpp"
 #include "summaryStats.hpp"
@@ -31,7 +32,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <expected>
 #include <format>
 #include <iterator>
 #include <numeric>
@@ -53,7 +53,7 @@ using num::NumberRange;
 /// @tparam T Arithmetic element type.
 /// @tparam N Array extent.
 /// @param data Input array of numeric values.
-/// @note Converts to `long double`, accumulates sum while materializing, sorts a local array,
+/// @note Converts to `CalculationFloat`, accumulates sum while materializing, sorts a local array,
 ///       then derives min/max from the sorted endpoints and quartiles via quartilesSorted().
 /// @return Summary statistics for `data`.
 template <class T, std::size_t N>
@@ -69,12 +69,12 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
     }
     else
     {
-        // Materialize as long double and accumulate the sum in one pass.
-        std::array<long double, N> sortedValues{};
-        long double                sumAcc = 0.0L;
+        // Materialize at calculation precision and accumulate the sum in one pass.
+        std::array<CalculationFloat, N> sortedValues{};
+        CalculationFloat                sumAcc = 0.0;
         for (std::size_t i = 0; i < N; ++i)
         {
-            sortedValues[i] = static_cast<long double>(data[i]);
+            sortedValues[i] = static_cast<CalculationFloat>(data[i]);
             sumAcc += sortedValues[i];
         }
         std::ranges::sort(sortedValues);
@@ -82,7 +82,7 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
         // Min/max from sorted endpoints; mean from accumulated sum
         out.min  = sortedValues.front();
         out.max  = sortedValues.back();
-        out.mean = sumAcc / static_cast<long double>(N);
+        out.mean = sumAcc / static_cast<CalculationFloat>(N);
 
         // Quartiles from sorted array
         const auto qSorted = quartilesSorted(sortedValues);
@@ -94,12 +94,12 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
     }
 }
 
-/// @brief Summary for a generic numeric range (vectors, spans, views…).
+/// @brief Summary for a generic numeric range (vectors, spans, views...).
 /// @tparam R Numeric input range type.
 /// @param range Input range of numeric values.
-/// @details Materializes to a `std::vector<long double>` in one pass (accumulating the sum), sorts once,
+/// @details Materializes to a `std::vector<CalculationFloat>` in one pass (accumulating the sum), sorts once,
 ///          then derives min/max from the sorted endpoints and quartiles via
-///          quartilesFromSortedSpan().  This avoids repeated range traversals and redundant
+///          quartilesFromSortedSpan(). This avoids repeated range traversals and redundant
 ///          heap allocations compared with calling individual helpers separately.
 /// @note Requires forward iteration for the empty-check; the range body is single-pass.
 /// @return Summary statistics for `range`, or a zero-initialized summary for an empty range.
@@ -114,16 +114,16 @@ constexpr auto summary(const R& range) -> SummaryStats
         return out;
     }
 
-    // One pass: materialize to long double and accumulate the sum simultaneously.
-    std::vector<long double> sortedValues;
+    // One pass: materialize at calculation precision and accumulate the sum simultaneously.
+    std::vector<CalculationFloat> sortedValues;
     if constexpr (std::ranges::sized_range<R>)
     {
         sortedValues.reserve(static_cast<std::size_t>(std::ranges::size(range)));
     }
-    long double sumAcc = 0.0L;
+    CalculationFloat sumAcc = 0.0;
     for (auto&& val : range)
     {
-        const auto converted = static_cast<long double>(val);
+        const auto converted = static_cast<CalculationFloat>(val);
         sortedValues.push_back(converted);
         sumAcc += converted;
     }
@@ -134,7 +134,7 @@ constexpr auto summary(const R& range) -> SummaryStats
     std::ranges::sort(sortedValues);
     out.min  = sortedValues.front();
     out.max  = sortedValues.back();
-    out.mean = sumAcc / static_cast<long double>(out.count);
+    out.mean = sumAcc / static_cast<CalculationFloat>(out.count);
 
     // Reuse the sorted data for all three quartiles
     const auto q = quartilesFromSortedSpan(sortedValues);
@@ -147,42 +147,42 @@ constexpr auto summary(const R& range) -> SummaryStats
 
 /// @brief Compute the product of a range of numbers.
 /// @param range Input range of numbers.
-/// @details Uses `long double` accumulation for intermediate computation.
+/// @details Uses `CalculationFloat` accumulation for intermediate computation.
 /// @return Product of all values in `range`.
-constexpr auto product(const NumberRange auto& range) -> long double
+constexpr auto product(const NumberRange auto& range) -> CalculationFloat
 {
     return std::accumulate(std::ranges::begin(range),
                            std::ranges::end(range),
-                           1.0L,
-                           [](long double acc, auto val) -> auto { return acc * static_cast<long double>(val); });
+                           CalculationFloat{1.0},
+                           [](CalculationFloat acc, auto val) -> auto { return acc * static_cast<CalculationFloat>(val); });
 }
 
 /// @brief Compute the geometric mean of a range of numbers.
 /// @param range Input range of numbers.
-/// @details Uses `long double` intermediates during the calculation.
-/// @return Geometric mean of the values in `range`, or `0.0L` for an empty range.
-auto geometricMean(const NumberRange auto& range) -> long double
+/// @details Uses `CalculationFloat` intermediates during the calculation.
+/// @return Geometric mean of the values in `range`, or `0.0` for an empty range.
+auto geometricMean(const NumberRange auto& range) -> CalculationFloat
 {
     if (not range.size())
     {
-        return 0.0L;
+        return 0.0;
     }
 
-    auto totalProduct = product(range);
-    return std::powl(totalProduct, 1.0L / static_cast<long double>(range.size()));
+    const auto totalProduct = product(range);
+    return std::pow(totalProduct, CalculationFloat{1.0} / static_cast<CalculationFloat>(range.size()));
 }
 
 /// @brief Compute the sum of squares of a range of numbers.
 /// @param range Input range of numbers.
 /// @return Sum of squared values in `range`.
-constexpr auto sumSquared(const NumberRange auto& range) -> long double
+constexpr auto sumSquared(const NumberRange auto& range) -> CalculationFloat
 {
     return std::accumulate(std::ranges::begin(range),
                            std::ranges::end(range),
-                           0.0L,
-                           [](long double acc, auto val) -> auto
+                           CalculationFloat{0.0},
+                           [](CalculationFloat acc, auto val) -> auto
                            {
-                               const auto widenedValue = static_cast<long double>(val);
+                               const auto widenedValue = static_cast<CalculationFloat>(val);
                                const auto valueSquared = widenedValue * widenedValue;
                                return acc + valueSquared;
                            });
@@ -195,14 +195,14 @@ constexpr auto sumSquared(const NumberRange auto& range) -> long double
 /// @param sum Sum of the elements in the range
 /// @param sumSquared Sum of squares of the elements in the range
 /// @param n Number of elements in the range
-/// @return `std::expected<long double, std::string>`
-auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> std::expected<long double, std::string>
+/// @return `CalculationResult`
+auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> CalculationResult
 {
-    const auto n_ld          = static_cast<long double>(n);
-    const auto sum_ld        = static_cast<long double>(sum);
-    const auto sumSquared_ld = static_cast<long double>(sumSquared);
+    const auto n_calc          = static_cast<CalculationFloat>(n);
+    const auto sum_calc        = static_cast<CalculationFloat>(sum);
+    const auto sumSquared_calc = static_cast<CalculationFloat>(sumSquared);
 
-    const auto radicand = (n_ld * sumSquared_ld) - (sum_ld * sum_ld);
+    const auto radicand = (n_calc * sumSquared_calc) - (sum_calc * sum_calc);
     if (radicand < 0)
     {
         return std::unexpected(std::format("{} * {} - {}^2={}", n, sumSquared, sum, radicand));
@@ -224,12 +224,11 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> st
 ///          original implementation.
 /// @return Correlation coefficient on success, or an error if the inputs differ in size, have too few elements, or yield an invalid
 /// denominator.
-auto correlationCoefficient(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y)
-    -> std::expected<long double, std::string>
+auto correlationCoefficient(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y) -> CalculationResult
 {
     // Fused single pass: count n and accumulate all five sums simultaneously
-    long double sigma_x{}, sigma_y{}, sigma_x2{}, sigma_y2{}, sigma_xy{};
-    std::size_t n{};
+    CalculationFloat sigma_x{}, sigma_y{}, sigma_x2{}, sigma_y2{}, sigma_xy{};
+    std::size_t      n{};
 
     auto       itx  = std::ranges::begin(range_x);
     auto       ity  = std::ranges::begin(range_y);
@@ -238,8 +237,8 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
 
     for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        const auto xi = static_cast<long double>(*itx);
-        const auto yi = static_cast<long double>(*ity);
+        const auto xi = static_cast<CalculationFloat>(*itx);
+        const auto yi = static_cast<CalculationFloat>(*ity);
         sigma_x += xi;
         sigma_y += yi;
         sigma_x2 += xi * xi;
@@ -258,7 +257,7 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
         return std::unexpected(std::format("not enough data points: n={}", n));
     }
 
-    const auto count     = static_cast<long double>(n);
+    const auto count     = static_cast<CalculationFloat>(n);
     const auto numerator = (count * sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
@@ -278,7 +277,7 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
     }
 
     const auto denominator = *denominator_x * *denominator_y;
-    if (denominator == 0.0L)
+    if (denominator == CalculationFloat{0.0})
     {
         return std::unexpected(std::format("denominator is zero?"));
     }
@@ -307,11 +306,11 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
 ///          simultaneously, avoiding the three separate traversals of the original
 ///          implementation.
 /// @return Covariance on success, or an error if the inputs have mismatched sizes or too few elements.
-auto covariance(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y) -> std::expected<long double, std::string>
+auto covariance(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y) -> CalculationResult
 {
     // Fused single pass: count n and accumulate sigma_x, sigma_y, sigma_xy simultaneously
-    long double sigma_x{}, sigma_y{}, sigma_xy{};
-    std::size_t n{};
+    CalculationFloat sigma_x{}, sigma_y{}, sigma_xy{};
+    std::size_t      n{};
 
     auto       itx  = std::ranges::begin(range_x);
     auto       ity  = std::ranges::begin(range_y);
@@ -320,8 +319,8 @@ auto covariance(const ForwardNumberRange auto& range_x, const ForwardNumberRange
 
     for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        const auto xi = static_cast<long double>(*itx);
-        const auto yi = static_cast<long double>(*ity);
+        const auto xi = static_cast<CalculationFloat>(*itx);
+        const auto yi = static_cast<CalculationFloat>(*ity);
         sigma_x += xi;
         sigma_y += yi;
         sigma_xy += xi * yi;
@@ -338,9 +337,9 @@ auto covariance(const ForwardNumberRange auto& range_x, const ForwardNumberRange
         return std::unexpected(std::format("not enough data points: count={}", n));
     }
 
-    const auto count       = static_cast<long double>(n);
+    const auto count       = static_cast<CalculationFloat>(n);
     const auto numerator   = sigma_xy - ((sigma_x * sigma_y) / count);
-    const auto denominator = static_cast<long double>(n - 1);
+    const auto denominator = static_cast<CalculationFloat>(n - 1);
     return numerator / denominator;
 }
 } // namespace mally::statlib
