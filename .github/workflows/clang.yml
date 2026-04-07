@@ -35,6 +35,7 @@ jobs:
       - name: Configure & Build (${{ matrix.config }})
         run: >
           docker run --rm
+          --user $(id -u):$(id -g)
           -v ${{ github.workspace }}:/project
           -w /project
           cpp-ci-clang
@@ -44,6 +45,7 @@ jobs:
       - name: Run tests (${{ matrix.config }})
         run: >
           docker run --rm
+          --user $(id -u):$(id -g)
           -v ${{ github.workspace }}:/project
           -w /project
           cpp-ci-clang
@@ -53,6 +55,7 @@ jobs:
         if: matrix.config == 'release' && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
         run: >
           docker run --rm
+          --user $(id -u):$(id -g)
           -v ${{ github.workspace }}:/project
           -w /project
           cpp-ci-clang
@@ -60,12 +63,17 @@ jobs:
 
       - name: Archive CLI package (${{ matrix.config }})
         if: matrix.config == 'release' && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
-        run: |
-          rm -rf out/artifacts/statistics-cli-linux-clang-${{ matrix.config }}
-          mkdir -p out/artifacts/statistics-cli-linux-clang-${{ matrix.config }}
-          cp -R out/package/linux-clang-${{ matrix.config }}/. out/artifacts/statistics-cli-linux-clang-${{ matrix.config }}/
-          cp README.md LICENSE out/artifacts/statistics-cli-linux-clang-${{ matrix.config }}/
-          tar -czf out/artifacts/statistics-cli-linux-clang-${{ matrix.config }}.tar.gz -C out/artifacts statistics-cli-linux-clang-${{ matrix.config }}
+        run: >
+          docker run --rm
+          --user $(id -u):$(id -g)
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-clang
+          bash -lc "rm -rf out/artifacts/statistics-cli-linux-clang-${{ matrix.config }} &&
+                    mkdir -p out/artifacts/statistics-cli-linux-clang-${{ matrix.config }} &&
+                    cp -R out/package/linux-clang-${{ matrix.config }}/. out/artifacts/statistics-cli-linux-clang-${{ matrix.config }}/ &&
+                    cp README.md LICENSE out/artifacts/statistics-cli-linux-clang-${{ matrix.config }}/ &&
+                    tar -czf out/artifacts/statistics-cli-linux-clang-${{ matrix.config }}.tar.gz -C out/artifacts statistics-cli-linux-clang-${{ matrix.config }}"
 
       - name: Upload CLI artifact (${{ matrix.config }})
         if: matrix.config == 'release' && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
