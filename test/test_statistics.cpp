@@ -104,16 +104,16 @@ TEST(StatisticsTest, Product_InsectCount)
 // Test median of sorted evenData
 TEST(StatisticsTest, Median_EvenData_Sorted)
 {
-    constexpr std::array<mally::statlib::CalculationFloat, 6> evenData = {1, 2, 3, 4, 5, 6};
-    auto                                                      result   = median(evenData);
+    constexpr std::array<double, 6> evenData = {1, 2, 3, 4, 5, 6};
+    auto                            result   = median(evenData);
     EXPECT_EQ(result, 3.5L);
 }
 
 // Test median of sorted oddData
 TEST(StatisticsTest, Median_OddData_Sorted)
 {
-    constexpr std::array<mally::statlib::CalculationFloat, 5> oddData = {1, 2, 3, 4, 5};
-    auto                                                      result  = median(oddData);
+    constexpr std::array<double, 5> oddData = {1, 2, 3, 4, 5};
+    auto                            result  = median(oddData);
     EXPECT_EQ(result, 3.0L);
 }
 

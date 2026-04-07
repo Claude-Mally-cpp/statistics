@@ -14,87 +14,104 @@
 namespace mally::statlib::num
 {
 
-/// @brief Concept for ranges whose values convert to `CalculationFloat`.
+template <class R> using RangeValueType = std::remove_cvref_t<std::ranges::range_value_t<R>>;
+
+template <class R> using RangePublicResultType = mally::statlib::PublicResultType<RangeValueType<R>>;
+
+template <class R> using RangeCalculationFloat = mally::statlib::CalculationFloat<RangeValueType<R>>;
+
+template <class RX, class RY> using PairRangeValueType = std::common_type_t<RangeValueType<RX>, RangeValueType<RY>>;
+
+template <class RX, class RY> using PairPublicResultType = mally::statlib::PublicResultType<PairRangeValueType<RX, RY>>;
+
+template <class RX, class RY> using PairCalculationFloat = mally::statlib::CalculationFloat<PairRangeValueType<RX, RY>>;
+
+/// @brief Concept for ranges whose values are arithmetic.
 /// @tparam R Candidate range type.
 template <class R>
-concept NumberRange = std::ranges::input_range<R> && std::convertible_to<std::ranges::range_value_t<R>, mally::statlib::CalculationFloat>;
+concept NumberRange = std::ranges::input_range<R> && std::is_arithmetic_v<RangeValueType<R>>;
 
-/// @brief Concept for forward-iterable ranges whose values convert to `CalculationFloat`.
+/// @brief Concept for forward-iterable ranges whose values are arithmetic.
 /// @details Use this for algorithms that traverse the range more than once.
 /// @tparam R Candidate range type.
 template <class R>
 concept ForwardNumberRange = NumberRange<R> && std::ranges::forward_range<R>;
 
-/// @brief Sum of a numeric range in `CalculationFloat`.
+/// @brief Sum of a numeric range.
 /// @param range Input range of numeric values.
 /// @note O(n), single pass.
-/// @return Sum of all values in `range`.
-template <NumberRange R> constexpr auto sum(const R& range) -> mally::statlib::CalculationFloat
+/// @return Sum of all values in `range`, converted to the public result type for that input.
+template <NumberRange R> constexpr auto sum(const R& range) -> RangePublicResultType<R>
 {
-    mally::statlib::CalculationFloat acc = 0.0;
+    RangeCalculationFloat<R> acc = 0.0;
     for (auto&& val : range)
     {
-        acc += static_cast<mally::statlib::CalculationFloat>(val);
+        acc += static_cast<RangeCalculationFloat<R>>(val);
     }
-    return acc;
+    return static_cast<RangePublicResultType<R>>(acc);
 }
 
 /// @brief Arithmetic mean of a numeric range (0 for empty).
 /// @param range Input range of numeric values.
-/// @note O(n); uses `CalculationFloat` accumulation. Requires forward iteration (traverses twice).
+/// @note O(n); uses widened internal accumulation and returns the public result type for the input.
 /// @return Arithmetic mean of `range`, or `0.0` when the range is empty.
-template <ForwardNumberRange R> constexpr auto average(const R& range) -> mally::statlib::CalculationFloat
+template <ForwardNumberRange R> constexpr auto average(const R& range) -> RangePublicResultType<R>
 {
     const auto count = std::ranges::distance(range);
     if (count == 0)
     {
-        return 0.0;
+        return static_cast<RangePublicResultType<R>>(0.0);
     }
-    return sum(range) / static_cast<mally::statlib::CalculationFloat>(count);
+    const auto total = static_cast<RangeCalculationFloat<R>>(sum(range));
+    return static_cast<RangePublicResultType<R>>(total / static_cast<RangeCalculationFloat<R>>(count));
 }
 
-/// @brief Min & max values of a range as `CalculationFloat`.
+/// @brief Min & max values of a range.
 /// @param range Input range of numeric values.
 /// @note Requires forward iteration; returns `{0.0, 0.0}` for empty.
-/// @return Pair `{min, max}` converted to `CalculationFloat`, or `{0.0, 0.0}` for an empty range.
+/// @return Pair `{min, max}` converted to the public result type for the input.
 template <class R>
-    requires NumberRange<R> && std::ranges::forward_range<R>
-constexpr auto minMaxValue(const R& range) -> std::pair<mally::statlib::CalculationFloat, mally::statlib::CalculationFloat>
+    requires ForwardNumberRange<R>
+constexpr auto minMaxValue(const R& range) -> std::pair<RangePublicResultType<R>, RangePublicResultType<R>>
 {
     if (std::ranges::empty(range))
     {
-        return {0.0, 0.0};
+        return {
+            static_cast<RangePublicResultType<R>>(0.0),
+            static_cast<RangePublicResultType<R>>(0.0),
+        };
     }
     auto [itMin, itMax] = std::ranges::minmax_element(range);
     return {
-        static_cast<mally::statlib::CalculationFloat>(*itMin),
-        static_cast<mally::statlib::CalculationFloat>(*itMax),
+        static_cast<RangePublicResultType<R>>(*itMin),
+        static_cast<RangePublicResultType<R>>(*itMax),
     };
 }
 
-/// @brief Σ xrange_i * yrange_i as `CalculationFloat`, with size checking.
+/// @brief Σ xrange_i * yrange_i with size checking.
 /// @param xrange Left-hand input range.
 /// @param yrange Right-hand input range.
-/// @returns `CalculationResult` on success; unexpected on size mismatch.
+/// @returns Public result type based on the common input type, or unexpected on size mismatch.
 /// @note Works with single-pass ranges; detects mismatch if one ends earlier.
-template <NumberRange RX, NumberRange RY> constexpr auto sumProduct(const RX& xrange, const RY& yrange) -> mally::statlib::CalculationResult
+template <NumberRange RX, NumberRange RY>
+constexpr auto sumProduct(const RX& xrange, const RY& yrange) -> std::expected<PairPublicResultType<RX, RY>, std::string>
 {
     auto       itx  = std::ranges::begin(xrange);
     auto       ity  = std::ranges::begin(yrange);
     const auto endx = std::ranges::end(xrange);
     const auto endy = std::ranges::end(yrange);
 
-    mally::statlib::CalculationFloat acc = 0.0;
+    PairCalculationFloat<RX, RY> acc = 0.0;
     for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        acc += static_cast<mally::statlib::CalculationFloat>(*itx) * static_cast<mally::statlib::CalculationFloat>(*ity);
+        acc += static_cast<PairCalculationFloat<RX, RY>>(*itx) * static_cast<PairCalculationFloat<RX, RY>>(*ity);
     }
 
     if (itx != endx || ity != endy)
     {
         return std::unexpected(std::string{"sumProduct: ranges have different lengths"});
     }
-    return acc;
+    return static_cast<PairPublicResultType<RX, RY>>(acc);
 }
 
 } // namespace mally::statlib::num

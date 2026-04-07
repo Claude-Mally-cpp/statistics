@@ -1,6 +1,6 @@
 /// @file statistics.hpp : minimalist statistics library
 /// @brief This file contains functions to compute statistics on range(s) of numbers.
-/// @details The functions use the library's calculation-precision policy where needed.
+/// @details Public result types follow the input value type, while internal calculation may widen.
 /// @author Claude Mally
 /// @date 2025-04-11
 ///
@@ -53,14 +53,13 @@ using num::NumberRange;
 /// @tparam T Arithmetic element type.
 /// @tparam N Array extent.
 /// @param data Input array of numeric values.
-/// @note Converts to `CalculationFloat`, accumulates sum while materializing, sorts a local array,
-///       then derives min/max from the sorted endpoints and quartiles via quartilesSorted().
+/// @note Computes internally at `CalculationFloat<T>` precision, then converts to `SummaryStats<PublicResultType<T>>`.
 /// @return Summary statistics for `data`.
 template <class T, std::size_t N>
     requires std::is_arithmetic_v<std::remove_cvref_t<T>>
-constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
+constexpr auto summary(const std::array<T, N>& data) -> SummaryStats<PublicResultType<T>>
 {
-    SummaryStats out{};
+    SummaryStats<PublicResultType<T>> out{};
     out.count = N;
 
     if constexpr (N == 0)
@@ -70,22 +69,22 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
     else
     {
         // Materialize at calculation precision and accumulate the sum in one pass.
-        std::array<CalculationFloat, N> sortedValues{};
-        CalculationFloat                sumAcc = 0.0;
+        std::array<CalculationFloat<T>, N> sortedValues{};
+        CalculationFloat<T>                sumAcc = 0.0;
         for (std::size_t i = 0; i < N; ++i)
         {
-            sortedValues[i] = static_cast<CalculationFloat>(data[i]);
+            sortedValues[i] = static_cast<CalculationFloat<T>>(data[i]);
             sumAcc += sortedValues[i];
         }
         std::ranges::sort(sortedValues);
 
         // Min/max from sorted endpoints; mean from accumulated sum
-        out.min  = sortedValues.front();
-        out.max  = sortedValues.back();
-        out.mean = sumAcc / static_cast<CalculationFloat>(N);
+        out.min  = static_cast<PublicResultType<T>>(sortedValues.front());
+        out.max  = static_cast<PublicResultType<T>>(sortedValues.back());
+        out.mean = static_cast<PublicResultType<T>>(sumAcc / static_cast<CalculationFloat<T>>(N));
 
         // Quartiles from sorted array
-        const auto qSorted = quartilesSorted(sortedValues);
+        const auto qSorted = quartilesSorted<T>(sortedValues);
         out.q1             = qSorted.q1;
         out.median         = qSorted.median;
         out.q3             = qSorted.q3;
@@ -97,7 +96,7 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
 /// @brief Summary for a generic numeric range (vectors, spans, views...).
 /// @tparam R Numeric input range type.
 /// @param range Input range of numeric values.
-/// @details Materializes to a `std::vector<CalculationFloat>` in one pass (accumulating the sum), sorts once,
+/// @details Materializes to a calculation-precision vector in one pass (accumulating the sum), sorts once,
 ///          then derives min/max from the sorted endpoints and quartiles via
 ///          quartilesFromSortedSpan(). This avoids repeated range traversals and redundant
 ///          heap allocations compared with calling individual helpers separately.
@@ -105,9 +104,9 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats
 /// @return Summary statistics for `range`, or a zero-initialized summary for an empty range.
 template <class R>
     requires num::ForwardNumberRange<R>
-constexpr auto summary(const R& range) -> SummaryStats
+constexpr auto summary(const R& range) -> SummaryStats<num::RangePublicResultType<R>>
 {
-    SummaryStats out{};
+    SummaryStats<num::RangePublicResultType<R>> out{};
 
     if (std::ranges::empty(range))
     {
@@ -115,15 +114,15 @@ constexpr auto summary(const R& range) -> SummaryStats
     }
 
     // One pass: materialize at calculation precision and accumulate the sum simultaneously.
-    std::vector<CalculationFloat> sortedValues;
+    std::vector<num::RangeCalculationFloat<R>> sortedValues;
     if constexpr (std::ranges::sized_range<R>)
     {
         sortedValues.reserve(static_cast<std::size_t>(std::ranges::size(range)));
     }
-    CalculationFloat sumAcc = 0.0;
+    num::RangeCalculationFloat<R> sumAcc = 0.0;
     for (auto&& val : range)
     {
-        const auto converted = static_cast<CalculationFloat>(val);
+        const auto converted = static_cast<num::RangeCalculationFloat<R>>(val);
         sortedValues.push_back(converted);
         sumAcc += converted;
     }
@@ -132,12 +131,12 @@ constexpr auto summary(const R& range) -> SummaryStats
 
     // Sort once; min and max are the endpoints of the sorted sequence
     std::ranges::sort(sortedValues);
-    out.min  = sortedValues.front();
-    out.max  = sortedValues.back();
-    out.mean = sumAcc / static_cast<CalculationFloat>(out.count);
+    out.min  = static_cast<num::RangePublicResultType<R>>(sortedValues.front());
+    out.max  = static_cast<num::RangePublicResultType<R>>(sortedValues.back());
+    out.mean = static_cast<num::RangePublicResultType<R>>(sumAcc / static_cast<num::RangeCalculationFloat<R>>(out.count));
 
     // Reuse the sorted data for all three quartiles
-    const auto q = quartilesFromSortedSpan(sortedValues);
+    const auto q = quartilesFromSortedSpan<num::RangeValueType<R>>(sortedValues);
     out.q1       = q.q1;
     out.median   = q.median;
     out.q3       = q.q3;
@@ -147,60 +146,66 @@ constexpr auto summary(const R& range) -> SummaryStats
 
 /// @brief Compute the product of a range of numbers.
 /// @param range Input range of numbers.
-/// @details Uses `CalculationFloat` accumulation for intermediate computation.
+/// @details Uses widened internal accumulation and converts back to the public result type.
 /// @return Product of all values in `range`.
-constexpr auto product(const NumberRange auto& range) -> CalculationFloat
+template <NumberRange R> constexpr auto product(const R& range) -> num::RangePublicResultType<R>
 {
-    return std::accumulate(std::ranges::begin(range),
-                           std::ranges::end(range),
-                           CalculationFloat{1.0},
-                           [](CalculationFloat acc, auto val) -> auto { return acc * static_cast<CalculationFloat>(val); });
+    const auto value = std::accumulate(std::ranges::begin(range),
+                                       std::ranges::end(range),
+                                       num::RangeCalculationFloat<R>{1.0},
+                                       [](num::RangeCalculationFloat<R> acc, auto val) -> auto
+                                       { return acc * static_cast<num::RangeCalculationFloat<R>>(val); });
+    return static_cast<num::RangePublicResultType<R>>(value);
 }
 
 /// @brief Compute the geometric mean of a range of numbers.
 /// @param range Input range of numbers.
-/// @details Uses `CalculationFloat` intermediates during the calculation.
+/// @details Uses widened internal intermediates during the calculation.
 /// @return Geometric mean of the values in `range`, or `0.0` for an empty range.
-auto geometricMean(const NumberRange auto& range) -> CalculationFloat
+template <NumberRange R> auto geometricMean(const R& range) -> num::RangePublicResultType<R>
 {
     if (not range.size())
     {
-        return 0.0;
+        return static_cast<num::RangePublicResultType<R>>(0.0);
     }
 
-    const auto totalProduct = product(range);
-    return std::pow(totalProduct, CalculationFloat{1.0} / static_cast<CalculationFloat>(range.size()));
+    const auto totalProduct = static_cast<num::RangeCalculationFloat<R>>(product(range));
+    const auto value =
+        std::pow(totalProduct, num::RangeCalculationFloat<R>{1.0} / static_cast<num::RangeCalculationFloat<R>>(range.size()));
+    return static_cast<num::RangePublicResultType<R>>(value);
 }
 
 /// @brief Compute the sum of squares of a range of numbers.
 /// @param range Input range of numbers.
 /// @return Sum of squared values in `range`.
-constexpr auto sumSquared(const NumberRange auto& range) -> CalculationFloat
+template <NumberRange R> constexpr auto sumSquared(const R& range) -> num::RangePublicResultType<R>
 {
-    return std::accumulate(std::ranges::begin(range),
-                           std::ranges::end(range),
-                           CalculationFloat{0.0},
-                           [](CalculationFloat acc, auto val) -> auto
-                           {
-                               const auto widenedValue = static_cast<CalculationFloat>(val);
-                               const auto valueSquared = widenedValue * widenedValue;
-                               return acc + valueSquared;
-                           });
+    const auto value = std::accumulate(std::ranges::begin(range),
+                                       std::ranges::end(range),
+                                       num::RangeCalculationFloat<R>{0.0},
+                                       [](num::RangeCalculationFloat<R> acc, auto val) -> auto
+                                       {
+                                           const auto widenedValue = static_cast<num::RangeCalculationFloat<R>>(val);
+                                           const auto valueSquared = widenedValue * widenedValue;
+                                           return acc + valueSquared;
+                                       });
+    return static_cast<num::RangePublicResultType<R>>(value);
 }
 
-/// @brief Reusable part of the denominator of the correlation coefficient formula
+/// @brief Reusable part of the denominator of the correlation coefficient formula.
+/// @tparam CalcT Internal calculation type.
 /// @details This function computes either the x or the y denominator portion of
 /// the correlation coefficient formula:
 /// sqrt(n * sum(x^2) - (sum(x))^2) * sqrt(n * sum(y^2) - (sum(y))^2)
-/// @param sum Sum of the elements in the range
-/// @param sumSquared Sum of squares of the elements in the range
-/// @param n Number of elements in the range
-/// @return `CalculationResult`
-auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> CalculationResult
+/// @param sum Sum of the elements in the range.
+/// @param sumSquared Sum of squares of the elements in the range.
+/// @param n Number of elements in the range.
+/// @return `std::expected<CalcT, std::string>`
+template <class CalcT> auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> std::expected<CalcT, std::string>
 {
-    const auto n_calc          = static_cast<CalculationFloat>(n);
-    const auto sum_calc        = static_cast<CalculationFloat>(sum);
-    const auto sumSquared_calc = static_cast<CalculationFloat>(sumSquared);
+    const auto n_calc          = static_cast<CalcT>(n);
+    const auto sum_calc        = static_cast<CalcT>(sum);
+    const auto sumSquared_calc = static_cast<CalcT>(sumSquared);
 
     const auto radicand = (n_calc * sumSquared_calc) - (sum_calc * sum_calc);
     if (radicand < 0)
@@ -224,11 +229,12 @@ auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> Ca
 ///          original implementation.
 /// @return Correlation coefficient on success, or an error if the inputs differ in size, have too few elements, or yield an invalid
 /// denominator.
-auto correlationCoefficient(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y) -> CalculationResult
+template <ForwardNumberRange RX, ForwardNumberRange RY>
+auto correlationCoefficient(const RX& range_x, const RY& range_y) -> std::expected<num::PairPublicResultType<RX, RY>, std::string>
 {
     // Fused single pass: count n and accumulate all five sums simultaneously
-    CalculationFloat sigma_x{}, sigma_y{}, sigma_x2{}, sigma_y2{}, sigma_xy{};
-    std::size_t      n{};
+    num::PairCalculationFloat<RX, RY> sigma_x{}, sigma_y{}, sigma_x2{}, sigma_y2{}, sigma_xy{};
+    std::size_t                       n{};
 
     auto       itx  = std::ranges::begin(range_x);
     auto       ity  = std::ranges::begin(range_y);
@@ -237,8 +243,8 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
 
     for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        const auto xi = static_cast<CalculationFloat>(*itx);
-        const auto yi = static_cast<CalculationFloat>(*ity);
+        const auto xi = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
+        const auto yi = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
         sigma_x += xi;
         sigma_y += yi;
         sigma_x2 += xi * xi;
@@ -257,27 +263,27 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
         return std::unexpected(std::format("not enough data points: n={}", n));
     }
 
-    const auto count     = static_cast<CalculationFloat>(n);
+    const auto count     = static_cast<num::PairCalculationFloat<RX, RY>>(n);
     const auto numerator = (count * sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
         println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, sigma_xy, numerator);
     }
 
-    const auto denominator_x = rawDeviationDenominatorPart(sigma_x, sigma_x2, n);
+    const auto denominator_x = rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(sigma_x, sigma_x2, n);
     if (not denominator_x)
     {
         return denominator_x;
     }
 
-    const auto denominator_y = rawDeviationDenominatorPart(sigma_y, sigma_y2, n);
+    const auto denominator_y = rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(sigma_y, sigma_y2, n);
     if (not denominator_y)
     {
         return denominator_y;
     }
 
     const auto denominator = *denominator_x * *denominator_y;
-    if (denominator == CalculationFloat{0.0})
+    if (denominator == num::PairCalculationFloat<RX, RY>{0.0})
     {
         return std::unexpected(std::format("denominator is zero?"));
     }
@@ -296,7 +302,7 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
                 denominator);
     }
 
-    return numerator / denominator;
+    return static_cast<num::PairPublicResultType<RX, RY>>(numerator / denominator);
 }
 
 /// @brief Compute the sample covariance of two numeric ranges.
@@ -306,11 +312,12 @@ auto correlationCoefficient(const ForwardNumberRange auto& range_x, const Forwar
 ///          simultaneously, avoiding the three separate traversals of the original
 ///          implementation.
 /// @return Covariance on success, or an error if the inputs have mismatched sizes or too few elements.
-auto covariance(const ForwardNumberRange auto& range_x, const ForwardNumberRange auto& range_y) -> CalculationResult
+template <ForwardNumberRange RX, ForwardNumberRange RY>
+auto covariance(const RX& range_x, const RY& range_y) -> std::expected<num::PairPublicResultType<RX, RY>, std::string>
 {
     // Fused single pass: count n and accumulate sigma_x, sigma_y, sigma_xy simultaneously
-    CalculationFloat sigma_x{}, sigma_y{}, sigma_xy{};
-    std::size_t      n{};
+    num::PairCalculationFloat<RX, RY> sigma_x{}, sigma_y{}, sigma_xy{};
+    std::size_t                       n{};
 
     auto       itx  = std::ranges::begin(range_x);
     auto       ity  = std::ranges::begin(range_y);
@@ -319,8 +326,8 @@ auto covariance(const ForwardNumberRange auto& range_x, const ForwardNumberRange
 
     for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        const auto xi = static_cast<CalculationFloat>(*itx);
-        const auto yi = static_cast<CalculationFloat>(*ity);
+        const auto xi = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
+        const auto yi = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
         sigma_x += xi;
         sigma_y += yi;
         sigma_xy += xi * yi;
@@ -337,9 +344,9 @@ auto covariance(const ForwardNumberRange auto& range_x, const ForwardNumberRange
         return std::unexpected(std::format("not enough data points: count={}", n));
     }
 
-    const auto count       = static_cast<CalculationFloat>(n);
+    const auto count       = static_cast<num::PairCalculationFloat<RX, RY>>(n);
     const auto numerator   = sigma_xy - ((sigma_x * sigma_y) / count);
-    const auto denominator = static_cast<CalculationFloat>(n - 1);
-    return numerator / denominator;
+    const auto denominator = static_cast<num::PairCalculationFloat<RX, RY>>(n - 1);
+    return static_cast<num::PairPublicResultType<RX, RY>>(numerator / denominator);
 }
 } // namespace mally::statlib
