@@ -62,7 +62,11 @@ template <ForwardNumberRange R> constexpr auto average(const R& range) -> RangeP
     {
         return static_cast<RangePublicResultType<R>>(0.0);
     }
-    const auto total = static_cast<RangeCalculationFloat<R>>(sum(range));
+    RangeCalculationFloat<R> total = 0.0;
+    for (auto&& val : range)
+    {
+        total += static_cast<RangeCalculationFloat<R>>(val);
+    }
     return static_cast<RangePublicResultType<R>>(total / static_cast<RangeCalculationFloat<R>>(count));
 }
 
