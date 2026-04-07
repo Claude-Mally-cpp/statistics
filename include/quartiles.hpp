@@ -129,7 +129,9 @@ inline auto median(const R& range) -> num::RangePublicResultType<R>
 /// @tparam N Array extent.
 /// @param sorted Sorted input array.
 /// @return Median of `sorted`.
-template <typename T, std::size_t N> constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> PublicResultType<T>
+template <typename T, std::size_t N>
+    requires std::is_arithmetic_v<std::remove_cvref_t<T>>
+constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> PublicResultType<T>
 {
     std::array<CalculationFloat<T>, N> sortedValues{};
     for (std::size_t i = 0; i < N; ++i)
