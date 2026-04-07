@@ -2,7 +2,6 @@
 /// @brief Summary statistics structure and formatter specializations.
 #pragma once
 
-#include "CalculationFloat.hpp"
 #include "print_compat.hpp"
 #include <cstddef>
 #include <fmt/base.h>

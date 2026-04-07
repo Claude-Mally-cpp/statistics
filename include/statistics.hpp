@@ -32,10 +32,12 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <expected>
 #include <format>
 #include <iterator>
 #include <numeric>
 #include <ranges>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -136,10 +138,10 @@ constexpr auto summary(const R& range) -> SummaryStats<num::RangePublicResultTyp
     out.mean = static_cast<num::RangePublicResultType<R>>(sumAcc / static_cast<num::RangeCalculationFloat<R>>(out.count));
 
     // Reuse the sorted data for all three quartiles
-    const auto q = quartilesFromSortedSpan<num::RangeValueType<R>>(sortedValues);
-    out.q1       = q.q1;
-    out.median   = q.median;
-    out.q3       = q.q3;
+    const auto quartileSummary = quartilesFromSortedSpan<num::RangeValueType<R>>(sortedValues);
+    out.q1                     = quartileSummary.q1;
+    out.median                 = quartileSummary.median;
+    out.q3                     = quartileSummary.q3;
 
     return out;
 }
@@ -233,8 +235,12 @@ template <ForwardNumberRange RX, ForwardNumberRange RY>
 auto correlationCoefficient(const RX& range_x, const RY& range_y) -> std::expected<num::PairPublicResultType<RX, RY>, std::string>
 {
     // Fused single pass: count n and accumulate all five sums simultaneously
-    num::PairCalculationFloat<RX, RY> sigma_x{}, sigma_y{}, sigma_x2{}, sigma_y2{}, sigma_xy{};
-    std::size_t                       n{};
+    num::PairCalculationFloat<RX, RY> sigma_x{};
+    num::PairCalculationFloat<RX, RY> sigma_y{};
+    num::PairCalculationFloat<RX, RY> sigma_x2{};
+    num::PairCalculationFloat<RX, RY> sigma_y2{};
+    num::PairCalculationFloat<RX, RY> sigma_xy{};
+    std::size_t                       sampleCount{};
 
     auto       itx  = std::ranges::begin(range_x);
     auto       ity  = std::ranges::begin(range_y);
@@ -243,14 +249,14 @@ auto correlationCoefficient(const RX& range_x, const RY& range_y) -> std::expect
 
     for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        const auto xi = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
-        const auto yi = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
-        sigma_x += xi;
-        sigma_y += yi;
-        sigma_x2 += xi * xi;
-        sigma_y2 += yi * yi;
-        sigma_xy += xi * yi;
-        ++n;
+        const auto x_value = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
+        const auto y_value = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
+        sigma_x += x_value;
+        sigma_y += y_value;
+        sigma_x2 += x_value * x_value;
+        sigma_y2 += y_value * y_value;
+        sigma_xy += x_value * y_value;
+        ++sampleCount;
     }
 
     if (itx != endx || ity != endy)
@@ -258,25 +264,25 @@ auto correlationCoefficient(const RX& range_x, const RY& range_y) -> std::expect
         return std::unexpected(std::format("correlationCoefficient: ranges have different lengths"));
     }
 
-    if (n < 2)
+    if (sampleCount < 2)
     {
-        return std::unexpected(std::format("not enough data points: n={}", n));
+        return std::unexpected(std::format("not enough data points: n={}", sampleCount));
     }
 
-    const auto count     = static_cast<num::PairCalculationFloat<RX, RY>>(n);
+    const auto count     = static_cast<num::PairCalculationFloat<RX, RY>>(sampleCount);
     const auto numerator = (count * sigma_xy) - (sigma_x * sigma_y);
     if constexpr (verboseDebugging)
     {
         println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, sigma_xy, numerator);
     }
 
-    const auto denominator_x = rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(sigma_x, sigma_x2, n);
+    const auto denominator_x = rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(sigma_x, sigma_x2, sampleCount);
     if (not denominator_x)
     {
         return denominator_x;
     }
 
-    const auto denominator_y = rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(sigma_y, sigma_y2, n);
+    const auto denominator_y = rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(sigma_y, sigma_y2, sampleCount);
     if (not denominator_y)
     {
         return denominator_y;
@@ -316,8 +322,10 @@ template <ForwardNumberRange RX, ForwardNumberRange RY>
 auto covariance(const RX& range_x, const RY& range_y) -> std::expected<num::PairPublicResultType<RX, RY>, std::string>
 {
     // Fused single pass: count n and accumulate sigma_x, sigma_y, sigma_xy simultaneously
-    num::PairCalculationFloat<RX, RY> sigma_x{}, sigma_y{}, sigma_xy{};
-    std::size_t                       n{};
+    num::PairCalculationFloat<RX, RY> sigma_x{};
+    num::PairCalculationFloat<RX, RY> sigma_y{};
+    num::PairCalculationFloat<RX, RY> sigma_xy{};
+    std::size_t                       sampleCount{};
 
     auto       itx  = std::ranges::begin(range_x);
     auto       ity  = std::ranges::begin(range_y);
@@ -326,12 +334,12 @@ auto covariance(const RX& range_x, const RY& range_y) -> std::expected<num::Pair
 
     for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        const auto xi = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
-        const auto yi = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
-        sigma_x += xi;
-        sigma_y += yi;
-        sigma_xy += xi * yi;
-        ++n;
+        const auto x_value = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
+        const auto y_value = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
+        sigma_x += x_value;
+        sigma_y += y_value;
+        sigma_xy += x_value * y_value;
+        ++sampleCount;
     }
 
     if (itx != endx || ity != endy)
@@ -339,14 +347,14 @@ auto covariance(const RX& range_x, const RY& range_y) -> std::expected<num::Pair
         return std::unexpected(std::format("covariance: ranges have different lengths"));
     }
 
-    if (n < 2)
+    if (sampleCount < 2)
     {
-        return std::unexpected(std::format("not enough data points: count={}", n));
+        return std::unexpected(std::format("not enough data points: count={}", sampleCount));
     }
 
-    const auto count       = static_cast<num::PairCalculationFloat<RX, RY>>(n);
+    const auto count       = static_cast<num::PairCalculationFloat<RX, RY>>(sampleCount);
     const auto numerator   = sigma_xy - ((sigma_x * sigma_y) / count);
-    const auto denominator = static_cast<num::PairCalculationFloat<RX, RY>>(n - 1);
+    const auto denominator = static_cast<num::PairCalculationFloat<RX, RY>>(sampleCount - 1);
     return static_cast<num::PairPublicResultType<RX, RY>>(numerator / denominator);
 }
 } // namespace mally::statlib

@@ -341,9 +341,9 @@ TEST(StatisticsTest, Summary_VectorThreeElements)
 // correlationCoefficient with std::forward_list (forward-only range)
 TEST(StatisticsTest, Correlation_ForwardList)
 {
-    const std::forward_list<double> a      = {0.07, 0.09, 0.10};
-    const std::forward_list<double> b      = {0.085, 0.07, 0.095};
-    auto                            result = correlationCoefficient(a, b);
+    const std::forward_list<double> valuesA = {0.07, 0.09, 0.10};
+    const std::forward_list<double> valuesB = {0.085, 0.07, 0.095};
+    auto                            result  = correlationCoefficient(valuesA, valuesB);
     ASSERT_TRUE(result.has_value()) << "Failed: " << result.error();
     EXPECT_NEAR(static_cast<double>(*result), 0.21677749238102959, 1e-10);
 }
@@ -351,9 +351,9 @@ TEST(StatisticsTest, Correlation_ForwardList)
 // covariance with std::forward_list (forward-only range)
 TEST(StatisticsTest, Covariance_ForwardList)
 {
-    const std::forward_list<double> x      = {-0.10, -0.05, 0.00, 0.08, 0.14, 0.20, 0.25};
-    const std::forward_list<double> y      = {-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
-    auto                            result = covariance(x, y);
+    const std::forward_list<double> valuesX = {-0.10, -0.05, 0.00, 0.08, 0.14, 0.20, 0.25};
+    const std::forward_list<double> valuesY = {-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
+    auto                            result  = covariance(valuesX, valuesY);
     ASSERT_TRUE(result.has_value()) << "Failed: " << result.error();
     EXPECT_NEAR(static_cast<double>(*result), 0.022571428571428576, 1e-10);
 }
