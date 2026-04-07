@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     auto* summary = app.add_subcommand("summary", "Compute summary statistics for a vector of numbers");
 
     // Accept: --data "12.3,9e4,-0.6666"
-    std::vector<mally::statlib::HighPrecisionFloat> data;
+    std::vector<long double> data;
     summary->add_option("-d,--data", data, "Comma-separated numeric values (e.g. \"12.3,9e4,-0.6666\")")->required()->delimiter(',');
 
     if (argc == 1)

@@ -2,7 +2,6 @@
 /// @brief Summary statistics structure and formatter specializations.
 #pragma once
 
-#include "HighPrecisionFloat.hpp"
 #include "print_compat.hpp"
 #include <cstddef>
 #include <fmt/base.h>
@@ -15,13 +14,13 @@ namespace mally::statlib
 /// @brief Summary of basic descriptive statistics.
 struct SummaryStats
 {
-    std::size_t        count{};  ///< @brief Number of elements.
-    HighPrecisionFloat min{};    ///< @brief Minimum value.
-    HighPrecisionFloat q1{};     ///< @brief First quartile (Tukey lower hinge).
-    HighPrecisionFloat median{}; ///< @brief Median.
-    HighPrecisionFloat mean{};   ///< @brief Arithmetic mean.
-    HighPrecisionFloat q3{};     ///< @brief Third quartile (Tukey upper hinge).
-    HighPrecisionFloat max{};    ///< @brief Maximum value.
+    std::size_t count{};  ///< @brief Number of elements.
+    long double min{};    ///< @brief Minimum value.
+    long double q1{};     ///< @brief First quartile (Tukey lower hinge).
+    long double median{}; ///< @brief Median.
+    long double mean{};   ///< @brief Arithmetic mean.
+    long double q3{};     ///< @brief Third quartile (Tukey upper hinge).
+    long double max{};    ///< @brief Maximum value.
 
     /// @todo Add standard deviation and variance?
 

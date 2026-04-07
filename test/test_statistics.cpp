@@ -1,5 +1,4 @@
 // test_statistics.cpp
-#include "HighPrecisionFloat.hpp"
 #include "quartiles.hpp"
 #include "statistics.hpp"
 #include <array>
@@ -105,16 +104,16 @@ TEST(StatisticsTest, Product_InsectCount)
 // Test median of sorted evenData
 TEST(StatisticsTest, Median_EvenData_Sorted)
 {
-    constexpr std::array<mally::statlib::HighPrecisionFloat, 6> evenData = {1, 2, 3, 4, 5, 6};
-    auto                                                        result   = median(evenData);
+    constexpr std::array<long double, 6> evenData = {1, 2, 3, 4, 5, 6};
+    auto                                 result   = median(evenData);
     EXPECT_EQ(result, 3.5L);
 }
 
 // Test median of sorted oddData
 TEST(StatisticsTest, Median_OddData_Sorted)
 {
-    constexpr std::array<mally::statlib::HighPrecisionFloat, 5> oddData = {1, 2, 3, 4, 5};
-    auto                                                        result  = median(oddData);
+    constexpr std::array<long double, 5> oddData = {1, 2, 3, 4, 5};
+    auto                                 result  = median(oddData);
     EXPECT_EQ(result, 3.0L);
 }
 
@@ -342,8 +341,8 @@ TEST(StatisticsTest, Summary_VectorThreeElements)
 // correlationCoefficient with std::forward_list (forward-only range)
 TEST(StatisticsTest, Correlation_ForwardList)
 {
-    const std::forward_list<double> a = {0.07, 0.09, 0.10};
-    const std::forward_list<double> b = {0.085, 0.07, 0.095};
+    const std::forward_list<double> a      = {0.07, 0.09, 0.10};
+    const std::forward_list<double> b      = {0.085, 0.07, 0.095};
     auto                            result = correlationCoefficient(a, b);
     ASSERT_TRUE(result.has_value()) << "Failed: " << result.error();
     EXPECT_NEAR(static_cast<double>(*result), 0.21677749238102959, 1e-10);
@@ -352,8 +351,8 @@ TEST(StatisticsTest, Correlation_ForwardList)
 // covariance with std::forward_list (forward-only range)
 TEST(StatisticsTest, Covariance_ForwardList)
 {
-    const std::forward_list<double> x = {-0.10, -0.05, 0.00, 0.08, 0.14, 0.20, 0.25};
-    const std::forward_list<double> y = {-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
+    const std::forward_list<double> x      = {-0.10, -0.05, 0.00, 0.08, 0.14, 0.20, 0.25};
+    const std::forward_list<double> y      = {-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
     auto                            result = covariance(x, y);
     ASSERT_TRUE(result.has_value()) << "Failed: " << result.error();
     EXPECT_NEAR(static_cast<double>(*result), 0.022571428571428576, 1e-10);
