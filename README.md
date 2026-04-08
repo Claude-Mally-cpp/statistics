@@ -10,7 +10,7 @@
 [![doxygen](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/doxygen.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/doxygen.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Claude-Mally-cpp/statistics/blob/main/LICENSE)
 
-Small C++ statistics library and CLI for everyday descriptive-statistics tasks.
+Small C++ statistics library and CLI for descriptive-statistics workflows.
 
 This repository is for people who want a compact C++23 project that computes common summary statistics, exposes a reusable library, and keeps build and analysis tooling visible.
 
