@@ -3,6 +3,7 @@
 #include "quartiles.hpp"
 #include "statistics.hpp"
 #include <array>
+#include <cstdint>
 #include <forward_list>
 #include <gtest/gtest.h>
 #include <type_traits>
@@ -98,6 +99,33 @@ TEST(StatisticsTest, Product_InsectCount)
     constexpr auto insectCount = std::array{10, 1, 1000, 1, 10};
     auto           result      = product(insectCount);
     EXPECT_EQ(result, 100000);
+}
+
+TEST(StatisticsTest, Sum_IntRangeUsesWidenedIntegralType)
+{
+    constexpr auto values = std::array<int, 4>{7, -2, 9, 4};
+    const auto     result = num::sum(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, std::intmax_t>);
+    EXPECT_EQ(result, 18);
+}
+
+TEST(StatisticsTest, Sum_UnsignedRangeUsesWidenedUnsignedType)
+{
+    constexpr auto values = std::array<unsigned short, 4>{7, 2, 9, 4};
+    const auto     result = num::sum(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, std::uintmax_t>);
+    EXPECT_EQ(result, 22U);
+}
+
+TEST(StatisticsTest, Sum_FloatRangeKeepsFloatType)
+{
+    constexpr auto values = std::array<float, 4>{7.5F, -2.25F, 9.0F, 4.5F};
+    const auto     result = num::sum(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, float>);
+    EXPECT_FLOAT_EQ(result, 18.75F);
 }
 
 TEST(StatisticsTest, MinMaxValue_IntRangeKeepsIntegralType)
