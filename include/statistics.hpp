@@ -17,6 +17,8 @@
 /// - Result-type policy:
 ///   - `minMaxValue` preserves the natural input value type.
 ///   - `sum`, `product`, and `sumSquared` return widened integral types for integral inputs.
+///   - `modes` returns all tied repeated modes in `std::expected<std::vector<T>, std::string>`,
+///     where `T` is the natural input value type.
 ///   - `average`, `median`, `quartiles`, `summary`, `correlationCoefficient`, and
 ///     `covariance` follow the statistical public-result policy.
 ///   - Internal calculation may widen independently from the public return type.
@@ -209,6 +211,59 @@ template <NumberRange R> constexpr auto sumSquared(const R& range) -> num::Range
                                            return acc + valueSquared;
                                        });
     return static_cast<num::RangeNaturalArithmeticResultType<R>>(value);
+}
+
+/// @brief Compute the repeated modes of a numeric range.
+/// @param range Input range of numbers.
+/// @details Returns all repeated values tied for highest frequency in sorted order.
+///          Returns `unexpected` for empty input or when no value is repeated.
+/// @return `std::expected<std::vector<T>, std::string>`, where `T` is the natural input value type.
+template <NumberRange R> auto modes(const R& range) -> std::expected<std::vector<num::RangeValueType<R>>, std::string>
+{
+    std::vector<num::RangeValueType<R>> sortedValues;
+    if constexpr (std::ranges::sized_range<R>)
+    {
+        sortedValues.reserve(static_cast<std::size_t>(std::ranges::size(range)));
+    }
+    for (auto&& value : range)
+    {
+        sortedValues.push_back(static_cast<num::RangeValueType<R>>(value));
+    }
+
+    if (sortedValues.empty())
+    {
+        return std::unexpected(std::string{"modes: empty range"});
+    }
+
+    std::ranges::sort(sortedValues);
+
+    std::vector<num::RangeValueType<R>> modeValues;
+    std::size_t                         bestCount = 0;
+
+    for (auto it = sortedValues.begin(); it != sortedValues.end();)
+    {
+        auto       runEnd   = std::ranges::upper_bound(sortedValues, *it);
+        const auto runCount = static_cast<std::size_t>(std::ranges::distance(it, runEnd));
+
+        if (runCount > bestCount)
+        {
+            bestCount = runCount;
+            modeValues.assign(1, *it);
+        }
+        else if (runCount == bestCount)
+        {
+            modeValues.push_back(*it);
+        }
+
+        it = runEnd;
+    }
+
+    if (bestCount <= 1)
+    {
+        return std::unexpected(std::string{"modes: no repeated value"});
+    }
+
+    return modeValues;
 }
 
 /// @brief Reusable part of the denominator of the correlation coefficient formula.
