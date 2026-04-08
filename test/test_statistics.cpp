@@ -1,9 +1,12 @@
 // test_statistics.cpp
+#include "numeric.hpp"
 #include "quartiles.hpp"
 #include "statistics.hpp"
 #include <array>
 #include <forward_list>
 #include <gtest/gtest.h>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 using namespace mally::statlib;
@@ -95,6 +98,31 @@ TEST(StatisticsTest, Product_InsectCount)
     constexpr auto insectCount = std::array{10, 1, 1000, 1, 10};
     auto           result      = product(insectCount);
     EXPECT_EQ(result, 100000);
+}
+
+TEST(StatisticsTest, MinMaxValue_IntRangeKeepsIntegralType)
+{
+    constexpr auto values = std::array{7, -2, 9, 4};
+    const auto     result = num::minMaxValue(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, std::pair<int, int>>);
+    EXPECT_EQ(result, (std::pair<int, int>{-2, 9}));
+}
+
+TEST(StatisticsTest, MinMaxValue_FloatRangeKeepsFloatingType)
+{
+    constexpr auto values = std::array{7.5F, -2.25F, 9.0F, 4.5F};
+    const auto     result = num::minMaxValue(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, std::pair<float, float>>);
+    EXPECT_EQ(result, (std::pair<float, float>{-2.25F, 9.0F}));
+}
+
+TEST(StatisticsTest, MinMaxValue_EmptyRangeReturnsZeroInitializedPair)
+{
+    constexpr std::array<int, 0> values{};
+    const auto                   result = num::minMaxValue(values);
+    EXPECT_EQ(result, (std::pair<int, int>{0, 0}));
 }
 
 //
