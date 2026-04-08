@@ -14,6 +14,12 @@
 ///   very small sample (size == 3) a small-sample special-case is applied and the
 ///   median is included in both halves to match common textbook examples. See
 ///   quartiles.hpp and the unit tests under test/test_statistics.cpp for details.
+/// - Result-type policy:
+///   - `minMaxValue` preserves the natural input value type.
+///   - `sum`, `product`, and `sumSquared` return widened integral types for integral inputs.
+///   - `average`, `median`, `quartiles`, `summary`, `correlationCoefficient`, and
+///     `covariance` follow the statistical public-result policy.
+///   - Internal calculation may widen independently from the public return type.
 /// - Summary output: `summary(range)` returns min, Q1, median, mean, Q3 and max; mean
 ///   is computed with `average(range)` which returns 0 on empty ranges.
 ///
