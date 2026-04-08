@@ -155,6 +155,33 @@ TEST(StatisticsTest, Sum_FloatRangeKeepsFloatType)
     EXPECT_FLOAT_EQ(result, 18.75F);
 }
 
+TEST(StatisticsTest, SumSquared_IntRangeUsesWidenedIntegralType)
+{
+    constexpr auto values = std::array<int, 4>{2, -3, 4, 5};
+    const auto     result = sumSquared(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, std::intmax_t>);
+    EXPECT_EQ(result, 54);
+}
+
+TEST(StatisticsTest, SumSquared_UnsignedRangeUsesWidenedUnsignedType)
+{
+    constexpr auto values = std::array<unsigned short, 4>{2, 3, 4, 5};
+    const auto     result = sumSquared(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, std::uintmax_t>);
+    EXPECT_EQ(result, 54U);
+}
+
+TEST(StatisticsTest, SumSquared_FloatRangeKeepsFloatType)
+{
+    constexpr auto values = std::array<float, 4>{1.5F, 2.0F, -3.0F, 4.0F};
+    const auto     result = sumSquared(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, float>);
+    EXPECT_FLOAT_EQ(result, 31.25F);
+}
+
 TEST(StatisticsTest, MinMaxValue_IntRangeKeepsIntegralType)
 {
     constexpr auto values = std::array{7, -2, 9, 4};

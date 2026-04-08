@@ -187,19 +187,22 @@ template <NumberRange R> auto geometricMean(const R& range) -> num::RangePublicR
 
 /// @brief Compute the sum of squares of a range of numbers.
 /// @param range Input range of numbers.
+/// @details Uses widened internal accumulation and returns a widened integral result for integral inputs.
 /// @return Sum of squared values in `range`.
-template <NumberRange R> constexpr auto sumSquared(const R& range) -> num::RangePublicResultType<R>
+template <NumberRange R> constexpr auto sumSquared(const R& range) -> num::RangeNaturalArithmeticResultType<R>
 {
+    using AccumulatorType = std::
+        conditional_t<std::is_integral_v<num::RangeValueType<R>>, num::RangeNaturalArithmeticResultType<R>, num::RangeCalculationFloat<R>>;
     const auto value = std::accumulate(std::ranges::begin(range),
                                        std::ranges::end(range),
-                                       num::RangeCalculationFloat<R>{0.0},
-                                       [](num::RangeCalculationFloat<R> acc, auto val) -> auto
+                                       AccumulatorType{},
+                                       [](AccumulatorType acc, auto val) -> auto
                                        {
-                                           const auto widenedValue = static_cast<num::RangeCalculationFloat<R>>(val);
+                                           const auto widenedValue = static_cast<AccumulatorType>(val);
                                            const auto valueSquared = widenedValue * widenedValue;
                                            return acc + valueSquared;
                                        });
-    return static_cast<num::RangePublicResultType<R>>(value);
+    return static_cast<num::RangeNaturalArithmeticResultType<R>>(value);
 }
 
 /// @brief Reusable part of the denominator of the correlation coefficient formula.
