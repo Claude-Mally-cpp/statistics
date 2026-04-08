@@ -207,6 +207,58 @@ TEST(StatisticsTest, MinMaxValue_EmptyRangeReturnsZeroInitializedPair)
     EXPECT_EQ(result, (std::pair<int, int>{0, 0}));
 }
 
+TEST(StatisticsTest, Modes_UniqueModeIntRange)
+{
+    constexpr auto values = std::array{1, 2, 2, 3, 4};
+    auto           result = modes(values);
+    ASSERT_TRUE(result.has_value()) << result.error();
+    using ResultType = std::remove_cvref_t<decltype(*result)>;
+    static_assert(std::is_same_v<ResultType, std::vector<int>>);
+    EXPECT_EQ(*result, (std::vector<int>{2}));
+}
+
+TEST(StatisticsTest, Modes_TiedModesAreReturnedInSortedOrder)
+{
+    constexpr auto values = std::array{4, 1, 2, 2, 4, 3};
+    auto           result = modes(values);
+    ASSERT_TRUE(result.has_value()) << result.error();
+    EXPECT_EQ(*result, (std::vector<int>{2, 4}));
+}
+
+TEST(StatisticsTest, Modes_EmptyRangeReturnsUnexpected)
+{
+    constexpr std::array<int, 0> values{};
+    auto                         result = modes(values);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "modes: empty range");
+}
+
+TEST(StatisticsTest, Modes_NoRepeatedValueReturnsUnexpected)
+{
+    constexpr auto values = std::array{1, 2, 3, 4};
+    auto           result = modes(values);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "modes: no repeated value");
+}
+
+TEST(StatisticsTest, Modes_FloatRangeUsesExactEquality)
+{
+    constexpr auto values = std::array{1.5F, 2.0F, 1.5F, 3.0F, 3.0F};
+    auto           result = modes(values);
+    ASSERT_TRUE(result.has_value()) << result.error();
+    using ResultType = std::remove_cvref_t<decltype(*result)>;
+    static_assert(std::is_same_v<ResultType, std::vector<float>>);
+    EXPECT_EQ(*result, (std::vector<float>{1.5F, 3.0F}));
+}
+
+TEST(StatisticsTest, Modes_ForwardListRangeSupported)
+{
+    const std::forward_list<int> values{4, 2, 4, 1, 2, 4};
+    auto                         result = modes(values);
+    ASSERT_TRUE(result.has_value()) << result.error();
+    EXPECT_EQ(*result, (std::vector<int>{4}));
+}
+
 //
 // ---- Median tests ----
 //
