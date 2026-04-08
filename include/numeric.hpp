@@ -22,9 +22,10 @@ template <class R> using RangeValueType = std::remove_cvref_t<std::ranges::range
 template <class R> using RangeMinMaxResultType = RangeValueType<R>;
 
 template <class R>
-using RangeSumResultType = std::conditional_t<std::is_integral_v<RangeValueType<R>>,
-                                              std::conditional_t<std::is_signed_v<RangeValueType<R>>, std::intmax_t, std::uintmax_t>,
-                                              RangeValueType<R>>;
+using RangeNaturalArithmeticResultType =
+    std::conditional_t<std::is_integral_v<RangeValueType<R>>,
+                       std::conditional_t<std::is_signed_v<RangeValueType<R>>, std::intmax_t, std::uintmax_t>,
+                       RangeValueType<R>>;
 
 template <class R> using RangePublicResultType = mally::statlib::PublicResultType<RangeValueType<R>>;
 
@@ -52,15 +53,16 @@ concept ForwardNumberRange = NumberRange<R> && std::ranges::forward_range<R>;
 /// @param range Input range of numeric values.
 /// @note O(n), single pass.
 /// @return Sum of all values in `range`, using a widened integral result for integral inputs.
-template <NumberRange R> constexpr auto sum(const R& range) -> RangeSumResultType<R>
+template <NumberRange R> constexpr auto sum(const R& range) -> RangeNaturalArithmeticResultType<R>
 {
-    using AccumulatorType = std::conditional_t<std::is_integral_v<RangeValueType<R>>, RangeSumResultType<R>, RangeCalculationFloat<R>>;
+    using AccumulatorType =
+        std::conditional_t<std::is_integral_v<RangeValueType<R>>, RangeNaturalArithmeticResultType<R>, RangeCalculationFloat<R>>;
     AccumulatorType acc{};
     for (auto&& val : range)
     {
         acc += static_cast<AccumulatorType>(val);
     }
-    return static_cast<RangeSumResultType<R>>(acc);
+    return static_cast<RangeNaturalArithmeticResultType<R>>(acc);
 }
 
 /// @brief Arithmetic mean of a numeric range (0 for empty).

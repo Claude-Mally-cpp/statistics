@@ -148,16 +148,17 @@ constexpr auto summary(const R& range) -> SummaryStats<num::RangePublicResultTyp
 
 /// @brief Compute the product of a range of numbers.
 /// @param range Input range of numbers.
-/// @details Uses widened internal accumulation and converts back to the public result type.
+/// @details Uses widened internal accumulation and returns a widened integral result for integral inputs.
 /// @return Product of all values in `range`.
-template <NumberRange R> constexpr auto product(const R& range) -> num::RangePublicResultType<R>
+template <NumberRange R> constexpr auto product(const R& range) -> num::RangeNaturalArithmeticResultType<R>
 {
+    using AccumulatorType = std::
+        conditional_t<std::is_integral_v<num::RangeValueType<R>>, num::RangeNaturalArithmeticResultType<R>, num::RangeCalculationFloat<R>>;
     const auto value = std::accumulate(std::ranges::begin(range),
                                        std::ranges::end(range),
-                                       num::RangeCalculationFloat<R>{1.0},
-                                       [](num::RangeCalculationFloat<R> acc, auto val) -> auto
-                                       { return acc * static_cast<num::RangeCalculationFloat<R>>(val); });
-    return static_cast<num::RangePublicResultType<R>>(value);
+                                       AccumulatorType{1},
+                                       [](AccumulatorType acc, auto val) -> auto { return acc * static_cast<AccumulatorType>(val); });
+    return static_cast<num::RangeNaturalArithmeticResultType<R>>(value);
 }
 
 /// @brief Compute the geometric mean of a range of numbers.
