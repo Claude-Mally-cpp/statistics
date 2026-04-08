@@ -9,7 +9,8 @@ else
   exit 1
 fi
 
-# ---- clang-tidy (warning-only) ----
+# ---- clang-tidy (warning-only by default; set TIDY_ENFORCE=1 to block) ----
 if [ -x ./tidy-staged.sh ]; then
-  ENFORCE=0 ./tidy-staged.sh || true
+  TIDY_ENFORCE="${TIDY_ENFORCE:-0}"
+  ENFORCE="$TIDY_ENFORCE" ./tidy-staged.sh
 fi
