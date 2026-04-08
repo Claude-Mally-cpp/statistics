@@ -101,6 +101,33 @@ TEST(StatisticsTest, Product_InsectCount)
     EXPECT_EQ(result, 100000);
 }
 
+TEST(StatisticsTest, Product_IntRangeUsesWidenedIntegralType)
+{
+    constexpr auto values = std::array<int, 4>{2, -3, 4, 5};
+    const auto     result = product(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, std::intmax_t>);
+    EXPECT_EQ(result, -120);
+}
+
+TEST(StatisticsTest, Product_UnsignedRangeUsesWidenedUnsignedType)
+{
+    constexpr auto values = std::array<unsigned short, 4>{2, 3, 4, 5};
+    const auto     result = product(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, std::uintmax_t>);
+    EXPECT_EQ(result, 120U);
+}
+
+TEST(StatisticsTest, Product_FloatRangeKeepsFloatType)
+{
+    constexpr auto values = std::array<float, 4>{1.5F, 2.0F, -3.0F, 4.0F};
+    const auto     result = product(values);
+    using ResultType      = std::remove_cvref_t<decltype(result)>;
+    static_assert(std::is_same_v<ResultType, float>);
+    EXPECT_FLOAT_EQ(result, -36.0F);
+}
+
 TEST(StatisticsTest, Sum_IntRangeUsesWidenedIntegralType)
 {
     constexpr auto values = std::array<int, 4>{7, -2, 9, 4};
