@@ -180,9 +180,7 @@ template <NumberRange R> auto geometricMean(const R& range) -> num::RangePublicR
         return static_cast<num::RangePublicResultType<R>>(0.0);
     }
 
-    const auto value = std::pow(totalProduct,
-                                num::RangeCalculationFloat<R>{1.0}
-                                    / static_cast<num::RangeCalculationFloat<R>>(count));
+    const auto value = std::pow(totalProduct, num::RangeCalculationFloat<R>{1.0} / static_cast<num::RangeCalculationFloat<R>>(count));
     return static_cast<num::RangePublicResultType<R>>(value);
 }
 

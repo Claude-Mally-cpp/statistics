@@ -18,6 +18,8 @@ namespace mally::statlib::num
 /// @cond DOXYGEN_SKIP
 template <class R> using RangeValueType = std::remove_cvref_t<std::ranges::range_value_t<R>>;
 
+template <class R> using RangeMinMaxResultType = RangeValueType<R>;
+
 template <class R> using RangePublicResultType = mally::statlib::PublicResultType<RangeValueType<R>>;
 
 template <class R> using RangeCalculationFloat = mally::statlib::CalculationFloat<RangeValueType<R>>;
@@ -75,23 +77,20 @@ template <ForwardNumberRange R> constexpr auto average(const R& range) -> RangeP
 
 /// @brief Min & max values of a range.
 /// @param range Input range of numeric values.
-/// @note Requires forward iteration; returns `{0.0, 0.0}` for empty.
-/// @return Pair `{min, max}` converted to the public result type for the input.
+/// @note Requires forward iteration; returns `{}` for empty.
+/// @return Pair `{min, max}` in the range's natural value type.
 template <class R>
     requires ForwardNumberRange<R>
-constexpr auto minMaxValue(const R& range) -> std::pair<RangePublicResultType<R>, RangePublicResultType<R>>
+constexpr auto minMaxValue(const R& range) -> std::pair<RangeMinMaxResultType<R>, RangeMinMaxResultType<R>>
 {
     if (std::ranges::empty(range))
     {
-        return {
-            static_cast<RangePublicResultType<R>>(0.0),
-            static_cast<RangePublicResultType<R>>(0.0),
-        };
+        return {};
     }
     auto [itMin, itMax] = std::ranges::minmax_element(range);
     return {
-        static_cast<RangePublicResultType<R>>(*itMin),
-        static_cast<RangePublicResultType<R>>(*itMax),
+        static_cast<RangeMinMaxResultType<R>>(*itMin),
+        static_cast<RangeMinMaxResultType<R>>(*itMax),
     };
 }
 
