@@ -29,11 +29,21 @@ Right now the project focuses on:
 
 Linux / WSL:
 
+> NOTE: `linux-clang-debug` expects `clang-22` / `clang++-22`. If LLVM 22 is not installed yet, set that up first or use the `linux-gcc-debug` preset below instead.
+
 ```bash
+# Clang/LLVM 22
 cmake --preset linux-clang-debug
 cmake --build --preset linux-clang-debug
 ctest --preset linux-clang-debug
+
+# Optional: run the repo's quick format check
 ./verify.sh quick
+
+# Or use GCC
+cmake --preset linux-gcc-debug
+cmake --build --preset linux-gcc-debug
+ctest --preset linux-gcc-debug
 ```
 
 Windows PowerShell:
