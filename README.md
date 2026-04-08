@@ -14,6 +14,23 @@ playing around with statistics
 
 > NOTE: This project documents the quartile convention in `CHANGELOG.md` (Tukey hinges, exclusive-median by default; small-sample exception for size==3).
 
+## Result Type Policy
+
+Public result types are grouped by behavior:
+
+- Natural value type: `minMaxValue`
+- Widened integral result for integral inputs: `sum`, `product`, `sumSquared`
+- Statistical/public result policy: `average`, `median`, `quartiles`, `summary`, `correlationCoefficient`, `covariance`
+
+Examples:
+
+- `sum(range<int>)` returns a widened integral type rather than `int`
+- `product(range<int>)` and `sumSquared(range<int>)` also return widened integral types
+- `minMaxValue(range<int>)` preserves the input value type
+- `average(range<int>)`, `median(range<int>)`, and other statistical outputs follow the library's statistical public result policy
+
+Internal calculation may widen independently from the public result type. For example, a function may accumulate in a wider type for stability while still returning either a natural value type, a widened integral helper type, or a statistical/public result type.
+
 ## Running Linux Builds and Tests with Docker
 
 ### 1. Build the Docker Images
