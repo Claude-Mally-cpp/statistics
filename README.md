@@ -10,9 +10,66 @@
 [![doxygen](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/doxygen.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/doxygen.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Claude-Mally-cpp/statistics/blob/main/LICENSE)
 
-playing around with statistics
+Modern C++ statistics library and CLI for small descriptive-statistics workflows.
+
+This repository is for people who want a compact C++23 project that computes common summary statistics, exposes a reusable library, and keeps build and analysis tooling visible.
+
+If you prefer an editor-driven workflow, the CMake presets also work well from VS Code with CMake Tools.
+
+Right now the project focuses on:
+
+- descriptive statistics such as mean, median, quartiles, covariance, correlation, and modes
+- a header-only library target for use from other C++ code
+- a small CLI that computes summary statistics from comma-separated input
+- multi-toolchain verification with Clang, GCC, MSVC, sanitizers, `clang-format`, `clang-tidy`, and `cppcheck`
 
 > NOTE: This project documents the quartile convention in `CHANGELOG.md` (Tukey hinges, exclusive-median by default; small-sample exception for size==3).
+
+## Quick Start
+
+Linux / WSL:
+
+```bash
+cmake --preset linux-clang-debug
+cmake --build --preset linux-clang-debug
+ctest --preset linux-clang-debug
+./verify.sh quick
+```
+
+Windows PowerShell:
+
+```powershell
+cmake --preset msvc-x64-debug
+cmake --build --preset msvc-x64-debug
+ctest --preset msvc-x64-debug
+```
+
+VS Code:
+
+- open the folder
+- select a CMake preset such as `linux-clang-debug` or `msvc-x64-debug`
+- run Configure, Build, and Test from CMake Tools
+
+If you just want to build the CLI:
+
+```bash
+cmake --build --preset linux-clang-debug-cli
+./out/build/linux-clang-debug/statistics summary --data 1,2,2,3,5
+```
+
+## Example
+
+The CLI currently exposes a `summary` subcommand:
+
+```bash
+./out/build/linux-clang-debug/statistics summary --data 1,2,2,3,5
+```
+
+Expected output format:
+
+```text
+Computed summary: n=5, min=1, q1=1.5, median=2, q3=4, max=5, mean=2.6
+```
 
 ## Result Type Policy
 
@@ -32,6 +89,8 @@ Examples:
 - `average(range<int>)`, `median(range<int>)`, and other statistical outputs follow the library's statistical public result policy
 
 Internal calculation may widen independently from the public result type. For example, a function may accumulate in a wider type for stability while still returning either a natural value type, a widened integral helper type, or a statistical/public result type.
+
+## Tooling and Platform Setup
 
 ## Running Linux Builds and Tests with Docker
 
