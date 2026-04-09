@@ -67,12 +67,80 @@ TEST(StatisticsTest, Covariance_TitresX_Marche)
     // Alternative: test for symmetry, or with randomized data
 }
 
+TEST(StatisticsTest, Variance_SampleAndPopulation)
+{
+    constexpr auto values = std::array{2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0};
+
+    const auto sampleResult     = variance(values);
+    const auto populationResult = variance(values, VarianceKind::population);
+
+    ASSERT_TRUE(sampleResult.has_value()) << sampleResult.error();
+    ASSERT_TRUE(populationResult.has_value()) << populationResult.error();
+    EXPECT_NEAR(static_cast<double>(*sampleResult), 4.571428571428571, 1e-10);
+    EXPECT_NEAR(static_cast<double>(*populationResult), 4.0, 1e-10);
+}
+
+TEST(StatisticsTest, Variance_IntRangeUsesPublicFloatingResultType)
+{
+    constexpr auto values = std::array{1, 2, 3, 4};
+
+    const auto result = variance(values);
+
+    ASSERT_TRUE(result.has_value()) << result.error();
+    using ResultType = std::remove_cvref_t<decltype(*result)>;
+    static_assert(std::is_same_v<ResultType, double>);
+    EXPECT_NEAR(*result, 1.6666666666666667, 1e-10);
+}
+
+TEST(StatisticsTest, Variance_EmptyRangeReturnsError)
+{
+    constexpr auto values = std::array<double, 0>{};
+
+    const auto result = variance(values);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "variance: empty range");
+}
+
+TEST(StatisticsTest, Variance_SampleSingleValueReturnsError)
+{
+    constexpr auto values = std::array{42.0};
+
+    const auto result = variance(values);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "variance: sample variance requires at least 2 values, count=1");
+}
+
+TEST(StatisticsTest, StandardDeviation_SampleAndPopulation)
+{
+    constexpr auto values = std::array{2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0};
+
+    const auto sampleResult     = standardDeviation(values);
+    const auto populationResult = standardDeviation(values, VarianceKind::population);
+
+    ASSERT_TRUE(sampleResult.has_value()) << sampleResult.error();
+    ASSERT_TRUE(populationResult.has_value()) << populationResult.error();
+    EXPECT_NEAR(static_cast<double>(*sampleResult), 2.138089935299395, 1e-10);
+    EXPECT_NEAR(static_cast<double>(*populationResult), 2.0, 1e-10);
+}
+
+TEST(StatisticsTest, StandardDeviation_PropagatesVarianceErrors)
+{
+    constexpr auto values = std::array<int, 0>{};
+
+    const auto result = standardDeviation(values);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "standardDeviation: variance: empty range");
+}
+
 // Test correlation between profits and employers
 TEST(StatisticsTest, Correlation_Profits_Employers)
 {
     const auto profits   = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
-                                      118300, 119700, 153000, 252800, 333300, 412000, 424300, 454000,  829000,  86500,
-                                      176000, 227400, 471300, 681100, 747000, 859800, 939500, 1082000, 1102200, 1495400};
+                                    118300, 119700, 153000, 252800, 333300, 412000, 424300, 454000,  829000,  86500,
+                                    176000, 227400, 471300, 681100, 747000, 859800, 939500, 1082000, 1102200, 1495400};
     const auto employers = std::array{7523,  8200, 12068, 9500,  5000,  18000, 4708,  13740, 95000, 8200, 56000, 31404, 8578, 2900,  9100,
                                       10200, 9548, 82300, 28334, 40929, 50816, 54100, 28200, 83100, 3418, 34400, 42100, 8527, 21300, 20100};
     auto       result    = correlationCoefficient(profits, employers);

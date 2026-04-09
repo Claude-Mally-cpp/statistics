@@ -19,8 +19,9 @@
 ///   - `sum`, `product`, and `sumSquared` return widened integral types for integral inputs.
 ///   - `modes` returns all tied repeated modes in `std::expected<std::vector<T>, std::string>`,
 ///     where `T` is the natural input value type.
-///   - `average`, `median`, `quartiles`, `summary`, `correlationCoefficient`, and
-///     `covariance` follow the statistical public-result policy.
+///   - `average`, `median`, `quartiles`, `summary`, `variance`,
+///     `standardDeviation`, `correlationCoefficient`, and `covariance`
+///     follow the statistical public-result policy.
 ///   - Internal calculation may widen independently from the public return type.
 /// - Summary output: `summary(range)` returns min, Q1, median, mean, Q3 and max; mean
 ///   is computed with `average(range)` which returns 0 on empty ranges.
@@ -56,8 +57,126 @@ namespace mally::statlib
 /// @note Disabled by default; enable manually when needed.
 inline constexpr bool verboseDebugging = false;
 
+/// @brief Variance / standard-deviation denominator convention.
+enum class VarianceKind
+{
+    sample,
+    population,
+};
+
 using num::ForwardNumberRange;
 using num::NumberRange;
+
+namespace detail
+{
+template <class CalcT> struct DispersionAccumulation
+{
+    CalcT       sum{};
+    CalcT       sumSquares{};
+    std::size_t count{};
+};
+
+template <class CalcT> struct BivariateAccumulation
+{
+    CalcT       sumX{};
+    CalcT       sumY{};
+    CalcT       sumSquaresX{};
+    CalcT       sumSquaresY{};
+    CalcT       sumProducts{};
+    std::size_t count{};
+};
+
+template <ForwardNumberRange R> constexpr auto accumulateDispersion(const R& range) -> DispersionAccumulation<num::RangeCalculationFloat<R>>
+{
+    DispersionAccumulation<num::RangeCalculationFloat<R>> accumulation{};
+    for (auto&& value : range)
+    {
+        const auto widenedValue = static_cast<num::RangeCalculationFloat<R>>(value);
+        accumulation.sum += widenedValue;
+        accumulation.sumSquares += widenedValue * widenedValue;
+        ++accumulation.count;
+    }
+    return accumulation;
+}
+
+template <ForwardNumberRange RX, ForwardNumberRange RY>
+auto accumulateBivariate(const RX& range_x, const RY& range_y)
+    -> std::expected<BivariateAccumulation<num::PairCalculationFloat<RX, RY>>, std::string>
+{
+    BivariateAccumulation<num::PairCalculationFloat<RX, RY>> accumulation{};
+
+    auto       itx  = std::ranges::begin(range_x);
+    auto       ity  = std::ranges::begin(range_y);
+    const auto endx = std::ranges::end(range_x);
+    const auto endy = std::ranges::end(range_y);
+
+    for (; itx != endx && ity != endy; ++itx, ++ity)
+    {
+        const auto xValue = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
+        const auto yValue = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
+        accumulation.sumX += xValue;
+        accumulation.sumY += yValue;
+        accumulation.sumSquaresX += xValue * xValue;
+        accumulation.sumSquaresY += yValue * yValue;
+        accumulation.sumProducts += xValue * yValue;
+        ++accumulation.count;
+    }
+
+    if (itx != endx || ity != endy)
+    {
+        return std::unexpected(std::string{"ranges have different lengths"});
+    }
+
+    return accumulation;
+}
+
+template <class CalcT> constexpr auto centeredSquareSum(CalcT sum, CalcT sumSquares, std::size_t n) -> std::expected<CalcT, std::string>
+{
+    if (n == 0)
+    {
+        return std::unexpected(std::string{"empty range"});
+    }
+
+    const auto count = static_cast<CalcT>(n);
+    const auto value = sumSquares - ((sum * sum) / count);
+    if (value < 0)
+    {
+        return std::unexpected(std::format("sumSquares={} - (sum={}^2 / n={})={}", sumSquares, sum, n, value));
+    }
+    return value;
+}
+
+template <class CalcT>
+constexpr auto centeredCrossSum(CalcT sum_x, CalcT sum_y, CalcT sum_xy, std::size_t n) -> std::expected<CalcT, std::string>
+{
+    if (n == 0)
+    {
+        return std::unexpected(std::string{"empty range"});
+    }
+
+    const auto count = static_cast<CalcT>(n);
+    return sum_xy - ((sum_x * sum_y) / count);
+}
+
+template <class CalcT> constexpr auto varianceDivisor(std::size_t n, VarianceKind kind) -> std::expected<CalcT, std::string>
+{
+    if (n == 0)
+    {
+        return std::unexpected(std::string{"variance: empty range"});
+    }
+
+    if (kind == VarianceKind::sample)
+    {
+        if (n < 2)
+        {
+            return std::unexpected(std::format("variance: sample variance requires at least 2 values, count={}", n));
+        }
+        return static_cast<CalcT>(n - 1);
+    }
+
+    return static_cast<CalcT>(n);
+}
+} // namespace detail
 
 /// @brief Summary for an std::array without allocations.
 /// @tparam T Arithmetic element type.
@@ -213,6 +332,46 @@ template <NumberRange R> constexpr auto sumSquared(const R& range) -> num::Range
     return static_cast<num::RangeNaturalArithmeticResultType<R>>(value);
 }
 
+/// @brief Compute the variance of a numeric range.
+/// @param range Input range of numbers.
+/// @param kind Sample or population convention. Defaults to sample variance.
+/// @return Variance on success, or an error for empty input / too-few sample values.
+template <ForwardNumberRange R>
+auto variance(const R& range, VarianceKind kind = VarianceKind::sample) -> std::expected<num::RangePublicResultType<R>, std::string>
+{
+    const auto accumulation = detail::accumulateDispersion(range);
+    const auto numerator    = detail::centeredSquareSum(accumulation.sum, accumulation.sumSquares, accumulation.count);
+    if (not numerator)
+    {
+        return std::unexpected(std::format("variance: {}", numerator.error()));
+    }
+
+    const auto divisor = detail::varianceDivisor<num::RangeCalculationFloat<R>>(accumulation.count, kind);
+    if (not divisor)
+    {
+        return std::unexpected(divisor.error());
+    }
+
+    return static_cast<num::RangePublicResultType<R>>(*numerator / *divisor);
+}
+
+/// @brief Compute the standard deviation of a numeric range.
+/// @param range Input range of numbers.
+/// @param kind Sample or population convention. Defaults to sample standard deviation.
+/// @return Standard deviation on success, or an error for empty input / too-few sample values.
+template <ForwardNumberRange R>
+auto standardDeviation(const R& range, VarianceKind kind = VarianceKind::sample)
+    -> std::expected<num::RangePublicResultType<R>, std::string>
+{
+    const auto varianceValue = variance(range, kind);
+    if (not varianceValue)
+    {
+        return std::unexpected(std::format("standardDeviation: {}", varianceValue.error()));
+    }
+
+    return static_cast<num::RangePublicResultType<R>>(std::sqrt(static_cast<num::RangeCalculationFloat<R>>(*varianceValue)));
+}
+
 /// @brief Compute the repeated modes of a numeric range.
 /// @param range Input range of numbers.
 /// @details Returns all repeated values tied for highest frequency in sorted order.
@@ -277,22 +436,18 @@ template <NumberRange R> auto modes(const R& range) -> std::expected<std::vector
 /// @return `std::expected<CalcT, std::string>`
 template <class CalcT> auto rawDeviationDenominatorPart(auto sum, auto sumSquared, std::size_t n) -> std::expected<CalcT, std::string>
 {
-    const auto n_calc          = static_cast<CalcT>(n);
-    const auto sum_calc        = static_cast<CalcT>(sum);
-    const auto sumSquared_calc = static_cast<CalcT>(sumSquared);
-
-    const auto radicand = (n_calc * sumSquared_calc) - (sum_calc * sum_calc);
-    if (radicand < 0)
+    const auto centeredSquareSumValue = detail::centeredSquareSum(static_cast<CalcT>(sum), static_cast<CalcT>(sumSquared), n);
+    if (not centeredSquareSumValue)
     {
-        return std::unexpected(std::format("{} * {} - {}^2={}", n, sumSquared, sum, radicand));
+        return std::unexpected(centeredSquareSumValue.error());
     }
 
     if constexpr (verboseDebugging)
     {
-        println("rawDeviationDenominatorPart: n={} sum={} sumSquared={} radicand={}", n, sum, sumSquared, radicand);
+        println("rawDeviationDenominatorPart: n={} sum={} sumSquared={} centeredSquareSum={}", n, sum, sumSquared, *centeredSquareSumValue);
     }
 
-    return std::sqrt(radicand);
+    return std::sqrt(static_cast<CalcT>(n) * *centeredSquareSumValue);
 }
 
 /// @brief Compute the Pearson correlation coefficient of two numeric ranges.
@@ -306,55 +461,45 @@ template <class CalcT> auto rawDeviationDenominatorPart(auto sum, auto sumSquare
 template <ForwardNumberRange RX, ForwardNumberRange RY>
 auto correlationCoefficient(const RX& range_x, const RY& range_y) -> std::expected<num::PairPublicResultType<RX, RY>, std::string>
 {
-    // Fused single pass: count n and accumulate all five sums simultaneously
-    num::PairCalculationFloat<RX, RY> sigma_x{};
-    num::PairCalculationFloat<RX, RY> sigma_y{};
-    num::PairCalculationFloat<RX, RY> sigma_x2{};
-    num::PairCalculationFloat<RX, RY> sigma_y2{};
-    num::PairCalculationFloat<RX, RY> sigma_xy{};
-    std::size_t                       sampleCount{};
-
-    auto       itx  = std::ranges::begin(range_x);
-    auto       ity  = std::ranges::begin(range_y);
-    const auto endx = std::ranges::end(range_x);
-    const auto endy = std::ranges::end(range_y);
-
-    for (; itx != endx && ity != endy; ++itx, ++ity)
+    const auto accumulation = detail::accumulateBivariate(range_x, range_y);
+    if (not accumulation)
     {
-        const auto x_value = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
-        const auto y_value = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
-        sigma_x += x_value;
-        sigma_y += y_value;
-        sigma_x2 += x_value * x_value;
-        sigma_y2 += y_value * y_value;
-        sigma_xy += x_value * y_value;
-        ++sampleCount;
+        return std::unexpected(std::format("correlationCoefficient: {}", accumulation.error()));
     }
 
-    if (itx != endx || ity != endy)
+    if (accumulation->count < 2)
     {
-        return std::unexpected(std::format("correlationCoefficient: ranges have different lengths"));
+        return std::unexpected(std::format("not enough data points: n={}", accumulation->count));
     }
 
-    if (sampleCount < 2)
+    const auto count = static_cast<num::PairCalculationFloat<RX, RY>>(accumulation->count);
+    const auto centeredCrossTerm =
+        detail::centeredCrossSum(accumulation->sumX, accumulation->sumY, accumulation->sumProducts, accumulation->count);
+    if (not centeredCrossTerm)
     {
-        return std::unexpected(std::format("not enough data points: n={}", sampleCount));
+        return std::unexpected(std::format("correlationCoefficient: {}", centeredCrossTerm.error()));
     }
 
-    const auto count     = static_cast<num::PairCalculationFloat<RX, RY>>(sampleCount);
-    const auto numerator = (count * sigma_xy) - (sigma_x * sigma_y);
+    const auto numerator = count * *centeredCrossTerm;
     if constexpr (verboseDebugging)
     {
-        println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}", count, sigma_x, sigma_y, sigma_xy, numerator);
+        println("count={} sigma_x={} sigma_y={} sigma_xy={} numerator={}",
+                count,
+                accumulation->sumX,
+                accumulation->sumY,
+                accumulation->sumProducts,
+                numerator);
     }
 
-    const auto denominator_x = rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(sigma_x, sigma_x2, sampleCount);
+    const auto denominator_x =
+        rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(accumulation->sumX, accumulation->sumSquaresX, accumulation->count);
     if (not denominator_x)
     {
         return denominator_x;
     }
 
-    const auto denominator_y = rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(sigma_y, sigma_y2, sampleCount);
+    const auto denominator_y =
+        rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(accumulation->sumY, accumulation->sumSquaresY, accumulation->count);
     if (not denominator_y)
     {
         return denominator_y;
@@ -371,9 +516,9 @@ auto correlationCoefficient(const RX& range_x, const RY& range_y) -> std::expect
         println("coefficientCorrelation: count={} sigma_x={} sigma_y={} sigma_xy={} numerator={} denominator_x={} "
                 "denominator_y={} denominator={}",
                 count,
-                sigma_x,
-                sigma_y,
-                sigma_xy,
+                accumulation->sumX,
+                accumulation->sumY,
+                accumulation->sumProducts,
                 numerator,
                 *denominator_x,
                 *denominator_y,
@@ -393,40 +538,24 @@ auto correlationCoefficient(const RX& range_x, const RY& range_y) -> std::expect
 template <ForwardNumberRange RX, ForwardNumberRange RY>
 auto covariance(const RX& range_x, const RY& range_y) -> std::expected<num::PairPublicResultType<RX, RY>, std::string>
 {
-    // Fused single pass: count n and accumulate sigma_x, sigma_y, sigma_xy simultaneously
-    num::PairCalculationFloat<RX, RY> sigma_x{};
-    num::PairCalculationFloat<RX, RY> sigma_y{};
-    num::PairCalculationFloat<RX, RY> sigma_xy{};
-    std::size_t                       sampleCount{};
-
-    auto       itx  = std::ranges::begin(range_x);
-    auto       ity  = std::ranges::begin(range_y);
-    const auto endx = std::ranges::end(range_x);
-    const auto endy = std::ranges::end(range_y);
-
-    for (; itx != endx && ity != endy; ++itx, ++ity)
+    const auto accumulation = detail::accumulateBivariate(range_x, range_y);
+    if (not accumulation)
     {
-        const auto x_value = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
-        const auto y_value = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
-        sigma_x += x_value;
-        sigma_y += y_value;
-        sigma_xy += x_value * y_value;
-        ++sampleCount;
+        return std::unexpected(std::format("covariance: {}", accumulation.error()));
     }
 
-    if (itx != endx || ity != endy)
+    if (accumulation->count < 2)
     {
-        return std::unexpected(std::format("covariance: ranges have different lengths"));
+        return std::unexpected(std::format("not enough data points: count={}", accumulation->count));
     }
 
-    if (sampleCount < 2)
+    const auto numerator = detail::centeredCrossSum(accumulation->sumX, accumulation->sumY, accumulation->sumProducts, accumulation->count);
+    if (not numerator)
     {
-        return std::unexpected(std::format("not enough data points: count={}", sampleCount));
+        return std::unexpected(std::format("covariance: {}", numerator.error()));
     }
 
-    const auto count       = static_cast<num::PairCalculationFloat<RX, RY>>(sampleCount);
-    const auto numerator   = sigma_xy - ((sigma_x * sigma_y) / count);
-    const auto denominator = static_cast<num::PairCalculationFloat<RX, RY>>(sampleCount - 1);
-    return static_cast<num::PairPublicResultType<RX, RY>>(numerator / denominator);
+    const auto denominator = static_cast<num::PairCalculationFloat<RX, RY>>(accumulation->count - 1);
+    return static_cast<num::PairPublicResultType<RX, RY>>(*numerator / denominator);
 }
 } // namespace mally::statlib
