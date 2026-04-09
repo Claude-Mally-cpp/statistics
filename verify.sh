@@ -52,6 +52,12 @@ run_quick() {
 run_full() {
   run_quick
 
+  if have_cmd doxygen; then
+    run_step "doxygen verify" bash ./doxygen-docs.sh --verify-all
+  else
+    echo "Skipping Doxygen verification: doxygen not found."
+  fi
+
   if [[ "${OS:-}" == "Windows_NT" ]]; then
     run_step "windows build and test" pwsh -File ./windowsBuildAndTest.ps1
   else
