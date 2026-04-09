@@ -20,8 +20,10 @@
 ///   - `modes` returns all tied repeated modes in `std::expected<std::vector<T>, std::string>`,
 ///     where `T` is the natural input value type.
 ///   - `average`, `median`, `quartiles`, `summary`, `variance`,
-///     `standardDeviation`, `correlationCoefficient`, and `covariance`
-///     follow the statistical public-result policy.
+///     `standardDeviation`, `medianAbsoluteDeviation`, `zScores`,
+///     `correlationCoefficient`, and `covariance` follow the
+///     statistical public-result policy.
+///   - `range` returns a widened arithmetic difference for integral inputs.
 ///   - Internal calculation may widen independently from the public return type.
 /// - Summary output: `summary(range)` returns min, Q1, median, mean, Q3 and max; mean
 ///   is computed with `average(range)` which returns 0 on empty ranges.
@@ -60,8 +62,8 @@ inline constexpr bool verboseDebugging = false;
 /// @brief Variance / standard-deviation denominator convention.
 enum class VarianceKind
 {
-    sample,
-    population,
+    sample,     ///< Divide by `n - 1`.
+    population, ///< Divide by `n`.
 };
 
 using num::ForwardNumberRange;
@@ -396,6 +398,86 @@ auto standardDeviation(const R& range, VarianceKind kind = VarianceKind::sample)
     }
 
     return static_cast<num::RangePublicResultType<R>>(std::sqrt(static_cast<num::RangeCalculationFloat<R>>(*varianceValue)));
+}
+
+/// @brief Compute the numerical range `max - min` of a numeric range.
+/// @param values Input range of numbers.
+/// @return Range on success, or an error for empty input.
+template <ForwardNumberRange R> auto range(const R& values) -> std::expected<num::RangeNaturalArithmeticResultType<R>, std::string>
+{
+    if (std::ranges::empty(values))
+    {
+        return std::unexpected(std::string{"range: empty range"});
+    }
+
+    const auto [minValue, maxValue] = num::minMaxValue(values);
+    using ResultType                = num::RangeNaturalArithmeticResultType<R>;
+    return static_cast<ResultType>(static_cast<ResultType>(maxValue) - static_cast<ResultType>(minValue));
+}
+
+/// @brief Compute the raw median absolute deviation (MAD) of a numeric range.
+/// @param values Input range of numbers.
+/// @details This is the unscaled / raw MAD.
+/// @return Raw MAD on success, or an error for empty input.
+template <ForwardNumberRange R> auto medianAbsoluteDeviation(const R& values) -> std::expected<num::RangePublicResultType<R>, std::string>
+{
+    auto sortedValues = detail::materializeCalculationVector(values);
+    if (sortedValues.empty())
+    {
+        return std::unexpected(std::string{"medianAbsoluteDeviation: empty range"});
+    }
+
+    std::ranges::sort(sortedValues);
+    const auto medianValue = medianSortedSpan<num::RangeValueType<R>>(std::span<const num::RangeCalculationFloat<R>>(sortedValues));
+
+    std::vector<num::RangeCalculationFloat<R>> absoluteDeviations;
+    absoluteDeviations.reserve(sortedValues.size());
+    for (const auto value : sortedValues)
+    {
+        absoluteDeviations.push_back(std::abs(value - static_cast<num::RangeCalculationFloat<R>>(medianValue)));
+    }
+
+    std::ranges::sort(absoluteDeviations);
+    return static_cast<num::RangePublicResultType<R>>(
+        medianSortedSpan<num::RangeValueType<R>>(std::span<const num::RangeCalculationFloat<R>>(absoluteDeviations)));
+}
+
+/// @brief Compute z-scores for a numeric range.
+/// @param values Input range of numbers.
+/// @param kind Sample or population convention used for the standard deviation.
+/// @return Z-scores on success, or an error for empty input / invalid standard deviation.
+template <ForwardNumberRange R>
+auto zScores(const R& values, VarianceKind kind = VarianceKind::sample)
+    -> std::expected<std::vector<num::RangePublicResultType<R>>, std::string>
+{
+    auto materialized = detail::materializeCalculationVector(values);
+    if (materialized.empty())
+    {
+        return std::unexpected(std::string{"zScores: empty range"});
+    }
+
+    const auto deviation = standardDeviation(values, kind);
+    if (not deviation)
+    {
+        return std::unexpected(std::format("zScores: {}", deviation.error()));
+    }
+
+    const auto deviationCalc = static_cast<num::RangeCalculationFloat<R>>(*deviation);
+    if (deviationCalc == num::RangeCalculationFloat<R>{0.0})
+    {
+        return std::unexpected(std::string{"zScores: standard deviation is zero"});
+    }
+
+    const auto                                 meanValue = num::average(values);
+    std::vector<num::RangePublicResultType<R>> result;
+    result.reserve(materialized.size());
+    for (const auto value : materialized)
+    {
+        result.push_back(
+            static_cast<num::RangePublicResultType<R>>((value - static_cast<num::RangeCalculationFloat<R>>(meanValue)) / deviationCalc));
+    }
+
+    return result;
 }
 
 /// @brief Compute the repeated modes of a numeric range.

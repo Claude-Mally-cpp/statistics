@@ -18,7 +18,7 @@ If you prefer an editor-driven workflow, the CMake presets also work well from V
 
 Right now the project focuses on:
 
-- descriptive statistics such as mean, median, quartiles, covariance, correlation, and modes
+- descriptive statistics such as mean, median, quartiles, variance, standard deviation, range, MAD, z-scores, covariance, correlation, and modes
 - a header-only library target for use from other C++ code
 - a small CLI that computes summary statistics from comma-separated input
 - multi-toolchain verification with Clang, GCC, MSVC, sanitizers, `clang-format`, `clang-tidy`, and `cppcheck`
@@ -78,7 +78,8 @@ Public result types are grouped by behavior:
 - Natural value type: `minMaxValue`
 - Widened integral result for integral inputs: `sum`, `product`, `sumSquared`
 - Natural input value type inside `std::expected<std::vector<T>, std::string>`: `modes`
-- Statistical/public result policy: `average`, `median`, `quartiles`, `summary`, `correlationCoefficient`, `covariance`
+- Statistical/public result policy: `average`, `median`, `quartiles`, `summary`, `variance`, `standardDeviation`, `medianAbsoluteDeviation`, `zScores`, `correlationCoefficient`, `covariance`
+- Widened arithmetic difference for integral inputs: `range`
 
 Examples:
 
@@ -87,6 +88,9 @@ Examples:
 - `minMaxValue(range<int>)` preserves the input value type
 - `modes(range<int>)` returns repeated modes as `std::vector<int>` on success
 - `average(range<int>)`, `median(range<int>)`, and other statistical outputs follow the library's statistical public result policy
+- `range(range<int>)` returns a widened integral difference rather than `int`
+
+Variance and standard deviation accept `VarianceKind` with `VarianceKind::sample` as the default. `medianAbsoluteDeviation` currently returns the raw MAD, with no robustness scaling constant applied. `zScores` returns an error for empty input or when the standard deviation is zero.
 
 Internal calculation may widen independently from the public result type. For example, a function may accumulate in a wider type for stability while still returning either a natural value type, a widened integral helper type, or a statistical/public result type.
 
