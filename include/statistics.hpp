@@ -73,21 +73,21 @@ namespace detail
 /// @tparam CalcT Internal widened calculation type.
 template <class CalcT> struct DispersionAccumulation
 {
-    CalcT       sum{};
-    CalcT       sumSquares{};
-    std::size_t count{};
+    CalcT       sum{};        ///< Sum of values.
+    CalcT       sumSquares{}; ///< Sum of squared values.
+    std::size_t count{};      ///< Number of observed values.
 };
 
 /// @brief One-pass accumulation state for paired dispersion and covariance calculations.
 /// @tparam CalcT Internal widened calculation type.
 template <class CalcT> struct BivariateAccumulation
 {
-    CalcT       sumX{};
-    CalcT       sumY{};
-    CalcT       sumSquaresX{};
-    CalcT       sumSquaresY{};
-    CalcT       sumProducts{};
-    std::size_t count{};
+    CalcT       sumX{};        ///< Sum of x values.
+    CalcT       sumY{};        ///< Sum of y values.
+    CalcT       sumSquaresX{}; ///< Sum of squared x values.
+    CalcT       sumSquaresY{}; ///< Sum of squared y values.
+    CalcT       sumProducts{}; ///< Sum of pairwise products x*y.
+    std::size_t count{};       ///< Number of paired observations.
 };
 
 /// @brief Accumulate count, sum, and sum of squares for a numeric range.
