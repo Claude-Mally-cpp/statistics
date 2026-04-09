@@ -135,6 +135,95 @@ TEST(StatisticsTest, StandardDeviation_PropagatesVarianceErrors)
     EXPECT_EQ(result.error(), "standardDeviation: variance: empty range");
 }
 
+TEST(StatisticsTest, Range_IntAndFloatingInputs)
+{
+    constexpr auto intValues   = std::array{4, 1, 9, 2};
+    constexpr auto floatValues = std::array{1.5, 2.75, -0.25};
+
+    const auto intResult   = range(intValues);
+    const auto floatResult = range(floatValues);
+
+    ASSERT_TRUE(intResult.has_value()) << intResult.error();
+    ASSERT_TRUE(floatResult.has_value()) << floatResult.error();
+    using IntResultType = std::remove_cvref_t<decltype(*intResult)>;
+    static_assert(std::is_same_v<IntResultType, std::intmax_t>);
+    EXPECT_EQ(*intResult, 8);
+    EXPECT_NEAR(static_cast<double>(*floatResult), 3.0, 1e-10);
+}
+
+TEST(StatisticsTest, Range_EmptyRangeReturnsError)
+{
+    constexpr auto values = std::array<double, 0>{};
+
+    const auto result = range(values);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "range: empty range");
+}
+
+TEST(StatisticsTest, MedianAbsoluteDeviation_OddEvenAndRepeatedValues)
+{
+    constexpr auto oddValues      = std::array{1.0, 1.0, 2.0, 2.0, 4.0, 6.0, 9.0};
+    constexpr auto evenValues     = std::array{1.0, 2.0, 3.0, 4.0};
+    constexpr auto repeatedValues = std::array{5.0, 5.0, 5.0, 5.0};
+
+    const auto oddResult      = medianAbsoluteDeviation(oddValues);
+    const auto evenResult     = medianAbsoluteDeviation(evenValues);
+    const auto repeatedResult = medianAbsoluteDeviation(repeatedValues);
+
+    ASSERT_TRUE(oddResult.has_value()) << oddResult.error();
+    ASSERT_TRUE(evenResult.has_value()) << evenResult.error();
+    ASSERT_TRUE(repeatedResult.has_value()) << repeatedResult.error();
+    EXPECT_NEAR(static_cast<double>(*oddResult), 1.0, 1e-10);
+    EXPECT_NEAR(static_cast<double>(*evenResult), 1.0, 1e-10);
+    EXPECT_NEAR(static_cast<double>(*repeatedResult), 0.0, 1e-10);
+}
+
+TEST(StatisticsTest, MedianAbsoluteDeviation_EmptyRangeReturnsError)
+{
+    constexpr auto values = std::array<int, 0>{};
+
+    const auto result = medianAbsoluteDeviation(values);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "medianAbsoluteDeviation: empty range");
+}
+
+TEST(StatisticsTest, ZScores_KnownDatasetAndFloatingOutput)
+{
+    constexpr auto values = std::array{2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0};
+
+    const auto result = zScores(values, VarianceKind::population);
+
+    ASSERT_TRUE(result.has_value()) << result.error();
+    ASSERT_EQ(result->size(), values.size());
+    using ValueType = std::remove_cvref_t<decltype(result->front())>;
+    static_assert(std::is_same_v<ValueType, double>);
+    EXPECT_NEAR((*result)[0], -1.5, 1e-10);
+    EXPECT_NEAR((*result)[1], -0.5, 1e-10);
+    EXPECT_NEAR((*result)[7], 2.5, 1e-10);
+}
+
+TEST(StatisticsTest, ZScores_ZeroStandardDeviationReturnsError)
+{
+    constexpr auto values = std::array{5.0, 5.0, 5.0, 5.0};
+
+    const auto result = zScores(values);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "zScores: standard deviation is zero");
+}
+
+TEST(StatisticsTest, ZScores_EmptyRangeReturnsError)
+{
+    constexpr auto values = std::array<int, 0>{};
+
+    const auto result = zScores(values);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "zScores: empty range");
+}
+
 // Test correlation between profits and employers
 TEST(StatisticsTest, Correlation_Profits_Employers)
 {
