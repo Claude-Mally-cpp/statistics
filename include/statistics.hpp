@@ -69,6 +69,8 @@ using num::NumberRange;
 
 namespace detail
 {
+/// @brief One-pass accumulation state for univariate dispersion calculations.
+/// @tparam CalcT Internal widened calculation type.
 template <class CalcT> struct DispersionAccumulation
 {
     CalcT       sum{};
@@ -76,6 +78,8 @@ template <class CalcT> struct DispersionAccumulation
     std::size_t count{};
 };
 
+/// @brief One-pass accumulation state for paired dispersion and covariance calculations.
+/// @tparam CalcT Internal widened calculation type.
 template <class CalcT> struct BivariateAccumulation
 {
     CalcT       sumX{};
@@ -86,6 +90,9 @@ template <class CalcT> struct BivariateAccumulation
     std::size_t count{};
 };
 
+/// @brief Accumulate count, sum, and sum of squares for a numeric range.
+/// @param range Input range.
+/// @return Widened accumulation state for variance-style formulas.
 template <ForwardNumberRange R> constexpr auto accumulateDispersion(const R& range) -> DispersionAccumulation<num::RangeCalculationFloat<R>>
 {
     DispersionAccumulation<num::RangeCalculationFloat<R>> accumulation{};
@@ -99,6 +106,10 @@ template <ForwardNumberRange R> constexpr auto accumulateDispersion(const R& ran
     return accumulation;
 }
 
+/// @brief Accumulate paired sums, sums of squares, and cross-products for two ranges.
+/// @param range_x First input range.
+/// @param range_y Second input range.
+/// @return Widened paired accumulation state, or an error on length mismatch.
 template <ForwardNumberRange RX, ForwardNumberRange RY>
 auto accumulateBivariate(const RX& range_x, const RY& range_y)
     -> std::expected<BivariateAccumulation<num::PairCalculationFloat<RX, RY>>, std::string>
@@ -130,6 +141,11 @@ auto accumulateBivariate(const RX& range_x, const RY& range_y)
     return accumulation;
 }
 
+/// @brief Compute the centered sum-of-squares term `sum(x^2) - sum(x)^2 / n`.
+/// @param sum Sum of values.
+/// @param sumSquares Sum of squared values.
+/// @param n Number of values.
+/// @return Centered sum-of-squares term, or an error for empty input / invalid negative result.
 template <class CalcT> constexpr auto centeredSquareSum(CalcT sum, CalcT sumSquares, std::size_t n) -> std::expected<CalcT, std::string>
 {
     if (n == 0)
@@ -146,6 +162,12 @@ template <class CalcT> constexpr auto centeredSquareSum(CalcT sum, CalcT sumSqua
     return value;
 }
 
+/// @brief Compute the centered cross-product term `sum(xy) - sum(x)sum(y) / n`.
+/// @param sum_x Sum of x values.
+/// @param sum_y Sum of y values.
+/// @param sum_xy Sum of pairwise products.
+/// @param n Number of paired values.
+/// @return Centered cross-product term, or an error for empty input.
 template <class CalcT>
 constexpr auto centeredCrossSum(CalcT sum_x, CalcT sum_y, CalcT sum_xy, std::size_t n) -> std::expected<CalcT, std::string>
 {
@@ -158,6 +180,10 @@ constexpr auto centeredCrossSum(CalcT sum_x, CalcT sum_y, CalcT sum_xy, std::siz
     return sum_xy - ((sum_x * sum_y) / count);
 }
 
+/// @brief Select the variance divisor for sample or population convention.
+/// @param n Number of values.
+/// @param kind Variance convention selector.
+/// @return Divisor value, or an error for empty / too-small sample input.
 template <class CalcT> constexpr auto varianceDivisor(std::size_t n, VarianceKind kind) -> std::expected<CalcT, std::string>
 {
     if (n == 0)
