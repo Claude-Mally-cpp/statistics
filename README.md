@@ -52,6 +52,7 @@ Windows PowerShell:
 cmake --preset msvc-x64-debug
 cmake --build --preset msvc-x64-debug
 ctest --preset msvc-x64-debug
+.\verify.ps1 quick
 ```
 
 VS Code:
@@ -146,6 +147,8 @@ To build and test on Windows release and debug:
 # verbose output
 ./windowsBuildAndTest.ps1 --verbose
 ```
+
+Git hooks are currently Bash-first on this repository. The tracked pre-commit hook calls `./format-staged.sh` and `./tidy-staged.sh`, so Windows contributors using hooks should run them from Git Bash or another Bash-capable environment.
 
 ## Tooling Workflows
 

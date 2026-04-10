@@ -26,10 +26,39 @@ function RunStep {
     }
 }
 
-RunStep "Release Configure" { cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release }
-RunStep "Release Build" { cmake --build build-release --config Release }
-RunStep "Release Test" { .\build-release\Release\statistics_test.exe }
+function Find-TestExecutable {
+    param(
+        [string]$BuildDir,
+        [string]$Config
+    )
 
-RunStep "Debug Configure" { cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug }
-RunStep "Debug Build" { cmake --build build-debug --config Debug }
-RunStep "Debug Test" { .\build-debug\Debug\statistics_test.exe }
+    $candidates = @(
+        (Join-Path $BuildDir "statistics_test.exe"),
+        (Join-Path $BuildDir $Config | Join-Path -ChildPath "statistics_test.exe")
+    )
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    throw "statistics_test.exe not found under '$BuildDir' for config '$Config'"
+}
+
+$releaseBuildDir = "build-release"
+$debugBuildDir   = "build-debug"
+
+RunStep "Release Configure" { cmake -S . -B $releaseBuildDir -DCMAKE_BUILD_TYPE=Release }
+RunStep "Release Build" { cmake --build $releaseBuildDir --config Release }
+RunStep "Release Test" {
+    $testExe = Find-TestExecutable -BuildDir $releaseBuildDir -Config "Release"
+    & $testExe
+}
+
+RunStep "Debug Configure" { cmake -S . -B $debugBuildDir -DCMAKE_BUILD_TYPE=Debug }
+RunStep "Debug Build" { cmake --build $debugBuildDir --config Debug }
+RunStep "Debug Test" {
+    $testExe = Find-TestExecutable -BuildDir $debugBuildDir -Config "Debug"
+    & $testExe
+}
