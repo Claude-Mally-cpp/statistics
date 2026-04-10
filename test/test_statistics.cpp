@@ -201,7 +201,7 @@ TEST(StatisticsTest, ZScores_KnownDatasetAndFloatingOutput)
     static_assert(std::is_same_v<ValueType, double>);
     EXPECT_NEAR((*result)[0], -1.5, 1e-10);
     EXPECT_NEAR((*result)[1], -0.5, 1e-10);
-    EXPECT_NEAR((*result)[7], 2.5, 1e-10);
+    EXPECT_NEAR((*result)[7], 2.0, 1e-10);
 }
 
 TEST(StatisticsTest, ZScores_ZeroStandardDeviationReturnsError)
