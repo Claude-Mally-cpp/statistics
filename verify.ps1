@@ -129,7 +129,13 @@ function Invoke-Full {
     }
 
     Invoke-Step "rebuild docker images" { & bash ./rebuildDockerImages.sh }
-    Invoke-Step "docker linux build and test" { & bash ./dockerLinuxBuildAndTest.sh }
+    Invoke-Step "docker linux build and test" {
+        if ($Verbose) {
+            & bash ./dockerLinuxBuildAndTest.sh --verbose
+        } else {
+            & bash ./dockerLinuxBuildAndTest.sh
+        }
+    }
 }
 
 switch ($Mode) {
