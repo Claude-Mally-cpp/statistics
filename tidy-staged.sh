@@ -21,10 +21,10 @@ else
 fi
 
 HEADER_FILTER_ARGS=("-header-filter=$HEADER_FILTER")
-if clang-tidy --help 2>&1 | grep -q -- '--exclude-header-filter'; then
+if "$CLANG_TIDY_BIN" --help 2>&1 | grep -q -- '--exclude-header-filter'; then
   HEADER_FILTER_ARGS+=("-exclude-header-filter=$EXCLUDE_HEADER_FILTER")
 else
-  echo "clang-tidy does not support --exclude-header-filter; continuing without it"
+  echo "$CLANG_TIDY_BIN does not support --exclude-header-filter; continuing without it"
 fi
 
 TIDY_ARGS=()

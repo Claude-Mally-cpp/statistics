@@ -48,6 +48,7 @@
 #include <iterator>
 #include <numeric>
 #include <ranges>
+#include <span>
 #include <string>
 #include <type_traits>
 #include <vector>
