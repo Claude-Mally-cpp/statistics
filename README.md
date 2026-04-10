@@ -90,7 +90,15 @@ Examples:
 - `average(range<int>)`, `median(range<int>)`, and other statistical outputs follow the library's statistical public result policy
 - `range(range<int>)` returns a widened integral difference rather than `int`
 
-Variance and standard deviation accept `VarianceKind` with `VarianceKind::sample` as the default. `medianAbsoluteDeviation` currently returns the raw MAD, with no robustness scaling constant applied. `zScores` returns an error for empty input or when the standard deviation is zero.
+Variance and standard deviation accept `VarianceKind` with `VarianceKind::sample` as the default. `medianAbsoluteDeviation` currently returns the raw MAD, with no robustness scaling constant applied.
+
+Input behavior for the newer descriptive-statistics APIs:
+
+- `variance(range)` returns an error for empty input, and sample variance also returns an error when fewer than 2 values are provided
+- `standardDeviation(range)` propagates `variance(...)` input errors
+- `range(range)` returns an error for empty input
+- `medianAbsoluteDeviation(range)` returns an error for empty input
+- `zScores(range)` returns an error for empty input or when the standard deviation is zero
 
 Internal calculation may widen independently from the public result type. For example, a function may accumulate in a wider type for stability while still returning either a natural value type, a widened integral helper type, or a statistical/public result type.
 
