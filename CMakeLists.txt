@@ -96,6 +96,7 @@ enable_testing()
 
 # Test executable
 add_executable(statistics_test test/test_statistics.cpp)
+set_target_properties(statistics_test PROPERTIES BUILD_WITH_INSTALL_RPATH ON)
 target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main project_warnings)
 target_include_directories(statistics_test SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 
@@ -105,7 +106,10 @@ gtest_discover_tests(statistics_test)
 add_executable(statistics-cli statistics-cli/statistics-cli.cpp)
 
 # name the produced binary just "statistics"
-set_target_properties(statistics-cli PROPERTIES OUTPUT_NAME statistics)
+set_target_properties(statistics-cli PROPERTIES
+  OUTPUT_NAME statistics
+  BUILD_WITH_INSTALL_RPATH ON
+)
 
 target_link_libraries(statistics-cli
   PRIVATE
