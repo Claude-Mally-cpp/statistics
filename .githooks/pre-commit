@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Fast failure on formatting for staged C/C++ changes only.
-if [ -x ./check-format-staged.sh ]; then
-  ./check-format-staged.sh
+if [ -x ./format-staged.sh ]; then
+  ./format-staged.sh
 else
-  echo "Missing ./check-format-staged.sh"
+  echo "Missing ./format-staged.sh"
   exit 1
 fi
 

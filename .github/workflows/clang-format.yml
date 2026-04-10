@@ -31,4 +31,4 @@ jobs:
           -v ${{ github.workspace }}:/project
           -w /project
           cpp-ci-clang
-          bash -lc "clang-format-22 --version && CLANG_FORMAT=clang-format-22 bash ./check-format.sh"
+          bash -lc "clang-format-22 --version && CLANG_FORMAT=clang-format-22 bash ./format-check.sh"
