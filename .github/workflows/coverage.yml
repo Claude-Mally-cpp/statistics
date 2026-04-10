@@ -1,0 +1,48 @@
+name: coverage
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.clang
+          load: true
+          tags: cpp-ci-clang:latest
+          cache-from: type=gha,scope=dockerfile-clang
+          cache-to: type=gha,mode=max,scope=dockerfile-clang
+
+      - name: Generate coverage report
+        run: >
+          docker run --rm
+          --user $(id -u):$(id -g)
+          -v ${{ github.workspace }}:/project
+          -w /project
+          cpp-ci-clang
+          bash ./coverage-report.sh
+
+      - name: Publish coverage summary
+        run: cat out/coverage/linux-clang-coverage/summary.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-linux-clang
+          path: out/coverage/linux-clang-coverage
+          if-no-files-found: error

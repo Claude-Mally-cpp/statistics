@@ -150,6 +150,39 @@ To build and test on Windows release and debug:
 
 Git hooks are currently Bash-first on this repository. The tracked pre-commit hook calls `./format-staged.sh` and `./tidy-staged.sh`, so Windows contributors using hooks should run them from Git Bash or another Bash-capable environment.
 
+## Coverage
+
+The repository includes a small LLVM coverage path built around `llvm-profdata` and `llvm-cov`.
+
+CI coverage:
+
+- runs on one Linux Clang toolchain
+- generates a text summary, an LCOV file, and an HTML report
+- uploads the coverage directory as a GitHub Actions artifact
+
+Local reproduction:
+
+```bash
+bash ./coverage-report.sh
+```
+
+```powershell
+# Uses the local cpp-ci-clang Docker image and builds it if needed.
+pwsh -File .\coverage-report.ps1
+```
+
+The default preset is `linux-clang-coverage`, which configures Clang with `-fprofile-instr-generate -fcoverage-mapping`.
+
+To open the generated HTML report:
+
+```bash
+bash ./open-coverage-report.sh
+```
+
+```powershell
+pwsh -File .\open-coverage-report.ps1
+```
+
 ## Tooling Workflows
 
 ### WSL / Linux: LLVM 22 workflow
