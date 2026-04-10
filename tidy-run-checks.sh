@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+. "$(dirname "$0")/tidy-common.sh"
+
 usage() {
   cat <<'EOF'
-Usage: bash ./clang-tidy-run-checks.sh [--fix]
+Usage: bash ./tidy-run-checks.sh [--fix]
 
 Runs clang-tidy checks over the repo. Pass --fix to apply suggested changes.
 EOF
@@ -27,11 +29,20 @@ if [ $# -gt 0 ]; then
 fi
 
 PRESET=${PRESET:-linux-clang-release}
-DB=${DB:-"out/build/${PRESET}"}
-if [ ! -f "$DB/compile_commands.json" ]; then
-  echo "No compile_commands.json. Run: bash ./clang-tidy-prepare.sh"
+DEFAULT_DB="out/build/${PRESET}"
+FALLBACK_DB="build/${PRESET}"
+DB=${DB:-}
+DB_CANDIDATES=()
+if [ -n "$DB" ]; then
+  DB_CANDIDATES+=("$DB")
+else
+  DB_CANDIDATES+=("$DEFAULT_DB" "$FALLBACK_DB")
+fi
+
+if ! resolve_compile_db "PRESET=$PRESET bash ./tidy-prepare.sh" "${DB_CANDIDATES[@]}"; then
   exit 0
 fi
+DB="$RESOLVED_CLANG_TIDY_DB"
 
 PROJECT_DIRS=${PROJECT_DIRS:-"include test"}
 read -r -a DIRS <<< "$PROJECT_DIRS"

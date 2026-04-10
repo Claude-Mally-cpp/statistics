@@ -1,13 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+. "$(dirname "$0")/tidy-common.sh"
+
 # Toggle to enforce (1 = block on diagnostics; 0 = just warn)
 ENFORCE=${ENFORCE:-0}
-DB="out/build/linux-clang-debug"
+DEFAULT_DB="out/build/linux-clang-debug"
+FALLBACK_DB="build/linux-clang-debug"
+DB=${DB:-}
 ROOT=${ROOT:-"$(pwd)"}
 CLANG_TIDY_BIN=${CLANG_TIDY_BIN:-clang-tidy}
 HEADER_FILTER=${HEADER_FILTER:-"^${ROOT}/(include|test)/"}
 EXCLUDE_HEADER_FILTER=${EXCLUDE_HEADER_FILTER:-'(^|.*/)(out/build|build|_deps|third_party|external|vendor)/'}
+
+DB_CANDIDATES=()
+if [ -n "$DB" ]; then
+  DB_CANDIDATES+=("$DB")
+else
+  DB_CANDIDATES+=("$DEFAULT_DB" "$FALLBACK_DB")
+fi
 
 HEADER_FILTER_ARGS=("-header-filter=$HEADER_FILTER")
 if clang-tidy --help 2>&1 | grep -q -- '--exclude-header-filter'; then
@@ -21,10 +32,10 @@ if [ "${ENFORCE}" = "1" ]; then
   TIDY_ARGS+=("--warnings-as-errors=*")
 fi
 
-if [ ! -f "$DB/compile_commands.json" ]; then
-  echo "No compile_commands.json. Run: ./tidy-prepare.sh"
+if ! resolve_compile_db "bash ./tidy-prepare.sh" "${DB_CANDIDATES[@]}"; then
   exit 0
 fi
+DB="$RESOLVED_CLANG_TIDY_DB"
 
 # Collect staged C/C++ files
 mapfile -d '' FILES < <(git diff --cached --name-only -z --diff-filter=ACMR | \

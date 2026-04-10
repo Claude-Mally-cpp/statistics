@@ -10,7 +10,7 @@
 [![doxygen](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/doxygen.yml/badge.svg)](https://github.com/Claude-Mally-cpp/statistics/actions/workflows/doxygen.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Claude-Mally-cpp/statistics/blob/main/LICENSE)
 
-Small C++ statistics library and CLI for everyday descriptive-statistics tasks.
+Small C++ statistics library and CLI for descriptive-statistics workflows.
 
 This repository is for people who want a compact C++23 project that computes common summary statistics, exposes a reusable library, and keeps build and analysis tooling visible.
 
@@ -18,7 +18,7 @@ If you prefer an editor-driven workflow, the CMake presets also work well from V
 
 Right now the project focuses on:
 
-- descriptive statistics such as mean, median, quartiles, covariance, correlation, and modes
+- descriptive statistics such as mean, median, quartiles, variance, standard deviation, range, MAD, z-scores, covariance, correlation, and modes
 - a header-only library target for use from other C++ code
 - a small CLI that computes summary statistics from comma-separated input
 - multi-toolchain verification with Clang, GCC, MSVC, sanitizers, `clang-format`, `clang-tidy`, and `cppcheck`
@@ -52,6 +52,7 @@ Windows PowerShell:
 cmake --preset msvc-x64-debug
 cmake --build --preset msvc-x64-debug
 ctest --preset msvc-x64-debug
+.\verify.ps1 quick
 ```
 
 VS Code:
@@ -88,7 +89,8 @@ The library tries to keep result types predictable. In practice, the public API 
 - Natural value type: `minMaxValue`
 - Widened integral result for integral inputs: `sum`, `product`, `sumSquared`
 - Natural input value type inside `std::expected<std::vector<T>, std::string>`: `modes`
-- Statistical/public result policy: `average`, `median`, `quartiles`, `summary`, `correlationCoefficient`, `covariance`
+- Statistical/public result policy: `average`, `median`, `quartiles`, `summary`, `variance`, `standardDeviation`, `medianAbsoluteDeviation`, `zScores`, `correlationCoefficient`, `covariance`
+- Widened arithmetic difference for integral inputs: `range`
 
 Examples:
 
@@ -97,6 +99,17 @@ Examples:
 - `minMaxValue(range<int>)` preserves the input value type
 - `modes(range<int>)` returns repeated modes as `std::vector<int>` on success
 - `average(range<int>)`, `median(range<int>)`, and other statistical outputs follow the library's statistical public result policy
+- `range(range<int>)` returns a widened integral difference rather than `int`
+
+Variance and standard deviation accept `VarianceKind` with `VarianceKind::sample` as the default. `medianAbsoluteDeviation` currently returns the raw MAD, with no robustness scaling constant applied.
+
+Input behavior for the newer descriptive-statistics APIs:
+
+- `variance(range)` returns an error for empty input, and sample variance also returns an error when fewer than 2 values are provided
+- `standardDeviation(range)` propagates `variance(...)` input errors
+- `range(range)` returns an error for empty input
+- `medianAbsoluteDeviation(range)` returns an error for empty input
+- `zScores(range)` returns an error for empty input or when the standard deviation is zero
 
 Internal calculation may widen independently from the public result type. For example, a function may accumulate in a wider type for stability while still returning either a natural value type, a widened integral helper type, or a statistical/public result type.
 
@@ -134,6 +147,8 @@ To build and test on Windows release and debug:
 # verbose output
 ./windowsBuildAndTest.ps1 --verbose
 ```
+
+Git hooks are currently Bash-first on this repository. The tracked pre-commit hook calls `./format-staged.sh` and `./tidy-staged.sh`, so Windows contributors using hooks should run them from Git Bash or another Bash-capable environment.
 
 ## Tooling Workflows
 
@@ -181,9 +196,9 @@ ctest --preset linux-clang-debug
 To run local checks with the same binaries CI expects:
 
 ```bash
-CLANG_FORMAT=clang-format-22 bash ./check-format.sh
-bash ./clang-tidy-prepare.sh
-CLANG_TIDY_BIN=clang-tidy-22 bash ./clang-tidy-run-checks.sh
+CLANG_FORMAT=clang-format-22 bash ./format-check.sh
+bash ./tidy-prepare.sh
+CLANG_TIDY_BIN=clang-tidy-22 bash ./tidy-run-checks.sh
 ```
 
 > **Note:** The commands above target Ubuntu 24.04 Noble, matching
@@ -321,7 +336,7 @@ git config core.hooksPath .githooks
 ### 3. Use the tracked pre-commit hook
 
 ```bash
-chmod +x .githooks/pre-commit check-format-staged.sh verify.sh
+chmod +x .githooks/pre-commit format-staged.sh verify.sh
 ```
 
 ### 4. Test it
