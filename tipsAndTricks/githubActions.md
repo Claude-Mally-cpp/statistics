@@ -25,20 +25,20 @@ jobs:
           sudo apt-get install -y clang-tidy cmake ninja-build
 
       - name: Prepare compile_commands.json
-        run: bash ./clang-tidy-prepare.sh
+        run: bash ./tidy-prepare.sh
 
       - name: Run clang-tidy
-        run: bash ./clang-tidy-run-checks.sh
+        run: bash ./tidy-run-checks.sh
 ```
 
 ## Fail on warnings
 
-`clang-tidy-run-checks.sh` now passes `--warnings-as-errors=*` by default, so the workflow fails on any reported warning.
+`tidy-run-checks.sh` now passes `--warnings-as-errors=*` by default, so the workflow fails on any reported warning.
 
 If you need a softer local run, override it like this:
 
 ```bash
-WARNINGS_AS_ERRORS='' bash ./clang-tidy-run-checks.sh
+WARNINGS_AS_ERRORS='' bash ./tidy-run-checks.sh
 ```
 
 ## Future improvements

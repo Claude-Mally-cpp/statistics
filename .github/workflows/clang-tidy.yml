@@ -32,7 +32,7 @@ jobs:
           bash -lc "clang-22 --version &&
                     clang++-22 --version &&
                     clang-tidy-22 --version &&
-                    bash ./clang-tidy-prepare.sh"
+                    bash ./tidy-prepare.sh"
 
       - name: Run clang-tidy
         run: >
@@ -41,4 +41,4 @@ jobs:
           -w /project
           -e CLANG_TIDY_BIN=clang-tidy-22
           cpp-ci-clang
-          bash ./clang-tidy-run-checks.sh
+          bash ./tidy-run-checks.sh

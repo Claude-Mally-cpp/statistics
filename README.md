@@ -184,8 +184,8 @@ To run local checks with the same binaries CI expects:
 
 ```bash
 CLANG_FORMAT=clang-format-22 bash ./check-format.sh
-bash ./clang-tidy-prepare.sh
-CLANG_TIDY_BIN=clang-tidy-22 bash ./clang-tidy-run-checks.sh
+bash ./tidy-prepare.sh
+CLANG_TIDY_BIN=clang-tidy-22 bash ./tidy-run-checks.sh
 ```
 
 > **Note:** The commands above target Ubuntu 24.04 Noble, matching
