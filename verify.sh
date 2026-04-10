@@ -46,7 +46,7 @@ run_cppcheck_local() {
 }
 
 run_quick() {
-  run_step "format check" bash ./check-format.sh
+  run_step "format check" bash ./format-check.sh
 }
 
 run_full() {

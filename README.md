@@ -193,7 +193,7 @@ ctest --preset linux-clang-debug
 To run local checks with the same binaries CI expects:
 
 ```bash
-CLANG_FORMAT=clang-format-22 bash ./check-format.sh
+CLANG_FORMAT=clang-format-22 bash ./format-check.sh
 bash ./tidy-prepare.sh
 CLANG_TIDY_BIN=clang-tidy-22 bash ./tidy-run-checks.sh
 ```
@@ -333,7 +333,7 @@ git config core.hooksPath .githooks
 ### 3. Use the tracked pre-commit hook
 
 ```bash
-chmod +x .githooks/pre-commit check-format-staged.sh verify.sh
+chmod +x .githooks/pre-commit format-staged.sh verify.sh
 ```
 
 ### 4. Test it
