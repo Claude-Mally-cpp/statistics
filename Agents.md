@@ -34,6 +34,7 @@ Typical mapping:
 
 - code changes: targeted build/test first, then broader repo checks if warranted
 - workflow changes: YAML sanity review and, when practical, the smallest local validation available
+- coverage changes: one instrumented toolchain, one clear report artifact, and a short local reproduction path
 - docs-only changes: proofread, link/path checks, and no compile/test unless the docs affect executable examples
 - CI-failure follow-ups: reproduce or patch the reported failure first before running unrelated checks
 
@@ -44,10 +45,17 @@ If full verification is blocked by environment, permissions, network limits, or 
 - Keep each pass narrow.
 - Do not stage unrelated edits.
 - Treat local task `.md` files as temporary unless the user wants them kept.
+- Delete temporary local `.md` notes once the issue they describe is resolved.
 - Prefer reusing existing helper aliases or policies over duplicating logic.
 - Prefer staying on the user's current branch unless the user asks for a new branch or the task is clearly a separate, self-contained pass.
+- If the previous branch was already merged, start follow-up fixes on a fresh branch from `main`.
 - If a new branch is created, use a descriptive name and say whether it is based on the current branch or intended to be cleanly rebased from `main`.
 - For temporary PR or scratch artifacts, create or update them only when requested and avoid committing them unless asked.
+
+## Git State
+
+- Check `git status` before assuming a conflict is from a rebase.
+- If Git says all conflicts are fixed, report the exact next command based on repo state: `git rebase --continue` for rebases, `git commit` for merges.
 
 ## Default Shortcuts
 
