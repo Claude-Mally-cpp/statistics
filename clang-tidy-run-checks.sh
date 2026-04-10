@@ -28,8 +28,28 @@ fi
 
 PRESET=${PRESET:-linux-clang-release}
 DB=${DB:-"out/build/${PRESET}"}
-if [ ! -f "$DB/compile_commands.json" ]; then
-  echo "No compile_commands.json. Run: bash ./clang-tidy-prepare.sh"
+
+has_usable_compile_db() {
+  local db="$1"
+  local compile_db="$db/compile_commands.json"
+
+  if [ ! -f "$compile_db" ]; then
+    echo "No compile_commands.json. Run: bash ./clang-tidy-prepare.sh"
+    return 1
+  fi
+
+  # Reject compile databases generated in a different checkout or container path
+  # such as /project/... because clang-tidy will abort when it cannot chdir there.
+  if grep -Fq '"/project/' "$compile_db"; then
+    echo "Skipping clang-tidy: $compile_db was generated for /project/ and is stale in this checkout."
+    echo "Reconfigure a local build tree first, for example: rm -rf $db && PRESET=$PRESET bash ./clang-tidy-prepare.sh"
+    return 1
+  fi
+
+  return 0
+}
+
+if ! has_usable_compile_db "$DB"; then
   exit 0
 fi
 

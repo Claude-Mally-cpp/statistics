@@ -9,6 +9,26 @@ CLANG_TIDY_BIN=${CLANG_TIDY_BIN:-clang-tidy}
 HEADER_FILTER=${HEADER_FILTER:-"^${ROOT}/(include|test)/"}
 EXCLUDE_HEADER_FILTER=${EXCLUDE_HEADER_FILTER:-'(^|.*/)(out/build|build|_deps|third_party|external|vendor)/'}
 
+has_usable_compile_db() {
+  local db="$1"
+  local compile_db="$db/compile_commands.json"
+
+  if [ ! -f "$compile_db" ]; then
+    echo "No compile_commands.json. Run: ./tidy-prepare.sh"
+    return 1
+  fi
+
+  # Reject compile databases generated in a different checkout or container path
+  # such as /project/... because clang-tidy will abort when it cannot chdir there.
+  if grep -Fq '"/project/' "$compile_db"; then
+    echo "Skipping clang-tidy: $compile_db was generated for /project/ and is stale in this checkout."
+    echo "Reconfigure a local build tree first, for example: rm -rf $db && bash ./tidy-prepare.sh"
+    return 1
+  fi
+
+  return 0
+}
+
 HEADER_FILTER_ARGS=("-header-filter=$HEADER_FILTER")
 if clang-tidy --help 2>&1 | grep -q -- '--exclude-header-filter'; then
   HEADER_FILTER_ARGS+=("-exclude-header-filter=$EXCLUDE_HEADER_FILTER")
@@ -21,8 +41,7 @@ if [ "${ENFORCE}" = "1" ]; then
   TIDY_ARGS+=("--warnings-as-errors=*")
 fi
 
-if [ ! -f "$DB/compile_commands.json" ]; then
-  echo "No compile_commands.json. Run: ./tidy-prepare.sh"
+if ! has_usable_compile_db "$DB"; then
   exit 0
 fi
 
