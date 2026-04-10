@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+. "$(dirname "$0")/clang-tidy-common.sh"
+
 usage() {
   cat <<'EOF'
 Usage: bash ./clang-tidy-run-checks.sh [--fix]
@@ -30,62 +32,17 @@ PRESET=${PRESET:-linux-clang-release}
 DEFAULT_DB="out/build/${PRESET}"
 FALLBACK_DB="build/${PRESET}"
 DB=${DB:-}
+DB_CANDIDATES=()
+if [ -n "$DB" ]; then
+  DB_CANDIDATES+=("$DB")
+else
+  DB_CANDIDATES+=("$DEFAULT_DB" "$FALLBACK_DB")
+fi
 
-check_compile_db() {
-  local db="$1"
-  local compile_db="$db/compile_commands.json"
-
-  if [ ! -f "$compile_db" ]; then
-    return 1
-  fi
-
-  # Reject compile databases generated in a different checkout or container path
-  # such as /project/... because clang-tidy will abort when it cannot chdir there.
-  if grep -Fq '"/project/' "$compile_db"; then
-    echo "stale:$compile_db"
-    return 2
-  fi
-
-  return 0
-}
-
-resolve_compile_db() {
-  local candidates=()
-
-  if [ -n "$DB" ]; then
-    candidates+=("$DB")
-  else
-    candidates+=("$DEFAULT_DB" "$FALLBACK_DB")
-  fi
-
-  local stale_db=""
-  local candidate=""
-  for candidate in "${candidates[@]}"; do
-    local status=0
-    local output=""
-    output=$(check_compile_db "$candidate") || status=$?
-    if [ "$status" -eq 0 ]; then
-      DB="$candidate"
-      return 0
-    fi
-    if [ "$status" -eq 2 ] && [ -z "$stale_db" ]; then
-      stale_db="${output#stale:}"
-    fi
-  done
-
-  if [ -n "$stale_db" ]; then
-    echo "Skipping clang-tidy: $stale_db was generated for /project/ and is stale in this checkout."
-    echo "Reconfigure the local build tree first with: PRESET=$PRESET bash ./clang-tidy-prepare.sh"
-    return 1
-  fi
-
-  echo "No usable compile_commands.json. Run: PRESET=$PRESET bash ./clang-tidy-prepare.sh"
-  return 1
-}
-
-if ! resolve_compile_db; then
+if ! resolve_compile_db "PRESET=$PRESET bash ./clang-tidy-prepare.sh" "${DB_CANDIDATES[@]}"; then
   exit 0
 fi
+DB="$RESOLVED_CLANG_TIDY_DB"
 
 PROJECT_DIRS=${PROJECT_DIRS:-"include test"}
 read -r -a DIRS <<< "$PROJECT_DIRS"
