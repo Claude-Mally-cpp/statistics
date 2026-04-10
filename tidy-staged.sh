@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-. "$(dirname "$0")/clang-tidy-common.sh"
+. "$(dirname "$0")/tidy-common.sh"
 
 # Toggle to enforce (1 = block on diagnostics; 0 = just warn)
 ENFORCE=${ENFORCE:-0}

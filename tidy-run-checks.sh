@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-. "$(dirname "$0")/clang-tidy-common.sh"
+. "$(dirname "$0")/tidy-common.sh"
 
 usage() {
   cat <<'EOF'
-Usage: bash ./clang-tidy-run-checks.sh [--fix]
+Usage: bash ./tidy-run-checks.sh [--fix]
 
 Runs clang-tidy checks over the repo. Pass --fix to apply suggested changes.
 EOF
@@ -39,7 +39,7 @@ else
   DB_CANDIDATES+=("$DEFAULT_DB" "$FALLBACK_DB")
 fi
 
-if ! resolve_compile_db "PRESET=$PRESET bash ./clang-tidy-prepare.sh" "${DB_CANDIDATES[@]}"; then
+if ! resolve_compile_db "PRESET=$PRESET bash ./tidy-prepare.sh" "${DB_CANDIDATES[@]}"; then
   exit 0
 fi
 DB="$RESOLVED_CLANG_TIDY_DB"
