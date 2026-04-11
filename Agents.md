@@ -45,6 +45,8 @@ If full verification is blocked by environment, permissions, network limits, or 
 - Keep each pass narrow.
 - Do not stage unrelated edits.
 - Treat local task `.md` files as temporary unless the user wants them kept.
+- Keep temporary local notes and PR scratch files untracked by default unless the user explicitly asks to commit them.
+- Prefer local scratch names such as `*-note.local.md` or `*.local.md` for temporary notes to make their status obvious.
 - Delete temporary local `.md` notes once the issue they describe is resolved.
 - Prefer reusing existing helper aliases or policies over duplicating logic.
 - Prefer staying on the user's current branch unless the user asks for a new branch or the task is clearly a separate, self-contained pass.
@@ -56,6 +58,8 @@ If full verification is blocked by environment, permissions, network limits, or 
 
 - Check `git status` before assuming a conflict is from a rebase.
 - If Git says all conflicts are fixed, report the exact next command based on repo state: `git rebase --continue` for rebases, `git commit` for merges.
+- Do not run `git add`, `git commit`, `git push`, or other history-changing Git commands in parallel.
+- Before any commit or push, verify that temporary `.md` scratch files are not staged unless the user explicitly asked to include them.
 
 ## Default Shortcuts
 

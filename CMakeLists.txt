@@ -22,14 +22,16 @@ configure_file(
   @ONLY
 )
 
-# Use libc++ globally when compiling with Clang
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+# Use libc++ for non-Windows Clang builds. On Windows, Clang typically targets
+# the MSVC runtime/toolchain instead, and -stdlib=libc++ is rejected.
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT WIN32)
   add_compile_options(-stdlib=libc++)
   add_link_options(-stdlib=libc++ -lc++ -lc++abi)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(ProjectWarnings)
+include(ProjectInstrumentation)
 
 # Header-only library
 add_library(statistics INTERFACE)
@@ -77,6 +79,10 @@ endif()
 set(FMT_INCLUDE_DIRS $<TARGET_PROPERTY:fmt::fmt,INTERFACE_INCLUDE_DIRECTORIES>)
 
 # Fetch GoogleTest
+if (WIN32)
+  set(gtest_disable_pthreads ON CACHE BOOL "Disable pthread usage in GoogleTest on Windows" FORCE)
+endif()
+
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
@@ -97,11 +103,31 @@ enable_testing()
 # Test executable
 add_executable(statistics_test test/test_statistics.cpp)
 set_target_properties(statistics_test PROPERTIES BUILD_WITH_INSTALL_RPATH ON)
-target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main project_warnings)
+target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main project_warnings project_instrumentation)
 target_include_directories(statistics_test SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 
+if (STATISTICS_ENABLE_ASAN)
+  # LeakSanitizer aborts in this environment when the test binary is launched
+  # through CTest/GoogleTest discovery. Run through `cmake -E env` and disable
+  # leak detection so ASan/UBSan coverage remains usable.
+  set_property(
+    TARGET statistics_test
+    PROPERTY CROSSCOMPILING_EMULATOR
+      "${CMAKE_COMMAND};-E;env;LSAN_OPTIONS=detect_leaks=0"
+  )
+endif()
+
 include(GoogleTest)
-gtest_discover_tests(statistics_test)
+set(_statistics_gtest_discovery_mode POST_BUILD)
+if (STATISTICS_ENABLE_ASAN OR STATISTICS_ENABLE_UBSAN)
+  # LeakSanitizer can abort when GoogleTest enumerates tests during the build.
+  # Discovering at CTest time avoids that build-time execution path.
+  set(_statistics_gtest_discovery_mode PRE_TEST)
+endif()
+gtest_discover_tests(
+  statistics_test
+  DISCOVERY_MODE ${_statistics_gtest_discovery_mode}
+)
 
 add_executable(statistics-cli statistics-cli/statistics-cli.cpp)
 
@@ -117,6 +143,7 @@ target_link_libraries(statistics-cli
     statistics
     fmt::fmt
     project_warnings
+    project_instrumentation
 )
 target_include_directories(statistics-cli SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 
