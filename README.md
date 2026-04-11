@@ -155,6 +155,9 @@ To build and test this project for multiple Linux toolchains using Docker, use t
 ./dockerLinuxBuildAndTest.sh --verbose
 ```
 
+On Linux / WSL, the Docker helper runs the container as the calling user so
+repo-local outputs under `out/` stay owned by your normal account.
+
 To build and test on Windows release and debug:
 
 ```powershell

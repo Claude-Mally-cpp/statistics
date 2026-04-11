@@ -22,13 +22,14 @@ summary=""
 # --- helpers -----------------------------------------------------------------
 run_and_report() {
   local label="$1"; shift
+  local cmd=( "$@" )
   echo -e "${YELLOW}==> $label${NC}"
 
   set +e
   if (( VERBOSE )); then
-    "$@"
+    "${cmd[@]}"
   else
-    "$@" >/dev/null 2>&1
+    "${cmd[@]}" >/dev/null 2>&1
   fi
   local rc=$?
   set -e
@@ -38,6 +39,10 @@ run_and_report() {
     summary+="$label: SUCCESS\n"
   else
     echo -e "${RED}$label: FAILURE${NC}"
+    echo -e "${RED}  exit code: $rc${NC}"
+    printf '  command:'
+    printf ' %q' "${cmd[@]}"
+    printf '\n'
     summary+="$label: FAILURE\n"
   fi
   return $rc
@@ -45,11 +50,17 @@ run_and_report() {
 
 # --- docker path handling (Windows/MINGW/MSYS/Cygwin) ------------------------
 HOST_PWD="$PWD"
+DOCKER_USER_ARGS=()
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*)
     export MSYS_NO_PATHCONV=1
     export MSYS2_ARG_CONV_EXCL="*"
     HOST_PWD="$(cygpath -w "$PWD")"
+    ;;
+  *)
+    # Preserve ownership of generated files under out/ when the repo is
+    # bind-mounted into a Linux container from Linux/WSL.
+    DOCKER_USER_ARGS=(--user "$(id -u):$(id -g)")
     ;;
 esac
 
@@ -64,13 +75,14 @@ run_build_and_test() {
 
   # Pass flags into the container; bind mount repo
   local DOCKER=(docker run --rm \
+    "${DOCKER_USER_ARGS[@]}" \
     -e DEBUG="$DEBUG" -e VERBOSE="$VERBOSE" \
     -v "${HOST_PWD}:/project:rw" -w /project "$image")
 
   # CMake caches absolute source/build paths. A cache created on the host under
   # /home/... cannot be safely reused in the container under /project.
   run_and_report "${compiler^} ${buildType^} Cache Check" \
-    "${DOCKER[@]}" bash -lc '
+    "${DOCKER[@]}" bash -c '
       set -e
       BUILD_DIR="'"$buildDir"'"
       INSTALL_DIR="'"$installDir"'"
@@ -103,7 +115,7 @@ run_build_and_test() {
 
   if [[ "$compiler" == "clang" ]]; then
     run_and_report "${compiler^} ${buildType^} Clang-Tidy" \
-      "${DOCKER[@]}" bash -lc '
+      "${DOCKER[@]}" bash -c '
         set -e
         if ! command -v clang-tidy >/dev/null 2>&1; then
           echo "clang-tidy not found in image"; exit 1
@@ -115,7 +127,7 @@ run_build_and_test() {
   # --- Cppcheck --------------------------------------------------------------
   if [[ "$compiler" == "gcc" ]]; then
     run_and_report "${compiler^} ${buildType^} Cppcheck" \
-      "${DOCKER[@]}" bash -lc '
+      "${DOCKER[@]}" bash -c '
         # debug helper
         if [ "${DEBUG:-0}" -eq 1 ]; then
           echo "Mount info:"
@@ -155,7 +167,7 @@ run_build_and_test() {
       '
   else
     run_and_report "${compiler^} ${buildType^} Cppcheck" \
-      "${DOCKER[@]}" bash -lc '
+      "${DOCKER[@]}" bash -c '
         set -e
         BUILD_DIR="'"$buildDir"'"
 
