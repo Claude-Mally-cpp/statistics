@@ -22,8 +22,9 @@ configure_file(
   @ONLY
 )
 
-# Use libc++ globally when compiling with Clang
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+# Use libc++ for non-Windows Clang builds. On Windows, Clang typically targets
+# the MSVC runtime/toolchain instead, and -stdlib=libc++ is rejected.
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT WIN32)
   add_compile_options(-stdlib=libc++)
   add_link_options(-stdlib=libc++ -lc++ -lc++abi)
 endif()
@@ -77,6 +78,10 @@ endif()
 set(FMT_INCLUDE_DIRS $<TARGET_PROPERTY:fmt::fmt,INTERFACE_INCLUDE_DIRECTORIES>)
 
 # Fetch GoogleTest
+if (WIN32)
+  set(gtest_disable_pthreads ON CACHE BOOL "Disable pthread usage in GoogleTest on Windows" FORCE)
+endif()
+
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git

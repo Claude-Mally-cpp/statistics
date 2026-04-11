@@ -319,9 +319,9 @@ This separates the Windows workflows more cleanly:
 - `linux-clang-asan` for sanitizer runs
 - `linux-clang-coverage` for coverage reports
 
-> **Note:** On Windows, both MSVC and Windows Clang presets may work best when
-> VS Code or PowerShell is launched from a Visual Studio Developer PowerShell so
-> the MSVC environment and SDK paths are already set up.
+> **Note:** The intended workflow is plain PowerShell on Windows. If a local
+> shell resolves unexpected compiler paths, verify `where clang`, `where cl`,
+> and the active SDK/toolchain paths before assuming the preset itself is wrong.
 
 ### Practical contributor split
 
