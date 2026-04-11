@@ -36,68 +36,84 @@
       }
     },
     {
-      "name": "msvc-x64-debug",
-      "displayName": "MSVC x64 Debug",
-      "inherits": "windows-base",
+      "name": "windows-x64-base",
+      "hidden": true,
       "architecture": {
         "value": "x64",
         "strategy": "external"
-      },
+      }
+    },
+    {
+      "name": "windows-x86-base",
+      "hidden": true,
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "debug-base",
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
+    },
+    {
+      "name": "release-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "clang-asan-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined"
+      }
+    },
+    {
+      "name": "clang-coverage-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
+        "CMAKE_CXX_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
+        "CMAKE_EXE_LINKER_FLAGS": "-fprofile-instr-generate"
+      }
+    },
+    {
+      "name": "msvc-x64-debug",
+      "displayName": "MSVC x64 Debug",
+      "inherits": [ "windows-base", "windows-x64-base", "debug-base" ]
     },
     {
       "name": "msvc-x64-release",
       "displayName": "MSVC x64 Release",
-      "inherits": "msvc-x64-debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "inherits": [ "windows-base", "windows-x64-base", "release-base" ]
     },
     {
       "name": "windows-clang-x64-debug",
       "displayName": "Windows Clang x64 Debug",
-      "inherits": "windows-clang-base",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "inherits": [ "windows-clang-base", "windows-x64-base", "debug-base" ]
     },
     {
       "name": "windows-clang-x64-release",
       "displayName": "Windows Clang x64 Release",
-      "inherits": "windows-clang-x64-debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "inherits": [ "windows-clang-base", "windows-x64-base", "release-base" ]
     },
     {
       "name": "msvc-x86-debug",
       "displayName": "MSVC x86 Debug",
-      "inherits": "windows-base",
-      "architecture": {
-        "value": "x86",
-        "strategy": "external"
-      },
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
-      }
+      "inherits": [ "windows-base", "windows-x86-base", "debug-base" ]
     },
     {
       "name": "msvc-x86-release",
       "displayName": "MSVC x86 Release",
-      "inherits": "msvc-x86-debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
+      "inherits": [ "windows-base", "windows-x86-base", "release-base" ]
     },
     {
       "name": "linux-base",
@@ -105,134 +121,77 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang-22",
-        "CMAKE_CXX_COMPILER": "clang++-22",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
-      }
-    },
-    {
-      "name": "linux-debug",
-      "displayName": "Linux Debug",
-      "inherits": "linux-base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
-    },
-    {
-      "name": "linux-release",
-      "displayName": "Linux Release",
-      "inherits": "linux-base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
       "name": "linux-clang-base",
       "hidden": true,
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "installDir": "${sourceDir}/out/install/${presetName}",
+      "inherits": "linux-base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang-22",
         "CMAKE_CXX_COMPILER": "clang++-22",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
       }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug",
+      "inherits": [ "linux-clang-base", "debug-base" ]
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "inherits": [ "linux-clang-base", "release-base" ]
     },
     {
       "name": "linux-gcc-base",
       "hidden": true,
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "installDir": "${sourceDir}/out/install/${presetName}",
+      "inherits": "linux-base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
       }
     },
     {
       "name": "linux-clang-debug",
       "generator": "Ninja",
       "displayName": "Linux Debug (Clang)",
-      "inherits": "linux-clang-base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "inherits": [ "linux-clang-base", "debug-base" ]
     },
     {
       "name": "linux-clang-release",
       "generator": "Ninja",
       "displayName": "Linux Release (Clang)",
-      "inherits": "linux-clang-base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "inherits": [ "linux-clang-base", "release-base" ]
     },
     {
       "name": "linux-gcc-debug",
       "generator": "Ninja",
       "displayName": "Linux Debug (gcc)",
-      "inherits": "linux-gcc-base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "inherits": [ "linux-gcc-base", "debug-base" ]
     },
     {
       "name": "linux-gcc-release",
       "generator": "Ninja",
       "displayName": "Linux Release (gcc)",
-      "inherits": "linux-gcc-base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "inherits": [ "linux-gcc-base", "release-base" ]
     },
     {
       "name": "linux-clang-asan",
       "generator": "Ninja",
       "displayName": "Linux ASan+UBSan (Clang)",
-      "inherits": "linux-clang-base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_C_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
-        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
-        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined"
-      }
+      "inherits": [ "linux-clang-base", "debug-base", "clang-asan-base" ]
     },
     {
       "name": "linux-clang-coverage",
       "generator": "Ninja",
       "displayName": "Linux Coverage (Clang)",
-      "inherits": "linux-clang-base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_C_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
-        "CMAKE_CXX_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
-        "CMAKE_EXE_LINKER_FLAGS": "-fprofile-instr-generate"
-      }
+      "inherits": [ "linux-clang-base", "debug-base", "clang-coverage-base" ]
     },
     {
       "name": "local-msvc-debug",
@@ -240,10 +199,9 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/Debug",
       "installDir": "${sourceDir}/build/install/Debug",
+      "inherits": "debug-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_COMPILER": "cl.exe",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_CXX_COMPILER": "cl.exe"
       }
     }
   ],
