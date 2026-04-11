@@ -55,6 +55,13 @@ ctest --preset msvc-x64-debug
 .\verify.ps1 quick
 ```
 
+For a coverage report from Windows without setting up local Linux tooling:
+
+```powershell
+pwsh -File .\coverage-report.ps1
+pwsh -File .\open-coverage-report.ps1
+```
+
 VS Code:
 
 - open the folder
@@ -295,6 +302,26 @@ cmake --preset msvc-x64-release
 cmake --build --preset msvc-x64-release
 ctest --preset msvc-x64-release
 ```
+
+If you want a Clang-native compilation database for editor tooling or
+`clang-tidy`, use the Windows Clang presets:
+
+```powershell
+cmake --preset windows-clang-x64-debug
+cmake --build --preset windows-clang-x64-debug
+ctest --preset windows-clang-x64-debug
+```
+
+This separates the Windows workflows more cleanly:
+
+- `msvc-x64-*` for native Windows build/test
+- `windows-clang-x64-*` for Clang-oriented analysis and `compile_commands.json`
+- `linux-clang-asan` for sanitizer runs
+- `linux-clang-coverage` for coverage reports
+
+> **Note:** On Windows, both MSVC and Windows Clang presets may work best when
+> VS Code or PowerShell is launched from a Visual Studio Developer PowerShell so
+> the MSVC environment and SDK paths are already set up.
 
 ### Practical contributor split
 
