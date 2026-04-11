@@ -6,7 +6,7 @@ ALLOW_UNICODE_NAMES    = YES
 OUTPUT_LANGUAGE        = English
 USE_MDFILE_AS_MAINPAGE = README.md
 
-INPUT                  = include README.md
+INPUT                  = include README.md docs/llvm-setup.md
 FILE_PATTERNS          = *.hpp *.md
 RECURSIVE              = NO
 EXCLUDE_PATTERNS       =

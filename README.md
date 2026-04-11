@@ -115,6 +115,16 @@ Internal calculation may widen independently from the public result type. For ex
 
 ## Tooling and Platform Setup
 
+For the full LLVM setup, verification, and version-update workflow, see
+[docs/llvm-setup.md](docs/llvm-setup.md).
+
+Short version:
+
+- Windows native builds use the MSVC presets
+- WSL / Linux Clang workflows are pinned to LLVM 22
+- Docker is the closest local match to Linux CI
+- On Windows, always verify which `clang`, `clang-format`, and `clang-tidy` your current shell resolves
+
 ## Running Linux Builds and Tests with Docker
 
 ### 1. Build the Docker Images
