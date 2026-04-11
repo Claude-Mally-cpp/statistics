@@ -106,8 +106,28 @@ set_target_properties(statistics_test PROPERTIES BUILD_WITH_INSTALL_RPATH ON)
 target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main project_warnings project_instrumentation)
 target_include_directories(statistics_test SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 
+if (STATISTICS_ENABLE_ASAN)
+  # LeakSanitizer aborts in this environment when the test binary is launched
+  # through CTest/GoogleTest discovery. Run through `cmake -E env` and disable
+  # leak detection so ASan/UBSan coverage remains usable.
+  set_property(
+    TARGET statistics_test
+    PROPERTY CROSSCOMPILING_EMULATOR
+      "${CMAKE_COMMAND};-E;env;LSAN_OPTIONS=detect_leaks=0"
+  )
+endif()
+
 include(GoogleTest)
-gtest_discover_tests(statistics_test)
+set(_statistics_gtest_discovery_mode POST_BUILD)
+if (STATISTICS_ENABLE_ASAN OR STATISTICS_ENABLE_UBSAN)
+  # LeakSanitizer can abort when GoogleTest enumerates tests during the build.
+  # Discovering at CTest time avoids that build-time execution path.
+  set(_statistics_gtest_discovery_mode PRE_TEST)
+endif()
+gtest_discover_tests(
+  statistics_test
+  DISCOVERY_MODE ${_statistics_gtest_discovery_mode}
+)
 
 add_executable(statistics-cli statistics-cli/statistics-cli.cpp)
 
