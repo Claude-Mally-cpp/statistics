@@ -166,16 +166,25 @@ ctest --preset msvc-x64-release
 
 This repo currently matches the LLVM 22 packages installed in `Dockerfile.clang`.
 
-For Ubuntu 24.04 / Noble, install:
+For Ubuntu 24.04 / Noble, install the same prerequisite and LLVM
+packages that `Dockerfile.clang` uses:
 
 ```bash
-sudo apt-get update && sudo apt-get install -y wget gpg
+# Prerequisites (mirrors Dockerfile.clang)
+sudo apt-get update && sudo apt-get install -y \
+  ca-certificates \
+  gnupg \
+  wget
+
+# Import the LLVM signing key and add the apt repository
 wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
   | gpg --dearmor \
   | sudo tee /usr/share/keyrings/llvm-archive-keyring.gpg >/dev/null
 echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] \
 http://apt.llvm.org/noble/ llvm-toolchain-noble-22 main" \
   | sudo tee /etc/apt/sources.list.d/llvm.list
+
+# Install LLVM 22 toolchain
 sudo apt-get update
 sudo apt-get install -y \
   clang-22 \
