@@ -71,18 +71,15 @@
       "name": "clang-asan-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_C_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
-        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
-        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined"
+        "STATISTICS_ENABLE_ASAN": "ON",
+        "STATISTICS_ENABLE_UBSAN": "ON"
       }
     },
     {
       "name": "clang-coverage-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_C_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
-        "CMAKE_CXX_FLAGS": "-fprofile-instr-generate -fcoverage-mapping",
-        "CMAKE_EXE_LINKER_FLAGS": "-fprofile-instr-generate"
+        "STATISTICS_ENABLE_COVERAGE": "ON"
       }
     },
     {

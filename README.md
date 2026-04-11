@@ -319,6 +319,9 @@ This separates the Windows workflows more cleanly:
 - `linux-clang-asan` for sanitizer runs
 - `linux-clang-coverage` for coverage reports
 
+The Clang sanitizer and coverage presets now enable project-level CMake options
+instead of injecting raw instrumentation flags directly in each public preset.
+
 > **Note:** The intended workflow is plain PowerShell on Windows. If a local
 > shell resolves unexpected compiler paths, verify `where clang`, `where cl`,
 > and the active SDK/toolchain paths before assuming the preset itself is wrong.

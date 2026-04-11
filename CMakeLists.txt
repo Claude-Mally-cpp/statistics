@@ -31,6 +31,7 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(ProjectWarnings)
+include(ProjectInstrumentation)
 
 # Header-only library
 add_library(statistics INTERFACE)
@@ -102,7 +103,7 @@ enable_testing()
 # Test executable
 add_executable(statistics_test test/test_statistics.cpp)
 set_target_properties(statistics_test PROPERTIES BUILD_WITH_INSTALL_RPATH ON)
-target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main project_warnings)
+target_link_libraries(statistics_test PRIVATE statistics fmt::fmt gtest_main project_warnings project_instrumentation)
 target_include_directories(statistics_test SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 
 include(GoogleTest)
@@ -122,6 +123,7 @@ target_link_libraries(statistics-cli
     statistics
     fmt::fmt
     project_warnings
+    project_instrumentation
 )
 target_include_directories(statistics-cli SYSTEM PRIVATE ${FMT_INCLUDE_DIRS})
 
