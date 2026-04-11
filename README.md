@@ -123,7 +123,7 @@ Short version:
 - Windows native builds use the MSVC presets
 - WSL / Linux Clang workflows are pinned to LLVM 22
 - Docker is the closest local match to Linux CI
-- on Windows, always verify which `clang`, `clang-format`, and `clang-tidy` your current shell resolves
+- On Windows, always verify which `clang`, `clang-format`, and `clang-tidy` your current shell resolves
 
 ## Running Linux Builds and Tests with Docker
 
