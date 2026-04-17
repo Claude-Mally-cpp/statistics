@@ -37,8 +37,10 @@ Typical mapping:
 - coverage changes: one instrumented toolchain, one clear report artifact, and a short local reproduction path
 - docs-only changes: proofread, link/path checks, and no compile/test unless the docs affect executable examples
 - CI-failure follow-ups: reproduce or patch the reported failure first before running unrelated checks
+- preset/toolchain changes: verify the intended configure/build/test path end-to-end and check sibling debug/release variants when the issue is about preset usability rather than a single build type
 
-If full verification is blocked by environment, permissions, network limits, or missing tools, report the blocker and use the best local fallback.
+If full verification is blocked by environment, permissions, network limits, sandbox limits, or missing tools, report the blocker and use the best local fallback.
+If an important configure/build/test command hangs or fails only inside the sandbox, rerun it with escalation before treating the toolchain or preset as broken.
 
 ## Scoping Rules
 
@@ -60,6 +62,7 @@ If full verification is blocked by environment, permissions, network limits, or 
 - If Git says all conflicts are fixed, report the exact next command based on repo state: `git rebase --continue` for rebases, `git commit` for merges.
 - Do not run `git add`, `git commit`, `git push`, or other history-changing Git commands in parallel.
 - Before any commit or push, verify that temporary `.md` scratch files are not staged unless the user explicitly asked to include them.
+- Distinguish a merged PR from a merely closed PR before deciding whether to reuse a branch, replace a PR, or start from fresh `main`.
 
 ## Default Shortcuts
 

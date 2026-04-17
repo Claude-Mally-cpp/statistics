@@ -135,16 +135,6 @@
       }
     },
     {
-      "name": "linux-debug",
-      "displayName": "Linux Debug",
-      "inherits": [ "linux-clang-base", "debug-base" ]
-    },
-    {
-      "name": "linux-release",
-      "displayName": "Linux Release",
-      "inherits": [ "linux-clang-base", "release-base" ]
-    },
-    {
       "name": "linux-gcc-base",
       "hidden": true,
       "inherits": "linux-base",
