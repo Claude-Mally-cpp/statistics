@@ -49,10 +49,16 @@ ctest --preset linux-gcc-debug
 Windows PowerShell:
 
 ```powershell
+# Native MSVC
 cmake --preset msvc-x64-debug
 cmake --build --preset msvc-x64-debug
 ctest --preset msvc-x64-debug
 .\verify.ps1 quick
+
+# Windows Clang
+cmake --preset windows-clang-x64-debug
+cmake --build --preset windows-clang-x64-debug
+ctest --preset windows-clang-x64-debug
 ```
 
 For a coverage report from Windows without setting up local Linux tooling:
