@@ -279,9 +279,13 @@ Then verify what Windows resolves:
 
 ```powershell
 where clang
+where clang++
 where clang-format
 where clang-tidy
+clang --version
+clang++ --version
 clang-format --version
+clang-tidy --version
 ```
 
 Preferred VS Code + CMake Tools flow:
