@@ -128,8 +128,8 @@ Internal calculation may widen independently from the public result type. For ex
 
 ## Tooling and Platform Setup
 
-For the full LLVM setup, verification, and version-update workflow, see
-[docs/llvm-setup.md](docs/llvm-setup.md).
+For the full LLVM setup workflow, see [docs/llvm-setup.md](docs/llvm-setup.md).
+For release/versioning workflow, including the Python 3 version-bump helper, see [docs/release-process.md](docs/release-process.md).
 
 Short version:
 
