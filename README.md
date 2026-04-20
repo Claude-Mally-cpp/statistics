@@ -16,11 +16,6 @@ This repository is for people who want a compact C++23 project that computes com
 
 If you prefer an editor-driven workflow, the CMake presets also work well from VS Code with CMake Tools.
 
-## Using This Repo As a Template
-
-If your goal is to reuse this repository as the base for a new project, start with
-[docs/template-guide.md](docs/template-guide.md).
-
 Right now the project focuses on:
 
 - descriptive statistics such as mean, median, quartiles, variance, standard deviation, range, MAD, z-scores, covariance, correlation, and modes
@@ -79,13 +74,6 @@ VS Code:
 - select a CMake preset such as `linux-clang-debug` or `msvc-x64-debug`
 - run Configure, Build, and Test from CMake Tools
 
-The CLI is mainly here as one concrete consumer of the library. It gives the repo
-an executable smoke-test target and a simple example of wiring application code to
-the reusable library layer. If your derived project is library-only, this is one of
-the first components you can remove. If you do, also remove or update its
-references in `CMakeLists.txt`, `CMakePresets.json`, and any CI workflows or
-artifact names that still assume the CLI target exists.
-
 If you just want to build the CLI:
 
 ```bash
@@ -105,12 +93,6 @@ Expected output format:
 
 ```text
 Computed summary: n=5, min=1, q1=1.5, median=2, q3=4, max=5, mean=2.6
-```
-
-Windows Clang release example:
-
-```powershell
-.\out\build\windows-clang-x64-release\statistics summary --data 1,2,2,3,5
 ```
 
 ## Result Type Policy
