@@ -101,6 +101,10 @@ These are valid to keep briefly during local bootstrap, but should be reviewed b
 Not every derived project should keep every helper:
 
 - `statistics-cli/` if the new project is library-only
+- if you remove the CLI, also remove or update its references in
+  [`CMakeLists.txt`](../CMakeLists.txt),
+  [`CMakePresets.json`](../CMakePresets.json), and any CI workflows or artifact
+  names that still assume the CLI target exists
 - Docker helper scripts if Linux container parity is unnecessary
 - coverage scripts/workflow if coverage is not part of your initial maintenance model
 - Doxygen workflow if API docs are out of scope

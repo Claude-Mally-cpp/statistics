@@ -82,7 +82,9 @@ VS Code:
 The CLI is mainly here as one concrete consumer of the library. It gives the repo
 an executable smoke-test target and a simple example of wiring application code to
 the reusable library layer. If your derived project is library-only, this is one of
-the first components you can remove.
+the first components you can remove. If you do, also remove or update its
+references in `CMakeLists.txt`, `CMakePresets.json`, and any CI workflows or
+artifact names that still assume the CLI target exists.
 
 If you just want to build the CLI:
 
