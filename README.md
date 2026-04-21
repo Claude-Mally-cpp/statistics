@@ -24,6 +24,8 @@ If your goal is to reuse this repository as the base for a new project, start wi
 Most command examples below are intentionally written for this statistics project.
 Treat the executable names, subcommands, and sample outputs as replace-first content
 when adapting the repo into a different domain.
+The badge URLs and GitHub links near the top also still point at this repository
+and should be updated early in a derived project.
 
 Right now the project focuses on:
 
