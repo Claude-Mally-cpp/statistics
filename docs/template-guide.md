@@ -91,7 +91,7 @@ These are the highest-priority project-specific names:
 These are valid to keep briefly during local bootstrap, but should be reviewed before you call the derived repo “ready”:
 
 - namespace `mally::statlib`
-- workflow artifact names that still say `statistics`
+- workflow artifact names or package labels that still use the current project name
 - release-process examples that mention the current CLI binary name
 - changelog wording that still describes this as the statistics project
 - documentation examples that show statistics-specific commands or outputs
