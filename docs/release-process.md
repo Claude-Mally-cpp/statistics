@@ -78,6 +78,9 @@ bash ./doxygen-docs.sh
 
 Linux / WSL maintainers can substitute the equivalent documented Linux or Docker paths where appropriate.
 
+If you adapt this repository into a different project, rewrite the CLI smoke-test
+command to match the renamed executable and its real user-facing command surface.
+
 ## Version Bump Flow
 
 Choose the release type manually, then use the helper to apply the actual version change.
