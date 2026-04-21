@@ -95,6 +95,7 @@ These are valid to keep briefly during local bootstrap, but should be reviewed b
 - release-process examples that mention the current CLI binary name
 - changelog wording that still describes this as the statistics project
 - documentation examples that show statistics-specific commands or outputs
+- README example sections that still demonstrate the `statistics` executable and `summary` command
 
 ### Remove If Unneeded
 
@@ -175,11 +176,12 @@ Keep only if they match the new project’s maintenance style:
 1. Rename the project and README.
 2. Decide whether the CLI stays.
 3. Decide whether the namespace stays.
-4. Get one build/test path green.
-5. Rename package/export/install-facing names.
-6. Remove optional tooling you do not want.
-7. Re-run the main verification path.
-8. Only then broaden into deeper cleanup.
+4. Rewrite the most visible repo-specific examples and smoke-test commands.
+5. Get one build/test path green.
+6. Rename package/export/install-facing names.
+7. Remove optional tooling you do not want.
+8. Re-run the main verification path.
+9. Only then broaden into deeper cleanup.
 
 ## Verification Checklist
 
