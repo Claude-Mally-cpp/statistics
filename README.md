@@ -136,7 +136,7 @@ Examples:
 - `minMaxValue(range<int>)` preserves the input value type
 - `modes(range<int>)` returns repeated modes as `std::vector<int>` on success
 - `average(range<int>)`, `median(range<int>)`, and other statistical outputs return `double`
-- statistical outputs preserve floating-point input value types such as `float`, `double`, and `long double`
+- Statistical outputs preserve floating-point input value types such as `float`, `double`, and `long double`
 - `range(range<int>)` returns a widened integral difference rather than `int`
 
 Variance and standard deviation accept `VarianceKind` with `VarianceKind::sample` as the default. `medianAbsoluteDeviation` currently returns the raw MAD, with no robustness scaling constant applied.
