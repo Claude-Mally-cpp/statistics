@@ -2,7 +2,6 @@
 /// @brief Functions to compute quartiles (Q1, median, Q3) of numeric ranges.
 
 #pragma once
-#include "CalculationFloat.hpp"
 #include "numeric.hpp"
 
 #include <algorithm>
@@ -34,19 +33,19 @@ namespace detail
 {
 
 /// @cond DOXYGEN_SKIP
-template <class T> using QuartileCalculationFloat = CalculationFloat<T>;
+template <class T> using QuartileCalculationType  = CalculationType<T>;
 template <class T> using QuartilePublicResultType = PublicResultType<T>;
 /// @endcond
 
 /// @brief Median of an already-sorted inclusive slice [low..high] in an array.
 /// @tparam T Array element type.
 /// @tparam N Array extent.
-/// @param array Sorted input array at calculation precision.
+/// @param array Sorted input array in internal working storage.
 /// @param low Inclusive lower index.
 /// @param high Inclusive upper index.
 /// @return Median of the slice, or `0.0` if the slice is empty.
 template <typename T, std::size_t N>
-constexpr auto medianSortedSlice(const std::array<QuartileCalculationFloat<T>, N>& array, std::size_t low, std::size_t high)
+constexpr auto medianSortedSlice(const std::array<QuartileCalculationType<T>, N>& array, std::size_t low, std::size_t high)
     -> QuartilePublicResultType<T>
 {
     const std::size_t len = (high >= low) ? (high - low + 1) : 0;
@@ -66,10 +65,10 @@ constexpr auto medianSortedSlice(const std::array<QuartileCalculationFloat<T>, N
 /// @brief Median of an already-sorted whole array.
 /// @tparam T Array element type.
 /// @tparam N Array extent.
-/// @param array Sorted input array at calculation precision.
+/// @param array Sorted input array in internal working storage.
 /// @return Median of `array`, or `0.0` when `N == 0`.
 template <typename T, std::size_t N>
-constexpr auto medianSorted(const std::array<QuartileCalculationFloat<T>, N>& array) -> QuartilePublicResultType<T>
+constexpr auto medianSorted(const std::array<QuartileCalculationType<T>, N>& array) -> QuartilePublicResultType<T>
 {
     if constexpr (N == 0)
     {
@@ -85,69 +84,28 @@ constexpr auto medianSorted(const std::array<QuartileCalculationFloat<T>, N>& ar
     }
 }
 
-/// @brief Convert any dynamic (or unknown-extent) NumberRange to a calculation-precision vector.
+/// @brief Convert any dynamic (or unknown-extent) NumberRange to internal working storage.
 /// @tparam R Numeric input range type.
 /// @param range Input range.
 /// @return Vector containing all values converted to the internal calculation type for the input.
 template <class R>
     requires num::NumberRange<R>
-inline auto materializeCalculationVector(const R& range) -> std::vector<num::RangeCalculationFloat<R>>
+inline auto materializeCalculationVector(const R& range) -> std::vector<num::detail::RangeCalculationType<R>>
 {
-    std::vector<num::RangeCalculationFloat<R>> out;
+    std::vector<num::detail::RangeCalculationType<R>> out;
     if constexpr (std::ranges::sized_range<R>)
     {
         out.reserve(static_cast<std::size_t>(std::ranges::size(range)));
     }
     for (auto&& value : range)
     {
-        out.push_back(static_cast<num::RangeCalculationFloat<R>>(value));
+        out.push_back(static_cast<num::detail::RangeCalculationType<R>>(value));
     }
     return out;
 }
 
-} // namespace detail
-
-/// @brief Median of a (possibly unsorted) range. Materializes/sorts when needed.
-/// @tparam R Numeric input range type.
-/// @param range Input range.
-/// @return Median of `range`, or `0.0` if the range is empty.
-template <class R>
-    requires num::NumberRange<R>
-inline auto median(const R& range) -> num::RangePublicResultType<R>
-{
-    std::vector<num::RangeCalculationFloat<R>> sortedValues = detail::materializeCalculationVector(range);
-    if (sortedValues.empty())
-    {
-        return static_cast<num::RangePublicResultType<R>>(0.0);
-    }
-    std::ranges::sort(sortedValues);
-    const auto count = sortedValues.size();
-    const auto value = (count & 1U) ? sortedValues[count / 2] : (sortedValues[(count / 2) - 1] + sortedValues[count / 2]) / 2.0;
-    return static_cast<num::RangePublicResultType<R>>(value);
-}
-
-/// @brief Median of an already-sorted array.
-/// @tparam T Array element type.
-/// @tparam N Array extent.
-/// @param sorted Sorted input array.
-/// @return Median of `sorted`.
-template <typename T, std::size_t N>
-    requires std::is_arithmetic_v<std::remove_cvref_t<T>>
-constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> PublicResultType<T>
-{
-    std::array<CalculationFloat<T>, N> sortedValues{};
-    for (std::size_t i = 0; i < N; ++i)
-    {
-        sortedValues[i] = static_cast<CalculationFloat<T>>(sorted[i]);
-    }
-    return detail::medianSorted<T>(sortedValues);
-}
-
-/// @brief Median of an already-sorted span of calculation-precision values.
-/// @tparam T Original input value type driving public and calculation types.
-/// @param sorted Sorted input span.
-/// @return Median of `sorted`, or `0.0` if the span is empty.
-template <class T> inline auto medianSortedSpan(std::span<const CalculationFloat<T>> sorted) -> PublicResultType<T>
+/// @brief Median of an already-sorted span of internal working values.
+template <class T> inline auto medianSortedSpan(std::span<const CalculationType<T>> sorted) -> PublicResultType<T>
 {
     if (sorted.empty())
     {
@@ -158,13 +116,8 @@ template <class T> inline auto medianSortedSpan(std::span<const CalculationFloat
     return static_cast<PublicResultType<T>>(value);
 }
 
-/// @brief Compute Tukey hinges for an already-sorted span of calculation-precision values.
-/// @tparam T Original input value type driving public and calculation types.
-/// @param sorted Sorted span of values.
-/// @return Quartile summary containing Q1, median, and Q3, or zero-initialized if the span is empty.
-/// @note Applies the same exclusive-median Tukey hinge convention as `quartilesSorted`, including
-///       the special-case for n==3.
-template <class T> inline auto quartilesFromSortedSpan(std::span<const CalculationFloat<T>> sorted) -> QuartileSummary<PublicResultType<T>>
+/// @brief Compute Tukey hinges for an already-sorted span of internal working values.
+template <class T> inline auto quartilesFromSortedSpan(std::span<const CalculationType<T>> sorted) -> QuartileSummary<PublicResultType<T>>
 {
     if (sorted.empty())
     {
@@ -219,19 +172,15 @@ template <class T> inline auto quartilesFromSortedSpan(std::span<const Calculati
     return {.q1 = medianOfSlice(loL, loH), .median = med, .q3 = medianOfSlice(hiL, hiH)};
 }
 
-/// @brief Compute Tukey hinges for an already-sorted array at calculation precision.
-/// @tparam T Original input value type driving public and calculation types.
-/// @tparam N Array extent.
-/// @param sorted Sorted input array.
-/// @return Quartile summary containing Q1, median, and Q3.
+/// @brief Compute Tukey hinges for an already-sorted array of internal working values.
 template <class T, std::size_t N>
-constexpr auto quartilesSorted(const std::array<CalculationFloat<T>, N>& sorted) -> QuartileSummary<PublicResultType<T>>
+constexpr auto quartilesSorted(const std::array<CalculationType<T>, N>& sorted) -> QuartileSummary<PublicResultType<T>>
 {
     if constexpr (N == 0)
     {
         return {};
     }
-    const PublicResultType<T> med = detail::medianSorted<T>(sorted);
+    const PublicResultType<T> med = medianSorted<T>(sorted);
     const std::size_t         loL = 0;
     std::size_t               loH{};
     std::size_t               hiL{};
@@ -255,9 +204,47 @@ constexpr auto quartilesSorted(const std::array<CalculationFloat<T>, N>& sorted)
         loH = (N / 2) - 1;
         hiL = N / 2;
     }
-    const PublicResultType<T> quart1 = detail::medianSortedSlice<T>(sorted, loL, loH);
-    const PublicResultType<T> quart3 = detail::medianSortedSlice<T>(sorted, hiL, hiH);
+    const PublicResultType<T> quart1 = medianSortedSlice<T>(sorted, loL, loH);
+    const PublicResultType<T> quart3 = medianSortedSlice<T>(sorted, hiL, hiH);
     return {.q1 = quart1, .median = med, .q3 = quart3};
+}
+
+} // namespace detail
+
+/// @brief Median of a (possibly unsorted) range. Materializes/sorts when needed.
+/// @tparam R Numeric input range type.
+/// @param range Input range.
+/// @return Median of `range`, or `0.0` if the range is empty.
+template <class R>
+    requires num::NumberRange<R>
+inline auto median(const R& range) -> num::RangePublicResultType<R>
+{
+    std::vector<num::detail::RangeCalculationType<R>> sortedValues = detail::materializeCalculationVector(range);
+    if (sortedValues.empty())
+    {
+        return static_cast<num::RangePublicResultType<R>>(0.0);
+    }
+    std::ranges::sort(sortedValues);
+    const auto count = sortedValues.size();
+    const auto value = (count & 1U) ? sortedValues[count / 2] : (sortedValues[(count / 2) - 1] + sortedValues[count / 2]) / 2.0;
+    return static_cast<num::RangePublicResultType<R>>(value);
+}
+
+/// @brief Median of an already-sorted array.
+/// @tparam T Array element type.
+/// @tparam N Array extent.
+/// @param sorted Sorted input array.
+/// @return Median of `sorted`.
+template <typename T, std::size_t N>
+    requires std::is_arithmetic_v<std::remove_cvref_t<T>>
+constexpr auto medianSortedArray(const std::array<T, N>& sorted) -> PublicResultType<T>
+{
+    std::array<detail::CalculationType<T>, N> sortedValues{};
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        sortedValues[i] = static_cast<detail::CalculationType<T>>(sorted[i]);
+    }
+    return detail::medianSorted<T>(sortedValues);
 }
 
 /// @brief Quartiles for std::array<T, N> (no heap allocations).
@@ -273,13 +260,13 @@ constexpr auto quartiles(const std::array<T, N>& data) -> QuartileSummary<Public
     {
         return {};
     }
-    std::array<CalculationFloat<T>, N> sortedValues{};
+    std::array<detail::CalculationType<T>, N> sortedValues{};
     for (std::size_t i = 0; i < N; ++i)
     {
-        sortedValues[i] = static_cast<CalculationFloat<T>>(data[i]);
+        sortedValues[i] = static_cast<detail::CalculationType<T>>(data[i]);
     }
     std::ranges::sort(sortedValues);
-    return quartilesSorted<T>(sortedValues);
+    return detail::quartilesSorted<T>(sortedValues);
 }
 
 /// @brief Quartiles for ranges of numeric types (heap allocation if needed).
@@ -290,13 +277,13 @@ template <class R>
     requires num::NumberRange<R>
 inline auto quartiles(const R& range) -> QuartileSummary<num::RangePublicResultType<R>>
 {
-    std::vector<num::RangeCalculationFloat<R>> sortedValues = detail::materializeCalculationVector(range);
+    std::vector<num::detail::RangeCalculationType<R>> sortedValues = detail::materializeCalculationVector(range);
     if (sortedValues.empty())
     {
         return {};
     }
     std::ranges::sort(sortedValues);
-    return quartilesFromSortedSpan<num::RangeValueType<R>>(sortedValues);
+    return detail::quartilesFromSortedSpan<num::RangeValueType<R>>(sortedValues);
 }
 
 } // namespace mally::statlib

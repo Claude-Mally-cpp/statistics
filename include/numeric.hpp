@@ -2,7 +2,7 @@
 /// @brief Numeric helper functions for statistics library.
 #pragma once
 
-#include "CalculationFloat.hpp"
+#include "resultTypes.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -29,13 +29,16 @@ using RangeNaturalArithmeticResultType =
 
 template <class R> using RangePublicResultType = mally::statlib::PublicResultType<RangeValueType<R>>;
 
-template <class R> using RangeCalculationFloat = mally::statlib::CalculationFloat<RangeValueType<R>>;
-
 template <class RX, class RY> using PairRangeValueType = std::common_type_t<RangeValueType<RX>, RangeValueType<RY>>;
 
 template <class RX, class RY> using PairPublicResultType = mally::statlib::PublicResultType<PairRangeValueType<RX, RY>>;
 
-template <class RX, class RY> using PairCalculationFloat = mally::statlib::CalculationFloat<PairRangeValueType<RX, RY>>;
+namespace detail
+{
+template <class R> using RangeCalculationType = mally::statlib::detail::CalculationType<RangeValueType<R>>;
+
+template <class RX, class RY> using PairCalculationType = mally::statlib::detail::CalculationType<PairRangeValueType<RX, RY>>;
+} // namespace detail
 /// @endcond
 
 /// @brief Concept for ranges whose values are arithmetic.
@@ -56,7 +59,7 @@ concept ForwardNumberRange = NumberRange<R> && std::ranges::forward_range<R>;
 template <NumberRange R> constexpr auto sum(const R& range) -> RangeNaturalArithmeticResultType<R>
 {
     using AccumulatorType =
-        std::conditional_t<std::is_integral_v<RangeValueType<R>>, RangeNaturalArithmeticResultType<R>, RangeCalculationFloat<R>>;
+        std::conditional_t<std::is_integral_v<RangeValueType<R>>, RangeNaturalArithmeticResultType<R>, detail::RangeCalculationType<R>>;
     AccumulatorType acc{};
     for (auto&& val : range)
     {
@@ -67,7 +70,7 @@ template <NumberRange R> constexpr auto sum(const R& range) -> RangeNaturalArith
 
 /// @brief Arithmetic mean of a numeric range (0 for empty).
 /// @param range Input range of numeric values.
-/// @note O(n); uses widened internal accumulation and returns the public result type for the input.
+/// @note O(n); returns the public result type deduced from the input.
 /// @return Arithmetic mean of `range`, or `0.0` when the range is empty.
 template <ForwardNumberRange R> constexpr auto average(const R& range) -> RangePublicResultType<R>
 {
@@ -76,12 +79,12 @@ template <ForwardNumberRange R> constexpr auto average(const R& range) -> RangeP
     {
         return static_cast<RangePublicResultType<R>>(0.0);
     }
-    RangeCalculationFloat<R> total = 0.0;
+    detail::RangeCalculationType<R> total = 0.0;
     for (auto&& val : range)
     {
-        total += static_cast<RangeCalculationFloat<R>>(val);
+        total += static_cast<detail::RangeCalculationType<R>>(val);
     }
-    return static_cast<RangePublicResultType<R>>(total / static_cast<RangeCalculationFloat<R>>(count));
+    return static_cast<RangePublicResultType<R>>(total / static_cast<detail::RangeCalculationType<R>>(count));
 }
 
 /// @brief Min & max values of a range.
@@ -116,10 +119,10 @@ constexpr auto sumProduct(const RX& xrange, const RY& yrange) -> std::expected<P
     const auto endx = std::ranges::end(xrange);
     const auto endy = std::ranges::end(yrange);
 
-    PairCalculationFloat<RX, RY> acc = 0.0;
+    detail::PairCalculationType<RX, RY> acc = 0.0;
     for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        acc += static_cast<PairCalculationFloat<RX, RY>>(*itx) * static_cast<PairCalculationFloat<RX, RY>>(*ity);
+        acc += static_cast<detail::PairCalculationType<RX, RY>>(*itx) * static_cast<detail::PairCalculationType<RX, RY>>(*ity);
     }
 
     if (itx != endx || ity != endy)
