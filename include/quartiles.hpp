@@ -105,6 +105,9 @@ inline auto materializeCalculationVector(const R& range) -> std::vector<num::det
 }
 
 /// @brief Median of an already-sorted span of internal working values.
+/// @tparam T Original input value type.
+/// @param sorted Sorted internal working values.
+/// @return Median of `sorted`, or `0.0` if the span is empty.
 template <class T> inline auto medianSortedSpan(std::span<const CalculationType<T>> sorted) -> PublicResultType<T>
 {
     if (sorted.empty())
@@ -117,6 +120,9 @@ template <class T> inline auto medianSortedSpan(std::span<const CalculationType<
 }
 
 /// @brief Compute Tukey hinges for an already-sorted span of internal working values.
+/// @tparam T Original input value type.
+/// @param sorted Sorted internal working values.
+/// @return Quartile summary containing Q1, median, and Q3, or zero-initialized if the span is empty.
 template <class T> inline auto quartilesFromSortedSpan(std::span<const CalculationType<T>> sorted) -> QuartileSummary<PublicResultType<T>>
 {
     if (sorted.empty())
@@ -173,6 +179,10 @@ template <class T> inline auto quartilesFromSortedSpan(std::span<const Calculati
 }
 
 /// @brief Compute Tukey hinges for an already-sorted array of internal working values.
+/// @tparam T Original input value type.
+/// @tparam N Array extent.
+/// @param sorted Sorted internal working values.
+/// @return Quartile summary containing Q1, median, and Q3.
 template <class T, std::size_t N>
 constexpr auto quartilesSorted(const std::array<CalculationType<T>, N>& sorted) -> QuartileSummary<PublicResultType<T>>
 {
