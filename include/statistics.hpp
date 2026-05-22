@@ -1,6 +1,6 @@
 /// @file statistics.hpp : minimalist statistics library
 /// @brief This file contains functions to compute statistics on range(s) of numbers.
-/// @details Public result types follow the input value type, while internal calculation may widen.
+/// @details Public result types are deduced from the input value type.
 /// @author Claude Mally
 /// @date 2025-04-11
 ///
@@ -21,10 +21,10 @@
 ///     where `T` is the natural input value type.
 ///   - `average`, `median`, `quartiles`, `summary`, `variance`,
 ///     `standardDeviation`, `medianAbsoluteDeviation`, `zScores`,
-///     `correlationCoefficient`, and `covariance` follow the
-///     statistical public-result policy.
+///     `correlationCoefficient`, and `covariance` deduce a statistical result
+///     type from their input value type.
 ///   - `range` returns a widened arithmetic difference for integral inputs.
-///   - Internal calculation may widen independently from the public return type.
+///   - Internal intermediates are not part of the public result-type contract.
 /// - Summary output: `summary(range)` returns min, Q1, median, mean, Q3 and max; mean
 ///   is computed with `average(range)` which returns 0 on empty ranges.
 ///
@@ -34,9 +34,9 @@
 ///   auto s = summary(myVector);
 #pragma once
 
-#include "CalculationFloat.hpp"
 #include "numeric.hpp"
 #include "quartiles.hpp"
+#include "resultTypes.hpp"
 #include "summaryStats.hpp"
 
 #include <algorithm>
@@ -73,7 +73,7 @@ using num::NumberRange;
 namespace detail
 {
 /// @brief One-pass accumulation state for univariate dispersion calculations.
-/// @tparam CalcT Internal widened calculation type.
+/// @tparam CalcT Internal calculation type.
 template <class CalcT> struct DispersionAccumulation
 {
     CalcT       sum{};        ///< Sum of values.
@@ -82,7 +82,7 @@ template <class CalcT> struct DispersionAccumulation
 };
 
 /// @brief One-pass accumulation state for paired dispersion and covariance calculations.
-/// @tparam CalcT Internal widened calculation type.
+/// @tparam CalcT Internal calculation type.
 template <class CalcT> struct BivariateAccumulation
 {
     CalcT       sumX{};        ///< Sum of x values.
@@ -95,15 +95,16 @@ template <class CalcT> struct BivariateAccumulation
 
 /// @brief Accumulate count, sum, and sum of squares for a numeric range.
 /// @param range Input range.
-/// @return Widened accumulation state for variance-style formulas.
-template <ForwardNumberRange R> constexpr auto accumulateDispersion(const R& range) -> DispersionAccumulation<num::RangeCalculationFloat<R>>
+/// @return Accumulation state for variance-style formulas.
+template <ForwardNumberRange R>
+constexpr auto accumulateDispersion(const R& range) -> DispersionAccumulation<num::detail::RangeCalculationType<R>>
 {
-    DispersionAccumulation<num::RangeCalculationFloat<R>> accumulation{};
+    DispersionAccumulation<num::detail::RangeCalculationType<R>> accumulation{};
     for (auto&& value : range)
     {
-        const auto widenedValue = static_cast<num::RangeCalculationFloat<R>>(value);
-        accumulation.sum += widenedValue;
-        accumulation.sumSquares += widenedValue * widenedValue;
+        const auto calculationValue = static_cast<num::detail::RangeCalculationType<R>>(value);
+        accumulation.sum += calculationValue;
+        accumulation.sumSquares += calculationValue * calculationValue;
         ++accumulation.count;
     }
     return accumulation;
@@ -112,12 +113,12 @@ template <ForwardNumberRange R> constexpr auto accumulateDispersion(const R& ran
 /// @brief Accumulate paired sums, sums of squares, and cross-products for two ranges.
 /// @param range_x First input range.
 /// @param range_y Second input range.
-/// @return Widened paired accumulation state, or an error on length mismatch.
+/// @return Paired accumulation state, or an error on length mismatch.
 template <ForwardNumberRange RX, ForwardNumberRange RY>
 auto accumulateBivariate(const RX& range_x, const RY& range_y)
-    -> std::expected<BivariateAccumulation<num::PairCalculationFloat<RX, RY>>, std::string>
+    -> std::expected<BivariateAccumulation<num::detail::PairCalculationType<RX, RY>>, std::string>
 {
-    BivariateAccumulation<num::PairCalculationFloat<RX, RY>> accumulation{};
+    BivariateAccumulation<num::detail::PairCalculationType<RX, RY>> accumulation{};
 
     auto       itx  = std::ranges::begin(range_x);
     auto       ity  = std::ranges::begin(range_y);
@@ -126,8 +127,8 @@ auto accumulateBivariate(const RX& range_x, const RY& range_y)
 
     for (; itx != endx && ity != endy; ++itx, ++ity)
     {
-        const auto xValue = static_cast<num::PairCalculationFloat<RX, RY>>(*itx);
-        const auto yValue = static_cast<num::PairCalculationFloat<RX, RY>>(*ity);
+        const auto xValue = static_cast<num::detail::PairCalculationType<RX, RY>>(*itx);
+        const auto yValue = static_cast<num::detail::PairCalculationType<RX, RY>>(*ity);
         accumulation.sumX += xValue;
         accumulation.sumY += yValue;
         accumulation.sumSquaresX += xValue * xValue;
@@ -211,7 +212,7 @@ template <class CalcT> constexpr auto varianceDivisor(std::size_t n, VarianceKin
 /// @tparam T Arithmetic element type.
 /// @tparam N Array extent.
 /// @param data Input array of numeric values.
-/// @note Computes internally at `CalculationFloat<T>` precision, then converts to `SummaryStats<PublicResultType<T>>`.
+/// @note Returns a summary whose value type is deduced from the input.
 /// @return Summary statistics for `data`.
 template <class T, std::size_t N>
     requires std::is_arithmetic_v<std::remove_cvref_t<T>>
@@ -226,12 +227,12 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats<PublicResul
     }
     else
     {
-        // Materialize at calculation precision and accumulate the sum in one pass.
-        std::array<CalculationFloat<T>, N> sortedValues{};
-        CalculationFloat<T>                sumAcc = 0.0;
+        // Materialize and accumulate the sum in one pass.
+        std::array<detail::CalculationType<T>, N> sortedValues{};
+        detail::CalculationType<T>                sumAcc = 0.0;
         for (std::size_t i = 0; i < N; ++i)
         {
-            sortedValues[i] = static_cast<CalculationFloat<T>>(data[i]);
+            sortedValues[i] = static_cast<detail::CalculationType<T>>(data[i]);
             sumAcc += sortedValues[i];
         }
         std::ranges::sort(sortedValues);
@@ -239,10 +240,10 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats<PublicResul
         // Min/max from sorted endpoints; mean from accumulated sum
         out.min  = static_cast<PublicResultType<T>>(sortedValues.front());
         out.max  = static_cast<PublicResultType<T>>(sortedValues.back());
-        out.mean = static_cast<PublicResultType<T>>(sumAcc / static_cast<CalculationFloat<T>>(N));
+        out.mean = static_cast<PublicResultType<T>>(sumAcc / static_cast<detail::CalculationType<T>>(N));
 
         // Quartiles from sorted array
-        const auto qSorted = quartilesSorted<T>(sortedValues);
+        const auto qSorted = detail::quartilesSorted<T>(sortedValues);
         out.q1             = qSorted.q1;
         out.median         = qSorted.median;
         out.q3             = qSorted.q3;
@@ -254,9 +255,9 @@ constexpr auto summary(const std::array<T, N>& data) -> SummaryStats<PublicResul
 /// @brief Summary for a generic numeric range (vectors, spans, views...).
 /// @tparam R Numeric input range type.
 /// @param range Input range of numeric values.
-/// @details Materializes to a calculation-precision vector in one pass (accumulating the sum), sorts once,
+/// @details Materializes values in one pass while accumulating the sum, sorts once,
 ///          then derives min/max from the sorted endpoints and quartiles via
-///          quartilesFromSortedSpan(). This avoids repeated range traversals and redundant
+///          internal quartile helpers. This avoids repeated range traversals and redundant
 ///          heap allocations compared with calling individual helpers separately.
 /// @note Requires forward iteration for the empty-check; the range body is single-pass.
 /// @return Summary statistics for `range`, or a zero-initialized summary for an empty range.
@@ -271,16 +272,16 @@ constexpr auto summary(const R& range) -> SummaryStats<num::RangePublicResultTyp
         return out;
     }
 
-    // One pass: materialize at calculation precision and accumulate the sum simultaneously.
-    std::vector<num::RangeCalculationFloat<R>> sortedValues;
+    // One pass: materialize and accumulate the sum simultaneously.
+    std::vector<num::detail::RangeCalculationType<R>> sortedValues;
     if constexpr (std::ranges::sized_range<R>)
     {
         sortedValues.reserve(static_cast<std::size_t>(std::ranges::size(range)));
     }
-    num::RangeCalculationFloat<R> sumAcc = 0.0;
+    num::detail::RangeCalculationType<R> sumAcc = 0.0;
     for (auto&& val : range)
     {
-        const auto converted = static_cast<num::RangeCalculationFloat<R>>(val);
+        const auto converted = static_cast<num::detail::RangeCalculationType<R>>(val);
         sortedValues.push_back(converted);
         sumAcc += converted;
     }
@@ -291,10 +292,10 @@ constexpr auto summary(const R& range) -> SummaryStats<num::RangePublicResultTyp
     std::ranges::sort(sortedValues);
     out.min  = static_cast<num::RangePublicResultType<R>>(sortedValues.front());
     out.max  = static_cast<num::RangePublicResultType<R>>(sortedValues.back());
-    out.mean = static_cast<num::RangePublicResultType<R>>(sumAcc / static_cast<num::RangeCalculationFloat<R>>(out.count));
+    out.mean = static_cast<num::RangePublicResultType<R>>(sumAcc / static_cast<num::detail::RangeCalculationType<R>>(out.count));
 
     // Reuse the sorted data for all three quartiles
-    const auto quartileSummary = quartilesFromSortedSpan<num::RangeValueType<R>>(sortedValues);
+    const auto quartileSummary = detail::quartilesFromSortedSpan<num::RangeValueType<R>>(sortedValues);
     out.q1                     = quartileSummary.q1;
     out.median                 = quartileSummary.median;
     out.q3                     = quartileSummary.q3;
@@ -308,12 +309,13 @@ constexpr auto summary(const R& range) -> SummaryStats<num::RangePublicResultTyp
 /// @return Product of all values in `range`.
 template <NumberRange R> constexpr auto product(const R& range) -> num::RangeNaturalArithmeticResultType<R>
 {
-    using AccumulatorType = std::
-        conditional_t<std::is_integral_v<num::RangeValueType<R>>, num::RangeNaturalArithmeticResultType<R>, num::RangeCalculationFloat<R>>;
-    const auto value = std::accumulate(std::ranges::begin(range),
-                                       std::ranges::end(range),
-                                       AccumulatorType{1},
-                                       [](AccumulatorType acc, auto val) -> auto { return acc * static_cast<AccumulatorType>(val); });
+    using AccumulatorType = std::conditional_t<std::is_integral_v<num::RangeValueType<R>>,
+                                               num::RangeNaturalArithmeticResultType<R>,
+                                               num::detail::RangeCalculationType<R>>;
+    const auto value      = std::accumulate(std::ranges::begin(range),
+                                            std::ranges::end(range),
+                                            AccumulatorType{1},
+                                            [](AccumulatorType acc, auto val) -> auto { return acc * static_cast<AccumulatorType>(val); });
     return static_cast<num::RangeNaturalArithmeticResultType<R>>(value);
 }
 
@@ -323,12 +325,12 @@ template <NumberRange R> constexpr auto product(const R& range) -> num::RangeNat
 /// @return Geometric mean of the values in `range`, or `0.0` for an empty range.
 template <NumberRange R> auto geometricMean(const R& range) -> num::RangePublicResultType<R>
 {
-    auto        totalProduct = num::RangeCalculationFloat<R>{1.0};
+    auto        totalProduct = num::detail::RangeCalculationType<R>{1.0};
     std::size_t count        = 0;
 
     for (const auto& val : range)
     {
-        totalProduct *= static_cast<num::RangeCalculationFloat<R>>(val);
+        totalProduct *= static_cast<num::detail::RangeCalculationType<R>>(val);
         ++count;
     }
 
@@ -337,7 +339,8 @@ template <NumberRange R> auto geometricMean(const R& range) -> num::RangePublicR
         return static_cast<num::RangePublicResultType<R>>(0.0);
     }
 
-    const auto value = std::pow(totalProduct, num::RangeCalculationFloat<R>{1.0} / static_cast<num::RangeCalculationFloat<R>>(count));
+    const auto value =
+        std::pow(totalProduct, num::detail::RangeCalculationType<R>{1.0} / static_cast<num::detail::RangeCalculationType<R>>(count));
     return static_cast<num::RangePublicResultType<R>>(value);
 }
 
@@ -347,17 +350,18 @@ template <NumberRange R> auto geometricMean(const R& range) -> num::RangePublicR
 /// @return Sum of squared values in `range`.
 template <NumberRange R> constexpr auto sumSquared(const R& range) -> num::RangeNaturalArithmeticResultType<R>
 {
-    using AccumulatorType = std::
-        conditional_t<std::is_integral_v<num::RangeValueType<R>>, num::RangeNaturalArithmeticResultType<R>, num::RangeCalculationFloat<R>>;
-    const auto value = std::accumulate(std::ranges::begin(range),
-                                       std::ranges::end(range),
-                                       AccumulatorType{},
-                                       [](AccumulatorType acc, auto val) -> auto
-                                       {
+    using AccumulatorType = std::conditional_t<std::is_integral_v<num::RangeValueType<R>>,
+                                               num::RangeNaturalArithmeticResultType<R>,
+                                               num::detail::RangeCalculationType<R>>;
+    const auto value      = std::accumulate(std::ranges::begin(range),
+                                            std::ranges::end(range),
+                                            AccumulatorType{},
+                                            [](AccumulatorType acc, auto val) -> auto
+                                            {
                                            const auto widenedValue = static_cast<AccumulatorType>(val);
                                            const auto valueSquared = widenedValue * widenedValue;
                                            return acc + valueSquared;
-                                       });
+                                            });
     return static_cast<num::RangeNaturalArithmeticResultType<R>>(value);
 }
 
@@ -375,7 +379,7 @@ auto variance(const R& range, VarianceKind kind = VarianceKind::sample) -> std::
         return std::unexpected(std::format("variance: {}", numerator.error()));
     }
 
-    const auto divisor = detail::varianceDivisor<num::RangeCalculationFloat<R>>(accumulation.count, kind);
+    const auto divisor = detail::varianceDivisor<num::detail::RangeCalculationType<R>>(accumulation.count, kind);
     if (not divisor)
     {
         return std::unexpected(divisor.error());
@@ -398,7 +402,7 @@ auto standardDeviation(const R& range, VarianceKind kind = VarianceKind::sample)
         return std::unexpected(std::format("standardDeviation: {}", varianceValue.error()));
     }
 
-    return static_cast<num::RangePublicResultType<R>>(std::sqrt(static_cast<num::RangeCalculationFloat<R>>(*varianceValue)));
+    return static_cast<num::RangePublicResultType<R>>(std::sqrt(static_cast<num::detail::RangeCalculationType<R>>(*varianceValue)));
 }
 
 /// @brief Compute the numerical range `max - min` of a numeric range.
@@ -429,18 +433,19 @@ template <ForwardNumberRange R> auto medianAbsoluteDeviation(const R& values) ->
     }
 
     std::ranges::sort(sortedValues);
-    const auto medianValue = medianSortedSpan<num::RangeValueType<R>>(std::span<const num::RangeCalculationFloat<R>>(sortedValues));
+    const auto medianValue =
+        detail::medianSortedSpan<num::RangeValueType<R>>(std::span<const num::detail::RangeCalculationType<R>>(sortedValues));
 
-    std::vector<num::RangeCalculationFloat<R>> absoluteDeviations;
+    std::vector<num::detail::RangeCalculationType<R>> absoluteDeviations;
     absoluteDeviations.reserve(sortedValues.size());
     for (const auto value : sortedValues)
     {
-        absoluteDeviations.push_back(std::abs(value - static_cast<num::RangeCalculationFloat<R>>(medianValue)));
+        absoluteDeviations.push_back(std::abs(value - static_cast<num::detail::RangeCalculationType<R>>(medianValue)));
     }
 
     std::ranges::sort(absoluteDeviations);
     return static_cast<num::RangePublicResultType<R>>(
-        medianSortedSpan<num::RangeValueType<R>>(std::span<const num::RangeCalculationFloat<R>>(absoluteDeviations)));
+        detail::medianSortedSpan<num::RangeValueType<R>>(std::span<const num::detail::RangeCalculationType<R>>(absoluteDeviations)));
 }
 
 /// @brief Compute z-scores for a numeric range.
@@ -463,8 +468,8 @@ auto zScores(const R& values, VarianceKind kind = VarianceKind::sample)
         return std::unexpected(std::format("zScores: {}", deviation.error()));
     }
 
-    const auto deviationCalc = static_cast<num::RangeCalculationFloat<R>>(*deviation);
-    if (deviationCalc == num::RangeCalculationFloat<R>{0.0})
+    const auto deviationCalc = static_cast<num::detail::RangeCalculationType<R>>(*deviation);
+    if (deviationCalc == num::detail::RangeCalculationType<R>{0.0})
     {
         return std::unexpected(std::string{"zScores: standard deviation is zero"});
     }
@@ -474,8 +479,8 @@ auto zScores(const R& values, VarianceKind kind = VarianceKind::sample)
     result.reserve(materialized.size());
     for (const auto value : materialized)
     {
-        result.push_back(
-            static_cast<num::RangePublicResultType<R>>((value - static_cast<num::RangeCalculationFloat<R>>(meanValue)) / deviationCalc));
+        result.push_back(static_cast<num::RangePublicResultType<R>>((value - static_cast<num::detail::RangeCalculationType<R>>(meanValue))
+                                                                    / deviationCalc));
     }
 
     return result;
@@ -581,7 +586,7 @@ auto correlationCoefficient(const RX& range_x, const RY& range_y) -> std::expect
         return std::unexpected(std::format("not enough data points: n={}", accumulation->count));
     }
 
-    const auto count = static_cast<num::PairCalculationFloat<RX, RY>>(accumulation->count);
+    const auto count = static_cast<num::detail::PairCalculationType<RX, RY>>(accumulation->count);
     const auto centeredCrossTerm =
         detail::centeredCrossSum(accumulation->sumX, accumulation->sumY, accumulation->sumProducts, accumulation->count);
     if (not centeredCrossTerm)
@@ -600,22 +605,24 @@ auto correlationCoefficient(const RX& range_x, const RY& range_y) -> std::expect
                 numerator);
     }
 
-    const auto denominator_x =
-        rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(accumulation->sumX, accumulation->sumSquaresX, accumulation->count);
+    const auto denominator_x = rawDeviationDenominatorPart<num::detail::PairCalculationType<RX, RY>>(accumulation->sumX,
+                                                                                                     accumulation->sumSquaresX,
+                                                                                                     accumulation->count);
     if (not denominator_x)
     {
         return denominator_x;
     }
 
-    const auto denominator_y =
-        rawDeviationDenominatorPart<num::PairCalculationFloat<RX, RY>>(accumulation->sumY, accumulation->sumSquaresY, accumulation->count);
+    const auto denominator_y = rawDeviationDenominatorPart<num::detail::PairCalculationType<RX, RY>>(accumulation->sumY,
+                                                                                                     accumulation->sumSquaresY,
+                                                                                                     accumulation->count);
     if (not denominator_y)
     {
         return denominator_y;
     }
 
     const auto denominator = *denominator_x * *denominator_y;
-    if (denominator == num::PairCalculationFloat<RX, RY>{0.0})
+    if (denominator == num::detail::PairCalculationType<RX, RY>{0.0})
     {
         return std::unexpected(std::format("denominator is zero?"));
     }
@@ -664,7 +671,7 @@ auto covariance(const RX& range_x, const RY& range_y) -> std::expected<num::Pair
         return std::unexpected(std::format("covariance: {}", numerator.error()));
     }
 
-    const auto denominator = static_cast<num::PairCalculationFloat<RX, RY>>(accumulation->count - 1);
+    const auto denominator = static_cast<num::detail::PairCalculationType<RX, RY>>(accumulation->count - 1);
     return static_cast<num::PairPublicResultType<RX, RY>>(*numerator / denominator);
 }
 } // namespace mally::statlib

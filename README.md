@@ -121,12 +121,12 @@ Windows Clang release example:
 
 ## Result Type Policy
 
-The library tries to keep result types predictable. In practice, the public API falls into a few simple groups:
+The library keeps result types predictable. In practice, the public API falls into a few simple groups:
 
 - Natural value type: `minMaxValue`
 - Widened integral result for integral inputs: `sum`, `product`, `sumSquared`
 - Natural input value type inside `std::expected<std::vector<T>, std::string>`: `modes`
-- Statistical/public result policy: `average`, `median`, `quartiles`, `summary`, `variance`, `standardDeviation`, `medianAbsoluteDeviation`, `zScores`, `correlationCoefficient`, `covariance`
+- Statistical result type deduced from the input value type: `average`, `median`, `quartiles`, `summary`, `variance`, `standardDeviation`, `medianAbsoluteDeviation`, `zScores`, `correlationCoefficient`, `covariance`
 - Widened arithmetic difference for integral inputs: `range`
 
 Examples:
@@ -135,7 +135,8 @@ Examples:
 - `product(range<int>)` and `sumSquared(range<int>)` also return widened integral types
 - `minMaxValue(range<int>)` preserves the input value type
 - `modes(range<int>)` returns repeated modes as `std::vector<int>` on success
-- `average(range<int>)`, `median(range<int>)`, and other statistical outputs follow the library's statistical public result policy
+- `average(range<int>)`, `median(range<int>)`, and other statistical outputs return `double`
+- Statistical outputs preserve floating-point input value types such as `float`, `double`, and `long double`
 - `range(range<int>)` returns a widened integral difference rather than `int`
 
 Variance and standard deviation accept `VarianceKind` with `VarianceKind::sample` as the default. `medianAbsoluteDeviation` currently returns the raw MAD, with no robustness scaling constant applied.
@@ -148,7 +149,7 @@ Input behavior for the newer descriptive-statistics APIs:
 - `medianAbsoluteDeviation(range)` returns an error for empty input
 - `zScores(range)` returns an error for empty input or when the standard deviation is zero
 
-Internal calculation may widen independently from the public result type. For example, a function may accumulate in a wider type for stability while still returning either a natural value type, a widened integral helper type, or a statistical/public result type.
+Functions may use wider intermediates where that helps the implementation. Those working types are not part of the public result-type contract.
 
 ## Tooling and Platform Setup
 
