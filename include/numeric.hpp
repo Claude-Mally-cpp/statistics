@@ -91,6 +91,11 @@ template <ForwardNumberRange R> constexpr auto average(const R& range) -> RangeP
     {
         total += static_cast<detail::RangeCalculationType<R>>(val);
     }
+#ifdef _MSC_VER
+    // The denominator is checked above. MSVC still reports C4723 for this
+    // guarded floating-point division in Debug builds, where warnings are errors.
+#pragma warning(suppress : 4723)
+#endif
     return static_cast<RangePublicResultType<R>>(total / denominator);
 }
 
