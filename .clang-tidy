@@ -1,4 +1,5 @@
 ---
+# Preserve public enum underlying types when updating the analysis toolchain.
 Checks: >
   -*,
   cppcoreguidelines-*,
@@ -18,6 +19,7 @@ Checks: >
   -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-avoid-magic-numbers,
   -readability-magic-numbers,
+  -performance-enum-size,
   -misc-non-private-member-variables-in-classes
 WarningsAsErrors: ''
 HeaderFilterRegex: '^(include|test)/'

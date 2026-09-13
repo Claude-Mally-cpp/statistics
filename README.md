@@ -40,10 +40,10 @@ Right now the project focuses on:
 
 Linux / WSL:
 
-> NOTE: `linux-clang-debug` expects `clang-22` / `clang++-22`. If LLVM 22 is not installed yet, set that up first or use the `linux-gcc-debug` preset below instead.
+> NOTE: `linux-clang-debug` expects `clang-23` / `clang++-23`. If LLVM 23.1.1 is not installed yet, set that up first or use the `linux-gcc-debug` preset below instead.
 
 ```bash
-# Clang/LLVM 22
+# Clang/LLVM 23.1.1
 cmake --preset linux-clang-debug
 cmake --build --preset linux-clang-debug
 ctest --preset linux-clang-debug
@@ -159,7 +159,7 @@ For release/versioning workflow, including the Python 3 version-bump helper, see
 Short version:
 
 - Windows native builds use the MSVC presets
-- WSL / Linux Clang workflows are pinned to LLVM 22
+- WSL / Linux Clang workflows are pinned to LLVM 23.1.1
 - Docker is the closest local match to Linux CI
 - On Windows, always verify which `clang`, `clang-format`, and `clang-tidy` your current shell resolves
 
@@ -236,37 +236,27 @@ pwsh -File .\open-coverage-report.ps1
 
 ## Tooling Workflows
 
-### WSL / Linux: LLVM 22 workflow
+### WSL / Linux: LLVM 23.1.1 workflow
 
 Use this path when you want local Clang, `clang-format`, and `clang-tidy` behavior
 to match the Docker image and Linux CI.
 
-Install LLVM 22 from the same apt repository used by `Dockerfile.clang`:
+Install the checksum-verified LLVM 23.1.1 release used by `Dockerfile.clang`:
 
 ```bash
-sudo apt-get update && sudo apt-get install -y wget gpg
-wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
-  | gpg --dearmor \
-  | sudo tee /usr/share/keyrings/llvm-archive-keyring.gpg >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] \
-http://apt.llvm.org/noble/ llvm-toolchain-noble-22 main" \
-  | sudo tee /etc/apt/sources.list.d/llvm.list
-sudo apt-get update
-sudo apt-get install -y \
-  clang-22 \
-  clang-format-22 \
-  clang-tidy-22 \
-  libc++-22-dev \
-  libc++abi-22-dev
+sudo apt-get update && sudo apt-get install -y \
+  build-essential ca-certificates curl xz-utils
+sudo bash tools/install-llvm.sh
+source /etc/profile.d/llvm-23.sh
 ```
 
 Verify the installed tools:
 
 ```bash
-clang-22 --version
-clang++-22 --version
-clang-format-22 --version
-clang-tidy-22 --version
+clang-23 --version
+clang++-23 --version
+clang-format-23 --version
+clang-tidy-23 --version
 ```
 
 The Linux Clang presets already pin the versioned compiler names:
@@ -280,14 +270,14 @@ ctest --preset linux-clang-debug
 To run local checks with the same binaries CI expects:
 
 ```bash
-CLANG_FORMAT=clang-format-22 bash ./format-check.sh
+CLANG_FORMAT=clang-format-23 bash ./format-check.sh
 bash ./tidy-prepare.sh
-CLANG_TIDY_BIN=clang-tidy-22 bash ./tidy-run-checks.sh
+CLANG_TIDY_BIN=clang-tidy-23 bash ./tidy-run-checks.sh
 ```
 
-> **Note:** The commands above target Ubuntu 24.04 Noble, matching
-> `Dockerfile.clang`. Adjust `noble` / `llvm-toolchain-noble-22` if your local
-> Ubuntu release differs.
+> **Note:** This installer supports x86_64 and ARM64 Linux and is verified on
+> Ubuntu 24.04, matching `Dockerfile.clang`. It installs under `/opt/llvm-23.1.1`
+> and exposes the tools through `/usr/local/bin`. The GCC image uses `gcc:16.2.0`.
 
 ### Windows: recommended workflow
 
@@ -305,6 +295,9 @@ For a simple LLVM install on Windows:
 ```powershell
 winget install LLVM.LLVM
 ```
+
+WinGet may lag behind the project's LLVM 23.1.1 release. To match it exactly,
+use the Windows x64 installer from the [LLVM 23.1.1 release page](https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.1).
 
 Then verify what Windows resolves:
 
@@ -367,7 +360,7 @@ instead of injecting raw instrumentation flags directly in each public preset.
 ### Practical contributor split
 
 - Windows native: MSVC build/test
-- WSL or Linux: LLVM 22 format/tidy/build workflow
+- WSL or Linux: LLVM 23.1.1 format/tidy/build workflow
 - Docker: closest match to Linux CI
 - GitHub Actions: final clean-runner authority
 

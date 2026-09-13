@@ -26,8 +26,8 @@ find_llvm_tool() {
   exit 1
 }
 
-LLVM_COV_BIN="${LLVM_COV_BIN:-$(find_llvm_tool llvm-cov-22 llvm-cov)}"
-LLVM_PROFDATA_BIN="${LLVM_PROFDATA_BIN:-$(find_llvm_tool llvm-profdata-22 llvm-profdata)}"
+LLVM_COV_BIN="${LLVM_COV_BIN:-$(find_llvm_tool llvm-cov-23 llvm-cov)}"
+LLVM_PROFDATA_BIN="${LLVM_PROFDATA_BIN:-$(find_llvm_tool llvm-profdata-23 llvm-profdata)}"
 
 echo "Using preset: ${PRESET}"
 echo "Using llvm-cov: ${LLVM_COV_BIN}"

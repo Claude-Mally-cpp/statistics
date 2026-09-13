@@ -68,6 +68,13 @@ template <NumberRange R> constexpr auto sum(const R& range) -> RangeNaturalArith
     return static_cast<RangeNaturalArithmeticResultType<R>>(acc);
 }
 
+#ifdef _MSC_VER
+#pragma warning(push)
+// The denominator is checked before division. MSVC still reports C4723 for
+// this guarded floating-point division when the template is instantiated.
+#pragma warning(disable : 4723)
+#endif
+
 /// @brief Arithmetic mean of a numeric range (0 for empty).
 /// @param range Input range of numeric values.
 /// @note O(n); returns the public result type deduced from the input.
@@ -79,13 +86,24 @@ template <ForwardNumberRange R> constexpr auto average(const R& range) -> RangeP
     {
         return static_cast<RangePublicResultType<R>>(0.0);
     }
+    // Keep the converted denominator explicit; MSVC does not carry the count
+    // guard above through this cast when checking for a possible zero divisor.
+    const auto denominator = static_cast<detail::RangeCalculationType<R>>(count);
+    if (denominator == static_cast<detail::RangeCalculationType<R>>(0))
+    {
+        return static_cast<RangePublicResultType<R>>(0.0);
+    }
     detail::RangeCalculationType<R> total = 0.0;
     for (auto&& val : range)
     {
         total += static_cast<detail::RangeCalculationType<R>>(val);
     }
-    return static_cast<RangePublicResultType<R>>(total / static_cast<detail::RangeCalculationType<R>>(count));
+    return static_cast<RangePublicResultType<R>>(total / denominator);
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 /// @brief Min & max values of a range.
 /// @param range Input range of numeric values.

@@ -29,9 +29,9 @@ jobs:
           -v ${{ github.workspace }}:/project
           -w /project
           cpp-ci-clang
-          bash -lc "clang-22 --version &&
-                    clang++-22 --version &&
-                    clang-tidy-22 --version &&
+          bash -lc "clang-23 --version &&
+                    clang++-23 --version &&
+                    clang-tidy-23 --version &&
                     bash ./tidy-prepare.sh"
 
       - name: Run clang-tidy
@@ -39,6 +39,6 @@ jobs:
           docker run --rm
           -v ${{ github.workspace }}:/project
           -w /project
-          -e CLANG_TIDY_BIN=clang-tidy-22
+          -e CLANG_TIDY_BIN=clang-tidy-23
           cpp-ci-clang
           bash ./tidy-run-checks.sh
