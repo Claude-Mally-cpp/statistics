@@ -7,7 +7,7 @@ This note is for contributors working on this repository from Windows.
 The safest way to contribute from Windows is:
 
 1. Run local MSVC builds/tests natively on Windows.
-2. Match the repository's LLVM 22 toolchain for formatting and optional local Clang tools.
+2. Match the repository's LLVM 23.1.1 toolchain for formatting and optional local Clang tools.
 3. Use WSL or Docker for Linux `clang` / `gcc` validation when available.
 4. Let GitHub Actions be the final clean-runner authority.
 
@@ -15,13 +15,13 @@ The safest way to contribute from Windows is:
 
 The most important Windows-side tool to match is `clang-format`.
 
-Formatting disagreements are usually caused by version drift, so contributors should keep their local `clang-format` on the same major version used by CI and Docker. For this repository, the intended target is LLVM 22.
+Formatting disagreements are usually caused by version drift, so contributors should keep their local `clang-format` on the same major version used by CI and Docker. For this repository, the intended target is LLVM 23.1.1.
 
 ## Minimum Windows setup
 
 Contributors on Windows should aim to have:
 
-- `clang-format` 22.x
+- `clang-format` 23.1.1
 - MSVC build tools
 - CMake and Ninja
 
@@ -83,7 +83,7 @@ If only one of these is going to match CI reliably, make it `clang-format`.
 
 ## Practical contributor policy
 
-- Exact-match target: LLVM 22 tool versions, especially `clang-format`
+- Exact-match target: LLVM 23.1.1 tool versions, especially `clang-format`
 - Good local baseline: MSVC build/test plus formatting
 - Preferred cross-platform validation: WSL or Docker Linux build/test
 - Final authority: GitHub Actions

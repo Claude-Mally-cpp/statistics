@@ -19,11 +19,12 @@ Use this guide when you need to:
 
 ## Repo Expectation
 
-The Linux Clang workflow in this repo is currently pinned to LLVM 22.
+The Linux Clang workflow in this repo is currently pinned to LLVM 23.1.1.
 
 That version shows up in the main repo tooling here:
 
 - `Dockerfile.clang`
+- `tools/install-llvm.sh`
 - `CMakePresets.json`
 - `.github/workflows/clang.yml`
 - `.github/workflows/clang-format.yml`
@@ -31,8 +32,8 @@ That version shows up in the main repo tooling here:
 
 In practice:
 
-- Linux / WSL Clang presets expect `clang-22` and `clang++-22`
-- local format and tidy examples expect `clang-format-22` and `clang-tidy-22`
+- Linux / WSL Clang presets expect `clang-23` and `clang++-23`
+- local format and tidy examples expect `clang-format-23` and `clang-tidy-23`
 - the Docker image is the cleanest reference for the expected Linux LLVM toolchain
 
 ## Supported Workflow Split
@@ -40,7 +41,7 @@ In practice:
 Use the toolchain that best matches the job:
 
 - Windows native build/test: MSVC presets such as `msvc-x64-debug`
-- WSL or Linux LLVM workflow: Clang 22 with versioned binaries
+- WSL or Linux LLVM workflow: Clang 23 with versioned binaries
 - Docker Linux workflow: closest match to Linux CI
 - GitHub Actions: final clean-runner authority
 
@@ -67,20 +68,19 @@ The official release page is:
 
 - https://github.com/llvm/llvm-project/releases
 
+For this repository's exact version, use the Windows x64 installer from
+https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.1.
+WinGet may lag behind the upstream release. LLVM 23 uses an `.msi` installer.
+
 ### Does installing a new Windows LLVM version remove the old one?
 
-Usually, yes, if you use the official Windows installer.
+The LLVM 23 `.msi` installer updates its selected installation directory.
+Other copies, including Visual Studio's bundled LLVM and manually extracted
+toolchains, can remain installed. Verify the executable path after updating;
+the version reported by `clang` depends on your shell's `PATH` order.
 
-The practical model is:
-
-- the `LLVM-*.exe` installer is the normal Windows toolchain installer
-- if an older LLVM version is already installed, the installer is meant to replace that managed install rather than keep a clean side-by-side toolchain stack
-- in contrast, `clang+llvm-*.zip` archives can coexist in separate directories because they are just extracted files, not an installer-managed product
-
-For contributors, the safest expectation is:
-
-- installer-based LLVM on Windows should be treated as a replace-in-place install
-- archive-based LLVM can be kept side-by-side if you deliberately want multiple versions
+Use separate directories for archive-based installations when deliberately
+keeping multiple versions.
 
 ### Verify what Windows resolves
 
@@ -164,49 +164,44 @@ ctest --preset msvc-x64-release
 
 ### Install the expected LLVM version
 
-This repo currently matches the LLVM 22 packages installed in `Dockerfile.clang`.
+The Docker image and Linux presets use stable LLVM 23.1.1. The shared installer
+in `tools/install-llvm.sh` downloads the official release archive, verifies its
+SHA-256 checksum, and installs the compiler, format/tidy/coverage tools, libc++,
+and sanitizer runtimes under `/opt/llvm-23.1.1`. It creates tool links in
+`/usr/local/bin`, prioritizes the installation's own `bin` directory in login
+shells, and registers the matching C++ runtime with `ldconfig`. Open a new shell
+after installing so CMake records compiler paths that clang-tidy can use to
+locate libc++ headers.
 
-For Ubuntu 24.04 / Noble, install the same prerequisite and LLVM
-packages that `Dockerfile.clang` uses:
+The installer supports x86_64 and ARM64 Linux; Ubuntu 24.04 is the tested base.
+Run from the repository root:
 
 ```bash
-# Prerequisites (mirrors Dockerfile.clang)
 sudo apt-get update && sudo apt-get install -y \
-  ca-certificates \
-  gnupg \
-  wget
-
-# Import the LLVM signing key and add the apt repository
-wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
-  | gpg --dearmor \
-  | sudo tee /usr/share/keyrings/llvm-archive-keyring.gpg >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] \
-http://apt.llvm.org/noble/ llvm-toolchain-noble-22 main" \
-  | sudo tee /etc/apt/sources.list.d/llvm.list
-
-# Install LLVM 22 toolchain
-sudo apt-get update
-sudo apt-get install -y \
-  clang-22 \
-  clang-format-22 \
-  clang-tidy-22 \
-  llvm-22 \
-  libc++-22-dev \
-  libc++abi-22-dev
+  build-essential ca-certificates curl xz-utils
+sudo bash tools/install-llvm.sh
+source /etc/profile.d/llvm-23.sh
 ```
+
+The release archive is large (about 2 GB on x86_64); only the tools and runtimes
+needed by this project are extracted. The temporary download is removed after
+installation. Existing apt-managed LLVM versions remain installed.
+
+This deliberately uses a stable release archive: apt.llvm.org branch packages
+are nightly builds and can move ahead to an unreleased patch version.
 
 ### Verify installed versions
 
 ```bash
-clang-22 --version
-clang++-22 --version
-clang-format-22 --version
-clang-tidy-22 --version
+clang-23 --version
+clang++-23 --version
+clang-format-23 --version
+clang-tidy-23 --version
 ```
 
 ### Run repo commands with the expected binaries
 
-The Linux Clang presets already pin `clang-22` and `clang++-22`:
+The Linux Clang presets already pin `clang-23` and `clang++-23`:
 
 ```bash
 cmake --preset linux-clang-debug
@@ -217,9 +212,9 @@ ctest --preset linux-clang-debug
 For local format/tidy runs:
 
 ```bash
-CLANG_FORMAT=clang-format-22 bash ./format-check.sh
+CLANG_FORMAT=clang-format-23 bash ./format-check.sh
 bash ./tidy-prepare.sh
-CLANG_TIDY_BIN=clang-tidy-22 bash ./tidy-run-checks.sh
+CLANG_TIDY_BIN=clang-tidy-23 bash ./tidy-run-checks.sh
 ```
 
 If your shell default `clang` points somewhere else, use the versioned binary names explicitly.
@@ -240,6 +235,7 @@ When changing the repo's expected LLVM version, update the full chain, not just 
 ### Places to check in this repo
 
 - `Dockerfile.clang`
+- `tools/install-llvm.sh`
 - `CMakePresets.json`
 - `README.md`
 - `docs/llvm-setup.md`
@@ -249,14 +245,12 @@ When changing the repo's expected LLVM version, update the full chain, not just 
 
 ### Example version-change review
 
-If moving from LLVM 22 to LLVM 23, review:
+When changing the LLVM release, review:
 
-- `clang-22` -> `clang-23`
-- `clang++-22` -> `clang++-23`
-- `clang-format-22` -> `clang-format-23`
-- `clang-tidy-22` -> `clang-tidy-23`
-- `llvm-toolchain-noble-22` -> `llvm-toolchain-noble-23`
-- `llvm-22` package references -> `llvm-23`
+- the version and both architecture checksums in `tools/install-llvm.sh`
+- versioned compiler/tool names in that installer, presets, CI and coverage script
+- the versioned `/opt` path and runtime configuration filename
+- the Dockerfile comment and these setup instructions
 
 ## Local Verification After LLVM Changes
 
@@ -265,15 +259,15 @@ Use the smallest check that proves the edited path still works.
 ### Linux / WSL
 
 ```bash
-clang-22 --version
-clang-format-22 --version
-clang-tidy-22 --version
+clang-23 --version
+clang-format-23 --version
+clang-tidy-23 --version
 cmake --preset linux-clang-debug
 cmake --build --preset linux-clang-debug
 ctest --preset linux-clang-debug
-CLANG_FORMAT=clang-format-22 bash ./format-check.sh
+CLANG_FORMAT=clang-format-23 bash ./format-check.sh
 bash ./tidy-prepare.sh
-CLANG_TIDY_BIN=clang-tidy-22 bash ./tidy-run-checks.sh
+CLANG_TIDY_BIN=clang-tidy-23 bash ./tidy-run-checks.sh
 ```
 
 ### Docker

@@ -3,6 +3,7 @@
 
 #pragma once
 #include "numeric.hpp"
+#include "resultTypes.hpp"
 
 #include <algorithm>
 #include <array>

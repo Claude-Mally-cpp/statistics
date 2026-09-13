@@ -129,8 +129,8 @@
       "hidden": true,
       "inherits": "linux-base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang-22",
-        "CMAKE_CXX_COMPILER": "clang++-22",
+        "CMAKE_C_COMPILER": "clang-23",
+        "CMAKE_CXX_COMPILER": "clang++-23",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },

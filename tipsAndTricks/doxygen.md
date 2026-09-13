@@ -9,26 +9,11 @@ locally and in CI.
 
 ### Linux / WSL
 
-Use the same Ubuntu LLVM 22 setup already used by `Dockerfile.clang`, then add
-the documentation tools:
+Use the [LLVM 23.1.1 setup](../docs/llvm-setup.md) used by `Dockerfile.clang`,
+then add the documentation tools:
 
 ```bash
-sudo apt-get update && sudo apt-get install -y wget gpg
-wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
-  | gpg --dearmor \
-  | sudo tee /usr/share/keyrings/llvm-archive-keyring.gpg >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] \
-http://apt.llvm.org/noble/ llvm-toolchain-noble-22 main" \
-  | sudo tee /etc/apt/sources.list.d/llvm.list
-sudo apt-get update
-sudo apt-get install -y \
-  clang-22 \
-  clang-format-22 \
-  clang-tidy-22 \
-  libc++-22-dev \
-  libc++abi-22-dev \
-  doxygen \
-  graphviz
+sudo apt-get update && sudo apt-get install -y doxygen graphviz
 ```
 
 Verify the documentation tools:

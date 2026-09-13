@@ -20,7 +20,7 @@ TEST(StatisticsTest, Correlation_AB)
     auto                        result   = correlationCoefficient(returnsA, returnsB);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
     // Use fixed expected value, update if implementation changes
-    auto       expected  = 0.21677749238102959L;
+    const auto expected  = 0.21677749238102959L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
         << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
@@ -34,7 +34,7 @@ TEST(StatisticsTest, Correlation_AC)
     const auto returnsC = std::array<double, 3>{0.12, 0.11, 0.10};
     auto       result   = correlationCoefficient(returnsA, returnsC);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
-    auto       expected  = -0.9819805060619121L;
+    const auto expected  = -0.9819805060619121L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
         << "Expected " << -0.981980 << ", got " << *result << ". Check calculation or expected value.";
@@ -47,7 +47,7 @@ TEST(StatisticsTest, Correlation_BC)
     const auto returnsC = std::array{0.12, 0.11, 0.10};
     auto       result   = correlationCoefficient(returnsB, returnsC);
     ASSERT_TRUE(result.has_value()) << "Failed to compute correlation: " << result.error();
-    auto       expected  = -0.39735970711947155L;
+    const auto expected  = -0.39735970711947155L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
         << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
@@ -60,7 +60,7 @@ TEST(StatisticsTest, Covariance_TitresX_Marche)
     constexpr auto marketReturns = std::array{-0.20, -0.10, -0.05, 0.00, 0.10, 0.20, 0.30};
     auto           result        = covariance(returnsX, marketReturns);
     ASSERT_TRUE(result.has_value());
-    auto       expected  = 0.022571428571428576L;
+    const auto expected  = 0.022571428571428576L;
     const auto tolerance = 1e-10;
     EXPECT_NEAR(static_cast<double>(*result), static_cast<double>(expected), tolerance)
         << "Expected " << expected << ", got " << *result << ". Check calculation or expected value.";
@@ -227,12 +227,15 @@ TEST(StatisticsTest, ZScores_EmptyRangeReturnsError)
 // Test correlation between profits and employers
 TEST(StatisticsTest, Correlation_Profits_Employers)
 {
-    const auto profits   = std::array{300,    9300,   20900,  31000,  41400,  47700,  60800,  79500,   80400,   89000,
-                                      118300, 119700, 153000, 252800, 333300, 412000, 424300, 454000,  829000,  86500,
-                                      176000, 227400, 471300, 681100, 747000, 859800, 939500, 1082000, 1102200, 1495400};
-    const auto employers = std::array{7523,  8200, 12068, 9500,  5000,  18000, 4708,  13740, 95000, 8200, 56000, 31404, 8578, 2900,  9100,
-                                      10200, 9548, 82300, 28334, 40929, 50816, 54100, 28200, 83100, 3418, 34400, 42100, 8527, 21300, 20100};
-    auto       result    = correlationCoefficient(profits, employers);
+    const auto profits = std::array{
+        300,    9300,   20900,  31000,  41400, 47700,  60800,  79500,  80400,  89000,  118300, 119700, 153000,  252800,  333300,
+        412000, 424300, 454000, 829000, 86500, 176000, 227400, 471300, 681100, 747000, 859800, 939500, 1082000, 1102200, 1495400,
+    };
+    const auto employers = std::array{
+        7523,  8200, 12068, 9500,  5000,  18000, 4708,  13740, 95000, 8200, 56000, 31404, 8578, 2900,  9100,
+        10200, 9548, 82300, 28334, 40929, 50816, 54100, 28200, 83100, 3418, 34400, 42100, 8527, 21300, 20100,
+    };
+    auto result = correlationCoefficient(profits, employers);
     ASSERT_TRUE(result.has_value());
     const auto expected  = 0.05881462738716168;
     const auto tolerance = 1e-10;
@@ -245,7 +248,7 @@ TEST(StatisticsTest, Correlation_Profits_Employers)
 TEST(StatisticsTest, Product_Simple)
 {
     constexpr auto productTest = std::array{1, 2, 3, 4, 5};
-    auto           result      = product(productTest);
+    const auto     result      = product(productTest);
     EXPECT_EQ(result, 120);
     // Alternative: test with zeros, negatives, or large numbers
 }
@@ -254,7 +257,7 @@ TEST(StatisticsTest, Product_Simple)
 TEST(StatisticsTest, Product_InsectCount)
 {
     constexpr auto insectCount = std::array{10, 1, 1000, 1, 10};
-    auto           result      = product(insectCount);
+    const auto     result      = product(insectCount);
     EXPECT_EQ(result, 100000);
 }
 
@@ -424,7 +427,7 @@ TEST(StatisticsTest, Modes_ForwardListRangeSupported)
 TEST(StatisticsTest, Median_EvenData_Sorted)
 {
     constexpr std::array<double, 6> evenData = {1, 2, 3, 4, 5, 6};
-    auto                            result   = median(evenData);
+    const auto                      result   = median(evenData);
     EXPECT_EQ(result, 3.5L);
 }
 
@@ -432,7 +435,7 @@ TEST(StatisticsTest, Median_EvenData_Sorted)
 TEST(StatisticsTest, Median_OddData_Sorted)
 {
     constexpr std::array<double, 5> oddData = {1, 2, 3, 4, 5};
-    auto                            result  = median(oddData);
+    const auto                      result  = median(oddData);
     EXPECT_EQ(result, 3.0L);
 }
 
@@ -440,7 +443,7 @@ TEST(StatisticsTest, Median_OddData_Sorted)
 TEST(StatisticsTest, Median_UnsortedData)
 {
     const auto unsortedData = std::array{3, 1, 4, 2, 5};
-    auto       result       = median(unsortedData);
+    const auto result       = median(unsortedData);
     EXPECT_EQ(result, 3.0L);
 }
 
@@ -448,7 +451,7 @@ TEST(StatisticsTest, Median_UnsortedData)
 TEST(StatisticsTest, Median_EmptyData)
 {
     const std::array<int, 0> emptyData = {};
-    auto                     result    = median(emptyData);
+    const auto               result    = median(emptyData);
     EXPECT_EQ(result, 0.0L);
 }
 
@@ -456,14 +459,14 @@ TEST(StatisticsTest, Median_EmptyData)
 TEST(StatisticsTest, Median_SingleElement)
 {
     const auto single = std::array{42};
-    auto       result = median(single);
+    const auto result = median(single);
     EXPECT_EQ(result, 42.0L);
 }
 
 TEST(StatisticsTest, Median_VectorThreeElements)
 {
     const std::vector<int> data{1, 3, 5};
-    auto                   result = median(data);
+    const auto             result = median(data);
     EXPECT_EQ(result, 3.0L);
 }
 
@@ -475,7 +478,7 @@ TEST(StatisticsTest, Median_VectorThreeElements)
 TEST(StatisticsTest, Quartiles_OddData)
 {
     const std::array data{1, 2, 3, 4, 5};
-    auto             quart = quartiles(data);
+    const auto       quart = quartiles(data);
     EXPECT_EQ(quart.q1, 1.5L);
     EXPECT_EQ(quart.median, 3.0L);
     EXPECT_EQ(quart.q3, 4.5L);
@@ -485,7 +488,7 @@ TEST(StatisticsTest, Quartiles_OddData)
 TEST(StatisticsTest, Quartiles_EvenData)
 {
     const std::array data{1, 2, 3, 4, 5, 6};
-    auto             quart = quartiles(data);
+    const auto       quart = quartiles(data);
     EXPECT_EQ(quart.q1, 2.0L);
     EXPECT_EQ(quart.median, 3.5L);
     EXPECT_EQ(quart.q3, 5.0L);
@@ -495,7 +498,7 @@ TEST(StatisticsTest, Quartiles_EvenData)
 TEST(StatisticsTest, Quartiles_UnsortedData)
 {
     const std::array data{6, 1, 4, 2, 5, 3};
-    auto             quart = quartiles(data);
+    const auto       quart = quartiles(data);
     EXPECT_EQ(quart.q1, 2.0L);
     EXPECT_EQ(quart.median, 3.5L);
     EXPECT_EQ(quart.q3, 5.0L);
@@ -505,7 +508,7 @@ TEST(StatisticsTest, Quartiles_UnsortedData)
 TEST(StatisticsTest, Quartiles_EmptyData)
 {
     const std::array<double, 0> data{};
-    auto                        quart = quartiles(data);
+    const auto                  quart = quartiles(data);
     EXPECT_EQ(quart.q1, 0.0L);
     EXPECT_EQ(quart.median, 0.0L);
     EXPECT_EQ(quart.q3, 0.0L);
@@ -519,7 +522,7 @@ TEST(StatisticsTest, Quartiles_EmptyData)
 TEST(StatisticsTest, Summary_Basic)
 {
     const std::array data{12.3, 9e4, -0.6666};
-    auto             summ = summary(data);
+    const auto       summ = summary(data);
 
     EXPECT_NEAR(static_cast<double>(summ.min), -0.6666, 1e-9);
     EXPECT_NEAR(static_cast<double>(summ.q1), 5.8167, 1e-3);
@@ -533,7 +536,7 @@ TEST(StatisticsTest, Summary_Basic)
 TEST(StatisticsTest, Summary_Empty)
 {
     const std::array<long, 0> data{};
-    auto                      summ = summary(data);
+    const auto                summ = summary(data);
     EXPECT_EQ(summ.min, 0.0L);
     EXPECT_EQ(summ.q1, 0.0L);
     EXPECT_EQ(summ.median, 0.0L);
@@ -546,8 +549,8 @@ TEST(StatisticsTest, Summary_Empty)
 TEST(StatisticsTest, Summary_QuartileConsistency)
 {
     const std::array data{1, 2, 3, 4, 5, 6};
-    auto             quart = quartiles(data);
-    auto             summ  = summary(data);
+    const auto       quart = quartiles(data);
+    const auto       summ  = summary(data);
 
     EXPECT_EQ(quart.q1, summ.q1);
     EXPECT_EQ(quart.median, summ.median);
@@ -559,7 +562,7 @@ TEST(StatisticsTest, Summary_QuartileConsistency)
 TEST(StatisticsTest, Quartiles_1to9)
 {
     const std::array data{1, 2, 3, 4, 5, 6, 7, 8, 9};
-    auto             quart = quartiles(data);
+    const auto       quart = quartiles(data);
     EXPECT_EQ(quart.q1, 2.5L);
     EXPECT_EQ(quart.median, 5.0L);
     EXPECT_EQ(quart.q3, 7.5L);
@@ -569,7 +572,7 @@ TEST(StatisticsTest, Quartiles_1to9)
 TEST(StatisticsTest, Quartiles_1to8)
 {
     const std::array data{1, 2, 3, 4, 5, 6, 7, 8};
-    auto             quart = quartiles(data);
+    const auto       quart = quartiles(data);
     EXPECT_EQ(quart.q1, 2.5L);
     EXPECT_EQ(quart.median, 4.5L);
     EXPECT_EQ(quart.q3, 6.5L);
@@ -579,7 +582,7 @@ TEST(StatisticsTest, Quartiles_1to8)
 TEST(StatisticsTest, Quartiles_TwoElements)
 {
     const std::array data{10, 20};
-    auto             quart = quartiles(data);
+    const auto       quart = quartiles(data);
     EXPECT_EQ(quart.q1, 10.0L);
     EXPECT_EQ(quart.median, 15.0L);
     EXPECT_EQ(quart.q3, 20.0L);
@@ -589,7 +592,7 @@ TEST(StatisticsTest, Quartiles_TwoElements)
 TEST(StatisticsTest, Quartiles_Duplicates)
 {
     const std::array data{5, 5, 5, 5, 5, 5, 5};
-    auto             quart = quartiles(data);
+    const auto       quart = quartiles(data);
     EXPECT_EQ(quart.q1, 5.0L);
     EXPECT_EQ(quart.median, 5.0L);
     EXPECT_EQ(quart.q3, 5.0L);
@@ -599,7 +602,7 @@ TEST(StatisticsTest, Quartiles_Duplicates)
 TEST(StatisticsTest, Quartiles_ThreeElements)
 {
     const std::array data{1, 3, 5};
-    auto             quart = quartiles(data);
+    const auto       quart = quartiles(data);
     EXPECT_EQ(quart.q1, 2.0L);
     EXPECT_EQ(quart.median, 3.0L);
     EXPECT_EQ(quart.q3, 4.0L);
@@ -608,7 +611,7 @@ TEST(StatisticsTest, Quartiles_ThreeElements)
 TEST(StatisticsTest, Quartiles_VectorThreeElements)
 {
     const std::vector<int> data{1, 3, 5};
-    auto                   quart = quartiles(data);
+    const auto             quart = quartiles(data);
     EXPECT_EQ(quart.q1, 2.0L);
     EXPECT_EQ(quart.median, 3.0L);
     EXPECT_EQ(quart.q3, 4.0L);
@@ -618,7 +621,7 @@ TEST(StatisticsTest, Quartiles_VectorThreeElements)
 TEST(StatisticsTest, Summary_Textbook)
 {
     const std::array data{6, 7, 15, 36, 39, 40, 41};
-    auto             summ = summary(data);
+    const auto       summ = summary(data);
     EXPECT_EQ(summ.min, 6.0L);
     EXPECT_EQ(summ.q1, 7.0L);
     EXPECT_EQ(summ.median, 36.0L);
@@ -630,7 +633,7 @@ TEST(StatisticsTest, Summary_Textbook)
 TEST(StatisticsTest, Summary_EvenCount)
 {
     const std::array data{1, 2, 3, 4, 5, 6, 7, 8};
-    auto             summ = summary(data);
+    const auto       summ = summary(data);
     EXPECT_EQ(summ.min, 1.0L);
     EXPECT_EQ(summ.q1, 2.5L);
     EXPECT_EQ(summ.median, 4.5L);
@@ -642,7 +645,7 @@ TEST(StatisticsTest, Summary_EvenCount)
 TEST(StatisticsTest, Summary_VectorThreeElements)
 {
     const std::vector<int> data{1, 3, 5};
-    auto                   summ = summary(data);
+    const auto             summ = summary(data);
     EXPECT_EQ(summ.min, 1.0L);
     EXPECT_EQ(summ.q1, 2.0L);
     EXPECT_EQ(summ.median, 3.0L);
@@ -681,7 +684,7 @@ TEST(StatisticsTest, Covariance_ForwardList)
 TEST(StatisticsTest, Summary_ForwardList)
 {
     const std::forward_list<int> data = {1, 3, 5};
-    auto                         summ = summary(data);
+    const auto                   summ = summary(data);
     EXPECT_EQ(summ.min, 1.0L);
     EXPECT_EQ(summ.q1, 2.0L);
     EXPECT_EQ(summ.median, 3.0L);

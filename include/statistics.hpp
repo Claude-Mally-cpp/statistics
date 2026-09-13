@@ -456,7 +456,7 @@ template <ForwardNumberRange R>
 auto zScores(const R& values, VarianceKind kind = VarianceKind::sample)
     -> std::expected<std::vector<num::RangePublicResultType<R>>, std::string>
 {
-    auto materialized = detail::materializeCalculationVector(values);
+    const auto materialized = detail::materializeCalculationVector(values);
     if (materialized.empty())
     {
         return std::unexpected(std::string{"zScores: empty range"});
@@ -515,7 +515,7 @@ template <NumberRange R> auto modes(const R& range) -> std::expected<std::vector
 
     for (auto it = sortedValues.begin(); it != sortedValues.end();)
     {
-        auto       runEnd   = std::ranges::upper_bound(sortedValues, *it);
+        const auto runEnd   = std::ranges::upper_bound(sortedValues, *it);
         const auto runCount = static_cast<std::size_t>(std::ranges::distance(it, runEnd));
 
         if (runCount > bestCount)
