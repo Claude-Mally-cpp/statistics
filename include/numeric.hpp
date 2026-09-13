@@ -79,12 +79,19 @@ template <ForwardNumberRange R> constexpr auto average(const R& range) -> RangeP
     {
         return static_cast<RangePublicResultType<R>>(0.0);
     }
+    // Keep the converted denominator explicit; MSVC does not carry the count
+    // guard above through this cast when checking for a possible zero divisor.
+    const auto denominator = static_cast<detail::RangeCalculationType<R>>(count);
+    if (denominator == static_cast<detail::RangeCalculationType<R>>(0))
+    {
+        return static_cast<RangePublicResultType<R>>(0.0);
+    }
     detail::RangeCalculationType<R> total = 0.0;
     for (auto&& val : range)
     {
         total += static_cast<detail::RangeCalculationType<R>>(val);
     }
-    return static_cast<RangePublicResultType<R>>(total / static_cast<detail::RangeCalculationType<R>>(count));
+    return static_cast<RangePublicResultType<R>>(total / denominator);
 }
 
 /// @brief Min & max values of a range.
