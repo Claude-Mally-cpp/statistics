@@ -40,6 +40,8 @@ Right now the project focuses on:
 
 > NOTE: This project documents the quartile convention in `CHANGELOG.md` (Tukey hinges, exclusive-median by default; small-sample exception for size==3).
 
+<a id="quick-start"></a>
+
 ## Quick Start
 
 Linux / WSL:
