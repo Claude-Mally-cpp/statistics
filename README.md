@@ -46,10 +46,10 @@ Right now the project focuses on:
 
 Linux / WSL:
 
-> NOTE: `linux-clang-debug` expects `clang-23` / `clang++-23`. If LLVM 23.1.1 is not installed yet, set that up first or use the `linux-gcc-debug` preset below instead.
+> NOTE: `linux-clang-debug` expects `clang-23` / `clang++-23`. If LLVM 23.1.5 is not installed yet, set that up first or use the `linux-gcc-debug` preset below instead.
 
 ```bash
-# Clang/LLVM 23.1.1
+# Clang/LLVM 23.1.5
 cmake --preset linux-clang-debug
 cmake --build --preset linux-clang-debug
 ctest --preset linux-clang-debug
@@ -161,7 +161,7 @@ For release/versioning workflow, including the Python 3 version-bump helper, see
 Short version:
 
 - Windows native builds use the MSVC presets
-- WSL / Linux Clang workflows are pinned to LLVM 23.1.1
+- WSL / Linux Clang workflows are pinned to LLVM 23.1.5
 - Docker is the closest local match to Linux CI
 - On Windows, always verify which `clang`, `clang-format`, and `clang-tidy` your current shell resolves
 
@@ -238,12 +238,12 @@ pwsh -File .\open-coverage-report.ps1
 
 ## Tooling Workflows
 
-### WSL / Linux: LLVM 23.1.1 workflow
+### WSL / Linux: LLVM 23.1.5 workflow
 
 Use this path when you want local Clang, `clang-format`, and `clang-tidy` behavior
 to match the Docker image and Linux CI.
 
-Install the checksum-verified LLVM 23.1.1 release used by `Dockerfile.clang`:
+Install the checksum-verified LLVM 23.1.5 release used by `Dockerfile.clang`:
 
 ```bash
 sudo apt-get update && sudo apt-get install -y \
@@ -278,7 +278,7 @@ CLANG_TIDY_BIN=clang-tidy-23 bash ./tidy-run-checks.sh
 ```
 
 > **Note:** This installer supports x86_64 and ARM64 Linux and is verified on
-> Ubuntu 24.04, matching `Dockerfile.clang`. It installs under `/opt/llvm-23.1.1`
+> Ubuntu 24.04, matching `Dockerfile.clang`. It installs under `/opt/llvm-23.1.5`
 > and exposes the tools through `/usr/local/bin`. The GCC image uses `gcc:16.2.0`.
 
 ### Windows: recommended workflow
@@ -298,8 +298,8 @@ For a simple LLVM install on Windows:
 winget install LLVM.LLVM
 ```
 
-WinGet may lag behind the project's LLVM 23.1.1 release. To match it exactly,
-use the Windows x64 installer from the [LLVM 23.1.1 release page](https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.1).
+WinGet may lag behind the project's LLVM 23.1.5 release. To match it exactly,
+use the Windows x64 installer from the [LLVM 23.1.5 release page](https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.5).
 
 Then verify what Windows resolves:
 
@@ -362,7 +362,7 @@ instead of injecting raw instrumentation flags directly in each public preset.
 ### Practical contributor split
 
 - Windows native: MSVC build/test
-- WSL or Linux: LLVM 23.1.1 format/tidy/build workflow
+- WSL or Linux: LLVM 23.1.5 format/tidy/build workflow
 - Docker: closest match to Linux CI
 - GitHub Actions: final clean-runner authority
 

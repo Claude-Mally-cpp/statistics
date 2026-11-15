@@ -9,7 +9,7 @@ locally and in CI.
 
 ### Linux / WSL
 
-Use the [LLVM 23.1.1 setup](../docs/llvm-setup.md) used by `Dockerfile.clang`,
+Use the [LLVM 23.1.5 setup](../docs/llvm-setup.md) used by `Dockerfile.clang`,
 then add the documentation tools:
 
 ```bash
