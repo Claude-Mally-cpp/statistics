@@ -19,7 +19,7 @@ Use this guide when you need to:
 
 ## Repo Expectation
 
-The Linux Clang workflow in this repo is currently pinned to LLVM 23.1.1.
+The Linux Clang workflow in this repo is currently pinned to LLVM 23.1.5.
 
 That version shows up in the main repo tooling here:
 
@@ -69,7 +69,7 @@ The official release page is:
 - https://github.com/llvm/llvm-project/releases
 
 For this repository's exact version, use the Windows x64 installer from
-https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.1.
+https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.5.
 WinGet may lag behind the upstream release. LLVM 23 uses an `.msi` installer.
 
 ### Does installing a new Windows LLVM version remove the old one?
@@ -164,10 +164,10 @@ ctest --preset msvc-x64-release
 
 ### Install the expected LLVM version
 
-The Docker image and Linux presets use stable LLVM 23.1.1. The shared installer
+The Docker image and Linux presets use stable LLVM 23.1.5. The shared installer
 in `tools/install-llvm.sh` downloads the official release archive, verifies its
 SHA-256 checksum, and installs the compiler, format/tidy/coverage tools, libc++,
-and sanitizer runtimes under `/opt/llvm-23.1.1`. It creates tool links in
+and sanitizer runtimes under `/opt/llvm-23.1.5`. It creates tool links in
 `/usr/local/bin`, prioritizes the installation's own `bin` directory in login
 shells, and registers the matching C++ runtime with `ldconfig`. Open a new shell
 after installing so CMake records compiler paths that clang-tidy can use to

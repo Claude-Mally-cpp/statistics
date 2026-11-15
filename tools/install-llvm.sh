@@ -3,17 +3,17 @@ set -euo pipefail
 
 # Install the stable release, rather than apt.llvm.org's moving branch snapshots.
 # Requires root, curl, xz-utils, ca-certificates and the normal C++ runtime.
-version=23.1.1
+version=23.1.5
 prefix="/opt/llvm-${version}"
 case "$(uname -m)" in
   x86_64)
     platform=X64
-    sha256=832aeb58d105de1cabc7b982dd2c65de0610f7377df48ae8fc2dd8e97420a15c
+    sha256=f72edb0b36580ece7f52e23858f00c18fad4e87395ea7ad05d7e55c39f8fc78a
     triple=x86_64-unknown-linux-gnu
     ;;
   aarch64)
     platform=ARM64
-    sha256=3fbaaa6a1f147557a4095b9911f8dc2d4c745a11863982f76ee20e248c190a80
+    sha256=44f1e4b7a125b2763d56386a199928dd57ec32e151cc6042dce2f7b0da7bb651
     triple=aarch64-unknown-linux-gnu
     ;;
   *) echo "Unsupported LLVM release architecture: $(uname -m)" >&2; exit 1 ;;

@@ -1,7 +1,7 @@
 # Dockerfile.clang
 FROM ubuntu:24.04
 
-# Install the stable LLVM 23.1.1 release and its supporting tools.
+# Install the stable LLVM 23.1.5 release and its supporting tools.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY tools/install-llvm.sh /tmp/install-llvm.sh
 RUN bash /tmp/install-llvm.sh && rm /tmp/install-llvm.sh
-ENV PATH="/opt/llvm-23.1.1/bin:${PATH}"
+ENV PATH="/opt/llvm-23.1.5/bin:${PATH}"
 
 # Create working directory
 WORKDIR /project
