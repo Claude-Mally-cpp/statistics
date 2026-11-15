@@ -14,18 +14,22 @@ Small C++ statistics library and CLI for descriptive-statistics workflows.
 
 This repository is for people who want a compact C++23 project that computes common summary statistics, exposes a reusable library, and keeps build and analysis tooling visible.
 
+## Example
+
+After building the CLI with [Quick Start](#quick-start), run the `summary`
+subcommand to compute the count, minimum, quartiles, median, maximum, and mean:
+
+```bash
+./out/build/linux-clang-debug/statistics summary --data 1,2,2,3,5
+```
+
+Expected output:
+
+```text
+Computed summary: n=5, min=1, q1=1.5, median=2, q3=4, max=5, mean=2.6
+```
+
 If you prefer an editor-driven workflow, the CMake presets also work well from VS Code with CMake Tools.
-
-## Using This Repo As a Template
-
-If your goal is to reuse this repository as the base for a new project, start with
-[docs/template-guide.md](docs/template-guide.md).
-
-Most command examples below are intentionally written for this statistics project.
-Treat the executable names, subcommands, and sample outputs as replace-first content
-when adapting the repo into a different domain.
-The badge URLs and GitHub links near the top also still point at this repository
-and should be updated early in a derived project.
 
 Right now the project focuses on:
 
@@ -35,6 +39,8 @@ Right now the project focuses on:
 - multi-toolchain verification with Clang, GCC, MSVC, sanitizers, `clang-format`, `clang-tidy`, and `cppcheck`
 
 > NOTE: This project documents the quartile convention in `CHANGELOG.md` (Tukey hinges, exclusive-median by default; small-sample exception for size==3).
+
+<a id="quick-start"></a>
 
 ## Quick Start
 
@@ -85,39 +91,35 @@ VS Code:
 - select a CMake preset such as `linux-clang-debug` or `msvc-x64-debug`
 - run Configure, Build, and Test from CMake Tools
 
+If you just want to build the CLI:
+
+```bash
+cmake --build --preset linux-clang-debug-cli
+```
+
+After the Windows MSVC Debug build above, run the same example with:
+
+```powershell
+.\out\build\msvc-x64-debug\statistics summary --data 1,2,2,3,5
+```
+
+## Using This Repo As a Template
+
+If your goal is to reuse this repository as the base for a new project, start with
+[docs/template-guide.md](docs/template-guide.md).
+
+Most command examples below are intentionally written for this statistics project.
+Treat the executable names, subcommands, and sample outputs as replace-first content
+when adapting the repo into a different domain.
+The badge URLs and GitHub links near the top also still point at this repository
+and should be updated early in a derived project.
+
 The CLI is mainly here as one concrete consumer of the library. It gives the repo
 an executable smoke-test target and a simple example of wiring application code to
 the reusable library layer. If your derived project is library-only, this is one of
 the first components you can remove. If you do, also remove or update its
 references in `CMakeLists.txt`, `CMakePresets.json`, and any CI workflows or
 artifact names that still assume the CLI target exists.
-
-If you just want to build the CLI:
-
-```bash
-cmake --build --preset linux-clang-debug-cli
-./out/build/linux-clang-debug/statistics summary --data 1,2,2,3,5
-```
-
-## Example
-
-The CLI currently exposes a `summary` subcommand:
-
-```bash
-./out/build/linux-clang-debug/statistics summary --data 1,2,2,3,5
-```
-
-Expected output format:
-
-```text
-Computed summary: n=5, min=1, q1=1.5, median=2, q3=4, max=5, mean=2.6
-```
-
-Windows Clang release example:
-
-```powershell
-.\out\build\windows-clang-x64-release\statistics summary --data 1,2,2,3,5
-```
 
 ## Result Type Policy
 
