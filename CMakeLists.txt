@@ -1,4 +1,19 @@
 ﻿cmake_minimum_required(VERSION 3.25)
+
+option(STATISTICS_BUILD_STD_MODULE_EXAMPLE "Build the C++23 import std example" OFF)
+if (STATISTICS_BUILD_STD_MODULE_EXAMPLE)
+  if (CMAKE_VERSION VERSION_LESS "4.5")
+    message(FATAL_ERROR
+      "The import std example requires CMake 4.5 or newer. "
+      "Use a newer CMake or set STATISTICS_BUILD_STD_MODULE_EXAMPLE=OFF.")
+  endif()
+  if (NOT CMAKE_GENERATOR MATCHES "^Ninja")
+    message(FATAL_ERROR
+      "The import std example requires a Ninja generator. "
+      "Configure with -G Ninja in a new build directory.")
+  endif()
+endif()
+
 project(
   statistics
   VERSION 0.0.1
@@ -12,6 +27,12 @@ include(CMakePackageConfigHelpers)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+enable_testing()
+
+if (STATISTICS_BUILD_STD_MODULE_EXAMPLE)
+  add_subdirectory(examples/import-std)
+endif()
 
 set(STATISTICS_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
 set(STATISTICS_GENERATED_VERSION_HEADER "${STATISTICS_GENERATED_INCLUDE_DIR}/statistics_version.hpp")
@@ -99,8 +120,6 @@ FetchContent_Declare(
   GIT_TAG v2.5.0
 )
 FetchContent_MakeAvailable(CLI11)
-
-enable_testing()
 
 # Test executable
 add_executable(statistics_test test/test_statistics.cpp)
