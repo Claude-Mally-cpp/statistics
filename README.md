@@ -91,6 +91,9 @@ VS Code:
 - select a CMake preset such as `linux-clang-debug` or `msvc-x64-debug`
 - run Configure, Build, and Test from CMake Tools
 
+For the preset matrix, VS Code steps, and individual-test commands, see
+[the build and test guide](docs/build-and-test.md).
+
 If you just want to build the CLI:
 
 ```bash
