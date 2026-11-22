@@ -219,6 +219,73 @@ CLANG_TIDY_BIN=clang-tidy-23 bash ./tidy-run-checks.sh
 
 If your shell default `clang` points somewhere else, use the versioned binary names explicitly.
 
+## Optional C++23 standard-library module example
+
+The LLVM installer includes the libc++ module sources under
+`/opt/llvm-23.1.5/share/libc++/v1`, including the support files referenced by
+`std.cppm` and `std.compat.cppm`. Their installed metadata is in
+`lib/x86_64-unknown-linux-gnu/libc++.modules.json` on x86_64 and the corresponding
+`aarch64-unknown-linux-gnu` directory on ARM64.
+
+The optional example requires CMake 4.5 or newer and Ninja 1.11 or newer. It uses
+CMake's standard-library module discovery. The project's default build requires
+CMake 3.25 or newer. Check the CMake executable selected by your shell with
+`cmake --version` before opting in.
+
+Install the updated LLVM package using `sudo bash tools/install-llvm.sh`, then
+open a new shell. With a CMake 4.5+ executable on PATH, configure the example on
+Linux or WSL as follows. The compiler flags select libc++ during compiler
+detection so CMake discovers its module manifest.
+
+```bash
+cmake --preset linux-clang-debug -B out/build/linux-clang-debug-std \
+  -DCMAKE_CXX_FLAGS=-stdlib=libc++ \
+  -DSTATISTICS_BUILD_STD_MODULE_EXAMPLE=ON
+cmake --build out/build/linux-clang-debug-std --target statistics_std_module_example
+ctest --test-dir out/build/linux-clang-debug-std \
+  -R '^statistics_std_module_example$' --output-on-failure
+./out/build/linux-clang-debug-std/examples/import-std/statistics_std_module_example
+```
+
+Expected output is:
+
+```text
+C++23 modules: n=5, mean=2.6
+```
+
+For Release, use `linux-clang-release` with a separate build directory and the
+same two configuration options. To build and test the whole project in either
+example directory, omit `--target statistics_std_module_example` from the build
+command and the `-R` filter from the test command.
+
+CMake reports an error when the option is enabled with an older CMake, a
+non-Ninja generator, or missing standard-library module sources. A missing
+libc++ source usually means the toolchain was installed with the older trimmed
+installer. Rerun the updated installer and configure again.
+
+The example uses `import std;` and `std::println` to compute a mean from five
+values. It is enabled with `STATISTICS_BUILD_STD_MODULE_EXAMPLE=ON`; the default
+is `OFF`. Public library consumers can continue to include the installed headers.
+
+The example also passed with MSVC 19.52 and CMake 4.5.1. In an x64 Visual
+Studio Developer PowerShell with CMake 4.5+ on PATH, use:
+
+```powershell
+cmake --preset msvc-x64-debug -B out/build/msvc-x64-debug-std `
+  -DSTATISTICS_BUILD_STD_MODULE_EXAMPLE=ON
+cmake --build out/build/msvc-x64-debug-std --target statistics_std_module_example
+ctest --test-dir out/build/msvc-x64-debug-std `
+  -R '^statistics_std_module_example$' --output-on-failure
+```
+
+The Linux Clang/libc++ path is verified on x86_64. The extraction rule also
+includes module sources for ARM64, whose execution remains unverified. Module
+build artifacts depend on the compiler and its flags, so use a separate build
+directory for each toolchain and configuration. See the
+[libc++ module documentation](https://libcxx.llvm.org/Modules.html) and
+[CMake module documentation](https://cmake.org/cmake/help/latest/manual/cmake-cxxmodules.7.html)
+for current support details.
+
 ## Dockerfile LLVM Version Update Checklist
 
 When changing the repo's expected LLVM version, update the full chain, not just one file.

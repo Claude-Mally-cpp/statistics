@@ -28,10 +28,12 @@ printf '%s  %s\n' "$sha256" "$archive" | sha256sum --check -
 
 # Keep the compiler, analysis/coverage tools and C++/sanitizer runtimes, without
 # the archive's unrelated LLVM/MLIR/Fortran development libraries and executables.
+# Include libc++ module sources referenced by the installed modules manifest.
 tools=(clang clang++ clang-23 clang-format clang-tidy clang-apply-replacements
        clang-scan-deps llvm-ar llvm-ranlib llvm-nm llvm-cov llvm-profdata
        llvm-symbolizer lld ld.lld)
-members=("*/include/c++" "*/include/${triple}" "*/lib/clang" "*/lib/${triple}")
+members=("*/include/c++" "*/include/${triple}" "*/lib/clang" "*/lib/${triple}"
+         "*/share/libc++/v1")
 for tool in "${tools[@]}"; do members+=("*/bin/${tool}"); done
 mkdir -p "$prefix"
 tar -xJf "$archive" --strip-components=1 --wildcards --no-anchored \
